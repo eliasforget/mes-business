@@ -7,10 +7,11 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from moteur import Resultat, verdict
+from moteur import Resultat, verdict, verdict_qualite
 
-COULEURS_CLAIR = ["#2a78d6", "#eb6834", "#1baf7a"]
-COULEURS_SOMBRE = ["#3987e5", "#d95926", "#199e70"]
+# Palette catégorielle validée (ordre fixe : la couleur suit la stratégie, pas son rang).
+COULEURS_CLAIR = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"]
+COULEURS_SOMBRE = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"]
 
 
 def eur(x: float) -> str:
@@ -21,6 +22,16 @@ def pct(x: float | None, signe: bool = True) -> str:
     if x is None:
         return "-"
     return (f"{x * 100:+.1f} %" if signe else f"{x * 100:.1f} %").replace(".", ",")
+
+
+def ic(s: dict) -> str:
+    if not s.get("ic95"):
+        return "-"
+    return f"[{pct(s['ic95'][0])} ; {pct(s['ic95'][1])}]"
+
+
+def _ll(x: float | None) -> str:
+    return "-" if x is None else f"{x:.4f}".replace(".", ",")
 
 
 # ── Console ────────────────────────────────────────────────────────────────
@@ -40,15 +51,20 @@ def tableau_console(resultats: list[Resultat], stats: list[dict], infos: dict, p
         if s["n"] == 0:
             lignes.append(f"{res.strategie.nom:<16}{0:>7}   aucun pari")
             continue
-        ic = f"[{pct(s['ic95'][0])} ; {pct(s['ic95'][1])}]"
         lignes.append(
             f"{res.strategie.nom:<16}{s['n']:>7}{pct(s['taux'], False):>10}{_num(s['cote_moyenne']):>10}"
-            f"{eur(s['profit']):>14}{pct(s['roi']):>9}{ic:>22}{pct(s['clv_moyen']):>8}"
+            f"{eur(s['profit']):>14}{pct(s['roi']):>9}{ic(s):>22}{pct(s['clv_moyen']):>8}"
             f"{pct(s['drawdown_max'], False):>10}" + ("  RUINE" if s["ruine"] else "")
         )
+    qualites = [(r.strategie.nom, s.get("qualite")) for r, s in zip(resultats, stats) if s.get("qualite")]
+    if qualites:
+        lignes += ["", "Qualité des prédictions (log-loss, plus bas = mieux, mêmes matchs) :",
+                   f"{'Modèle':<16}{'Matchs':>8}{'Modèle':>10}{'Pinnacle':>10}{'Clôture':>10}"]
+        for nom, q in qualites:
+            lignes.append(f"{nom:<16}{q['n']:>8}{_ll(q['modele']):>10}{_ll(q['pinnacle']):>10}{_ll(q['cloture']):>10}")
     lignes.append("")
     for res, s in zip(resultats, stats):
-        lignes.append(f"- {res.strategie.nom} : {verdict(s) if s['n'] else 'aucun pari.'}")
+        lignes.append(f"- {res.strategie.nom} : {verdict(s) if s['n'] else 'aucun pari.' + verdict_qualite(s.get('qualite'))}")
     return "\n".join(lignes)
 
 
@@ -157,7 +173,7 @@ def ecrire_html(resultats: list[Resultat], stats: list[dict], infos: dict, param
         lignes.append(
             f"<tr><td>{html.escape(r.strategie.nom)}</td><td>{s['n']}</td><td>{pct(s['taux'], False)}</td>"
             f"<td>{_num(s['cote_moyenne'])}</td><td>{eur(s['profit'])}</td><td><b>{pct(s['roi'])}</b></td>"
-            f"<td>[{pct(s['ic95'][0])} ; {pct(s['ic95'][1])}]</td><td>{pct(s['clv_moyen'])}</td>"
+            f"<td>{ic(s)}</td><td>{pct(s['clv_moyen'])}</td>"
             f"<td>{pct(s['drawdown_max'], False)}{' · ruine' if s['ruine'] else ''}</td></tr>")
 
     saisons = sorted({sa for s in stats if s["n"] for sa in s["par_saison"]})
@@ -171,13 +187,28 @@ def ecrire_html(resultats: list[Resultat], stats: list[dict], infos: dict, param
         lignes_saison.append(f"<tr><td>{html.escape(r.strategie.nom)}</td>{cells}</tr>")
 
     verdicts = "".join(f"<li><b>{html.escape(r.strategie.nom)}</b> - {html.escape(r.strategie.description)}<br>"
-                       f"{html.escape(verdict(s)) if s['n'] else 'Aucun pari.'}</li>"
+                       f"{html.escape(verdict(s) if s['n'] else 'Aucun pari.' + verdict_qualite(s.get('qualite')))}</li>"
                        for r, s in zip(resultats, stats))
+    qualites = [(r.strategie.nom, s["qualite"]) for r, s in zip(resultats, stats) if s.get("qualite")]
+    table_qualite = ""
+    if qualites:
+        lignes_q = "".join(
+            f"<tr><td>{html.escape(nom)}</td><td>{q['n']}</td><td><b>{_ll(q['modele'])}</b></td>"
+            f"<td>{_ll(q['pinnacle'])}</td><td>{_ll(q['cloture'])}</td>"
+            f"<td>{'oui' if q['modele'] < q['pinnacle'] else 'non'}</td></tr>" for nom, q in qualites)
+        table_qualite = f"""<h2>Qualité des prédictions <small>(log-loss : plus c'est bas, mieux le modèle prédit)</small></h2>
+<table>
+<thead><tr><th>Modèle</th><th>Matchs</th><th>Modèle</th><th>Pinnacle avant-match</th><th>Pinnacle clôture</th>
+<th>Bat le marché ?</th></tr></thead>
+<tbody>{lignes_q}</tbody>
+</table>
+<p class="meta">Comparaison sur exactement les mêmes matchs. Un modèle qui prédit moins bien que Pinnacle ne peut pas
+gagner sur la durée : quand il croit voir une bonne affaire, c'est le plus souvent lui qui se trompe.</p>"""
 
     clair = "\n".join(f"  --s{i}: {c};" for i, c in enumerate(COULEURS_CLAIR))
     sombre = "\n".join(f"  --s{i}: {c};" for i, c in enumerate(COULEURS_SOMBRE))
     css_series = "\n".join(f".serie.s{i} {{ stroke: var(--s{i}); }} .puce.s{i} {{ color: var(--s{i}); fill: var(--s{i}); }}"
-                           for i in range(3))
+                           for i in range(len(COULEURS_CLAIR)))
 
     page = f"""<!DOCTYPE html>
 <html lang="fr">
@@ -245,6 +276,8 @@ moyenne) : utilise la décote pour t'en rapprocher.</p>
 <th>IC 95 % du ROI</th><th>CLV moyen</th><th>Drawdown max</th></tr></thead>
 <tbody>{''.join(lignes)}</tbody>
 </table>
+
+{table_qualite}
 
 <h2>ROI par saison <small>(nombre de paris)</small></h2>
 <table>

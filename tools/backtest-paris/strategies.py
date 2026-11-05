@@ -1,7 +1,9 @@
 """Stratégies de paris 1X2.
 
 Contrat : `choisir()` ne voit QUE le match à venir (équipes, cotes d'avant-match) et ce que la
-stratégie a appris des matchs PRÉCÉDENTS. Le résultat n'est révélé qu'ensuite via `apprendre()`.
+stratégie a appris des matchs PRÉCÉDENTS. Le résultat et les statistiques du match (tirs...) ne
+sont révélés qu'ensuite, via `apprendre()`. Les stratégies qui estiment des probabilités exposent
+aussi `probas(match)`, utilisé pour mesurer la qualité de leurs prédictions face au marché.
 """
 from __future__ import annotations
 
@@ -10,14 +12,16 @@ from dataclasses import dataclass
 
 from donnees import Cotes, ISSUES, Match
 
+Probas = tuple[float, float, float]
+
 
 @dataclass
 class Pari:
-    issue: int                 # 0 = domicile, 1 = nul, 2 = extérieur
+    issue: int                  # 0 = domicile, 1 = nul, 2 = extérieur
     proba: float | None = None  # probabilité estimée par la stratégie (None si elle n'en a pas)
 
 
-def probas_sans_marge(cotes: Cotes) -> tuple[float, float, float]:
+def probas_sans_marge(cotes: Cotes) -> Probas:
     """Probabilités implicites, marge du bookmaker retirée (méthode proportionnelle)."""
     inv = [1 / c for c in cotes]
     total = sum(inv)
@@ -29,7 +33,38 @@ def marge(cotes: Cotes) -> float:
     return sum(1 / c for c in cotes) - 1
 
 
-def _meilleur_avantage(probas: tuple[float, ...], cotes: Cotes, seuil: float) -> Pari | None:
+def probas_score(lam_dom: float, lam_ext: float, rho: float = 0.0, max_buts: int = 10) -> Probas:
+    """Probabilités 1/N/2 à partir des buts attendus (loi de Poisson).
+
+    `rho` < 0 applique la correction de Dixon-Coles : Poisson pur sous-estime les 0-0 et 1-1,
+    donc les nuls ; la correction redistribue un peu de probabilité vers ces petits scores.
+    """
+    pd = [math.exp(-lam_dom) * lam_dom ** k / math.factorial(k) for k in range(max_buts + 1)]
+    pe = [math.exp(-lam_ext) * lam_ext ** k / math.factorial(k) for k in range(max_buts + 1)]
+    h = d = a = 0.0
+    for i, x in enumerate(pd):
+        for j, y in enumerate(pe):
+            p = x * y
+            if i <= 1 and j <= 1 and rho:
+                if i == 0 and j == 0:
+                    p *= 1 - lam_dom * lam_ext * rho
+                elif i == 0 and j == 1:
+                    p *= 1 + lam_dom * rho
+                elif i == 1 and j == 0:
+                    p *= 1 + lam_ext * rho
+                else:
+                    p *= 1 - rho
+            if i > j:
+                h += p
+            elif i == j:
+                d += p
+            else:
+                a += p
+    total = h + d + a
+    return (h / total, d / total, a / total)
+
+
+def _meilleur_avantage(probas: Probas, cotes: Cotes, seuil: float) -> Pari | None:
     avantages = [p * c - 1 for p, c in zip(probas, cotes)]
     i = max(range(3), key=lambda k: avantages[k])
     return Pari(i, probas[i]) if avantages[i] > seuil else None
@@ -48,7 +83,7 @@ class Strategie:
 
 class Favori(Strategie):
     nom = "favori"
-    description = "Mise toujours sur l'issue la moins cotée (référence naïve)."
+    description = "Mise toujours sur l'issue la moins cotée. C'est la règle de mesure, pas une stratégie à suivre."
 
     def choisir(self, match: Match, cotes: Cotes) -> Pari | None:
         i = min(range(3), key=lambda k: cotes[k])
@@ -70,41 +105,59 @@ class ValuePinnacle(Strategie):
         return _meilleur_avantage(probas_sans_marge(pinnacle), cotes, self.seuil)
 
 
+# ── Modèles « maison » qui apprennent en continu ────────────────────────────
+
 @dataclass
 class _Equipe:
-    attaque: float = 1.0   # buts marqués / moyenne de la ligue (1 = moyen)
-    defense: float = 1.0   # buts encaissés / moyenne de la ligue (1 = moyen, >1 = passoire)
+    attaque: float = 1.0   # production offensive / moyenne de la ligue (1 = moyen)
+    defense: float = 1.0   # production concédée / moyenne de la ligue (1 = moyen, >1 = passoire)
     matchs: int = 0
 
 
 @dataclass
 class _Ligue:
-    buts_dom: float = 1.5
+    buts_dom: float = 1.5   # buts moyens à domicile (échelle des buts attendus)
     buts_ext: float = 1.2
+    mes_dom: float = 1.5    # moyenne de la mesure utilisée (buts, ou mélange tirs cadrés/buts)
+    mes_ext: float = 1.2
+    buts_total: float = 2.7  # pour estimer la conversion buts / tir cadré
+    cadres_total: float = 9.0
     matchs: int = 0
 
+    @property
+    def conversion(self) -> float:
+        return self.buts_total / self.cadres_total if self.cadres_total > 0 else 0.3
 
-class Poisson(Strategie):
-    nom = "poisson"
-    description = ("Modèle statistique maison : force d'attaque/défense de chaque équipe (moyennes "
-                   "pondérées des matchs passés) -> loi de Poisson -> probabilités 1/N/2. Mise si "
-                   "l'avantage estimé dépasse le seuil.")
+
+class ModeleForces(Strategie):
+    """Force d'attaque et de défense de chaque équipe, mise à jour après CHAQUE match
+    (moyennes pondérées : les matchs récents comptent plus), puis loi de Poisson corrigée."""
+
+    utilise_tirs = False
 
     def __init__(self, seuil: float = 0.05, demi_vie: float = 20, min_matchs: int = 8,
-                 min_matchs_ligue: int = 60, max_buts: int = 10):
+                 min_matchs_ligue: int = 60, rho: float = -0.10, poids_tirs: float = 0.7):
         self.seuil = seuil
         self.alpha = 1 - 0.5 ** (1 / demi_vie)
         self.alpha_ligue = 0.01
         self.min_matchs = min_matchs
         self.min_matchs_ligue = min_matchs_ligue
-        self.max_buts = max_buts
+        self.rho = rho
+        self.poids_tirs = poids_tirs
         self.ligues: dict[str, _Ligue] = {}
         self.equipes: dict[tuple[str, str], _Equipe] = {}
 
-    def _equipe(self, ligue: str, nom: str) -> _Equipe:
-        return self.equipes.setdefault((ligue, nom), _Equipe())
+    def _mesures(self, match: Match, lg: _Ligue) -> tuple[float, float]:
+        """Production offensive de chaque équipe sur ce match, en « équivalent buts »."""
+        if not self.utilise_tirs or not match.stats:
+            return float(match.buts_dom), float(match.buts_ext)
+        # Les tirs cadrés reflètent mieux la qualité de jeu que les buts (beaucoup plus de hasard).
+        xg_dom = match.stats["cadres_dom"] * lg.conversion
+        xg_ext = match.stats["cadres_ext"] * lg.conversion
+        w = self.poids_tirs
+        return w * xg_dom + (1 - w) * match.buts_dom, w * xg_ext + (1 - w) * match.buts_ext
 
-    def probas(self, match: Match) -> tuple[float, float, float] | None:
+    def probas(self, match: Match) -> Probas | None:
         lg = self.ligues.get(match.ligue)
         dom = self.equipes.get((match.ligue, match.domicile))
         ext = self.equipes.get((match.ligue, match.exterieur))
@@ -112,22 +165,9 @@ class Poisson(Strategie):
             return None
         if lg.matchs < self.min_matchs_ligue or dom.matchs < self.min_matchs or ext.matchs < self.min_matchs:
             return None
-
         lam_dom = lg.buts_dom * dom.attaque * ext.defense
         lam_ext = lg.buts_ext * ext.attaque * dom.defense
-        pd = [math.exp(-lam_dom) * lam_dom ** k / math.factorial(k) for k in range(self.max_buts + 1)]
-        pe = [math.exp(-lam_ext) * lam_ext ** k / math.factorial(k) for k in range(self.max_buts + 1)]
-        h = d = a = 0.0
-        for i, x in enumerate(pd):
-            for j, y in enumerate(pe):
-                if i > j:
-                    h += x * y
-                elif i == j:
-                    d += x * y
-                else:
-                    a += x * y
-        total = h + d + a
-        return (h / total, d / total, a / total)
+        return probas_score(lam_dom, lam_ext, self.rho)
 
     def choisir(self, match: Match, cotes: Cotes) -> Pari | None:
         p = self.probas(match)
@@ -135,40 +175,98 @@ class Poisson(Strategie):
 
     def apprendre(self, match: Match) -> None:
         lg = self.ligues.setdefault(match.ligue, _Ligue())
-        dom = self._equipe(match.ligue, match.domicile)
-        ext = self._equipe(match.ligue, match.exterieur)
+        dom = self.equipes.setdefault((match.ligue, match.domicile), _Equipe())
+        ext = self.equipes.setdefault((match.ligue, match.exterieur), _Equipe())
+        md, me = self._mesures(match, lg)
         a = self.alpha
         # Ratios calculés avec les moyennes de ligue AVANT mise à jour.
-        dom.attaque += a * (match.buts_dom / lg.buts_dom - dom.attaque)
-        dom.defense += a * (match.buts_ext / lg.buts_ext - dom.defense)
-        ext.attaque += a * (match.buts_ext / lg.buts_ext - ext.attaque)
-        ext.defense += a * (match.buts_dom / lg.buts_dom - ext.defense)
+        dom.attaque += a * (md / lg.mes_dom - dom.attaque)
+        dom.defense += a * (me / lg.mes_ext - dom.defense)
+        ext.attaque += a * (me / lg.mes_ext - ext.attaque)
+        ext.defense += a * (md / lg.mes_dom - ext.defense)
         dom.matchs += 1
         ext.matchs += 1
+
         al = self.alpha_ligue
         lg.buts_dom += al * (match.buts_dom - lg.buts_dom)
         lg.buts_ext += al * (match.buts_ext - lg.buts_ext)
+        lg.mes_dom += al * (md - lg.mes_dom)
+        lg.mes_ext += al * (me - lg.mes_ext)
+        if match.stats:
+            lg.buts_total += al * (match.buts_dom + match.buts_ext - lg.buts_total)
+            lg.cadres_total += al * (match.stats["cadres_dom"] + match.stats["cadres_ext"] - lg.cadres_total)
         lg.matchs += 1
 
 
-DISPONIBLES = {cls.nom: cls for cls in (Favori, ValuePinnacle, Poisson)}
+class Poisson(ModeleForces):
+    nom = "poisson"
+    description = ("Modèle maison sur les BUTS : force d'attaque/défense de chaque équipe, recalculée après "
+                   "chaque match, puis loi de Poisson (avec correction des nuls). Mise si l'avantage estimé "
+                   "dépasse le seuil.")
+    utilise_tirs = False
 
 
-def construire(noms: list[str], seuil_value: float, seuil_poisson: float) -> list[Strategie]:
+class Tirs(ModeleForces):
+    nom = "tirs"
+    description = ("Même modèle, mais la forme des équipes est mesurée surtout par les TIRS CADRÉS "
+                   "(70 %) plutôt que par les buts, qui dépendent beaucoup de la chance.")
+    utilise_tirs = True
+
+
+class Mixte(Strategie):
+    nom = "mixte"
+    description = ("Part des probabilités de Pinnacle (le marché le plus précis) et les corrige un peu avec "
+                   "le modèle « tirs ». Mise si l'avantage dépasse le seuil. C'est l'approche des parieurs "
+                   "qui utilisent un modèle : ne pas l'opposer au marché, mais s'en servir pour l'ajuster.")
+
+    def __init__(self, seuil: float = 0.03, poids_modele: float = 0.3):
+        self.seuil = seuil
+        self.poids = poids_modele
+        self.modele = Tirs(seuil=0)
+
+    def probas(self, match: Match) -> Probas | None:
+        pinnacle = match.cotes.get("ps")
+        pm = self.modele.probas(match)
+        if pinnacle is None or pm is None:
+            return None
+        marche = probas_sans_marge(pinnacle)
+        w = self.poids
+        return (w * pm[0] + (1 - w) * marche[0], w * pm[1] + (1 - w) * marche[1], w * pm[2] + (1 - w) * marche[2])
+
+    def choisir(self, match: Match, cotes: Cotes) -> Pari | None:
+        p = self.probas(match)
+        return None if p is None else _meilleur_avantage(p, cotes, self.seuil)
+
+    def apprendre(self, match: Match) -> None:
+        self.modele.apprendre(match)
+
+
+DISPONIBLES = {cls.nom: cls for cls in (Favori, ValuePinnacle, Poisson, Tirs, Mixte)}
+
+
+@dataclass
+class Reglages:
+    seuil_value: float = 0.03
+    seuil_modele: float = 0.05
+    seuil_mixte: float = 0.03
+    poids_modele: float = 0.3
+
+
+def construire(noms: list[str], r: Reglages | None = None) -> list[Strategie]:
+    r = r or Reglages()
     inconnues = [n for n in noms if n not in DISPONIBLES]
     if inconnues:
         raise ValueError(f"Stratégie(s) inconnue(s) : {', '.join(inconnues)}. "
                          f"Disponibles : {', '.join(DISPONIBLES)}")
-    res: list[Strategie] = []
-    for n in noms:
-        if n == "value_pinnacle":
-            res.append(ValuePinnacle(seuil_value))
-        elif n == "poisson":
-            res.append(Poisson(seuil_poisson))
-        else:
-            res.append(DISPONIBLES[n]())
-    return res
+    fabriques = {
+        "favori": Favori,
+        "value_pinnacle": lambda: ValuePinnacle(r.seuil_value),
+        "poisson": lambda: Poisson(r.seuil_modele),
+        "tirs": lambda: Tirs(r.seuil_modele),
+        "mixte": lambda: Mixte(r.seuil_mixte, r.poids_modele),
+    }
+    return [fabriques[n]() for n in noms]
 
 
-__all__ = ["Pari", "Strategie", "Favori", "ValuePinnacle", "Poisson", "DISPONIBLES", "construire",
-           "probas_sans_marge", "marge", "ISSUES"]
+__all__ = ["Pari", "Strategie", "Favori", "ValuePinnacle", "Poisson", "Tirs", "Mixte", "DISPONIBLES",
+           "Reglages", "construire", "probas_sans_marge", "probas_score", "marge", "ISSUES"]

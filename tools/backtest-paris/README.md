@@ -31,11 +31,15 @@ Chaque lancement crée `resultats\AAAA-MM-JJ_HHMMSS\` avec :
 
 | Nom | Idée | Ce qu'elle t'apprend |
 |---|---|---|
-| `favori` | Toujours parier l'issue la moins cotée | Le point de départ : on perd à peu près la marge du bookmaker. |
+| `favori` | Toujours parier l'issue la moins cotée | La règle de mesure : on perd à peu près la marge du bookmaker. |
 | `value_pinnacle` | Pinnacle (bookmaker « sharp ») donne les vraies probabilités ; on parie quand une autre cote les dépasse | La seule approche avec un avantage documenté, à condition d'avoir accès aux meilleures cotes. |
-| `poisson` | Modèle maison : force d'attaque/défense par équipe -> loi de Poisson -> probabilités 1/N/2 | Battre le marché avec son propre modèle est très difficile. |
+| `poisson` | Modèle maison sur les **buts** : force d'attaque/défense par équipe, recalculée après chaque match, loi de Poisson corrigée pour les nuls (Dixon-Coles) | Battre le marché avec son propre modèle est très difficile. |
+| `tirs` | Même modèle, mais la forme est mesurée surtout par les **tirs cadrés** (70 %), moins soumis à la chance que les buts | Une meilleure donnée améliore les prédictions… suffit-il pour battre le marché ? |
+| `mixte` | Probabilités Pinnacle corrigées à 30 % par le modèle `tirs` | L'approche des parieurs qui ont un modèle : s'en servir pour ajuster le marché, pas pour s'y opposer. |
 
-Pour en ajouter une : une classe dans `strategies.py` avec `choisir(match, cotes)` (ne voit que l'avant-match) et éventuellement `apprendre(match)` (résultat révélé après), puis l'enregistrer dans `DISPONIBLES`.
+Les modèles **apprennent en continu** : après chaque journée, ils intègrent les résultats et les stats des matchs joués, et les matchs récents comptent plus que les anciens. Ils ne voient jamais le résultat d'un match avant d'avoir décidé.
+
+Pour ajouter une stratégie : une classe dans `strategies.py` avec `choisir(match, cotes)` (ne voit que l'avant-match), éventuellement `apprendre(match)` (résultat et stats révélés après) et `probas(match)` (pour la mesure de qualité), puis l'enregistrer dans `DISPONIBLES` et `construire()`.
 
 ## Lire le rapport
 
@@ -43,6 +47,7 @@ Pour en ajouter une : une classe dans `strategies.py` avec `choisir(match, cotes
 - **IC 95 %** : fourchette plausible du « vrai » ROI. **S'il contient 0, tu ne peux pas distinguer la stratégie de la chance**, même si la courbe monte.
 - **CLV** (closing line value) : ta cote comparée à la cote « juste » de clôture de Pinnacle. Un CLV positif et régulier est le meilleur signe d'un avantage réel. C'est l'indicateur que suivent les parieurs professionnels.
 - **Drawdown** : plus forte chute depuis un sommet. Ça donne une idée de ce que tu devrais encaisser psychologiquement.
+- **Qualité des prédictions (log-loss)** : compare les probabilités de chaque modèle à celles de Pinnacle, sur exactement les mêmes matchs. Plus c'est bas, mieux c'est. **C'est la question de fond** : un modèle qui prédit moins bien que le marché ne peut pas gagner sur la durée, quelle que soit la courbe.
 
 ## Limites (à garder en tête)
 
@@ -58,7 +63,7 @@ py -m unittest discover -s tests -v
 py tests\simul.py data_demo        # génère des saisons fictives pour tester hors ligne
 ```
 
-Les tests vérifient notamment qu'**aucune stratégie ne voit le résultat d'un match du jour avant de décider** (pas de fuite du futur), et les calculs de ROI, de drawdown, de Kelly et de ruine.
+Les tests vérifient notamment qu'**aucune stratégie ne voit le résultat d'un match du jour avant de décider** (pas de fuite du futur), les calculs (ROI, drawdown, Kelly, ruine, log-loss), la lecture des tirs, la correction des nuls, et que le modèle `tirs` prédit mieux que `poisson` quand les tirs portent de l'information.
 
 ## Mise à jour automatique des données (facultatif)
 

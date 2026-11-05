@@ -47,6 +47,8 @@ class Match:
     buts_ext: int
     resultat: str  # "H", "D" ou "A"
     cotes: dict[str, Cotes] = field(default_factory=dict)
+    # Statistiques du match (révélées APRÈS le match) : tirs_dom, tirs_ext, cadres_dom, cadres_ext
+    stats: dict[str, int] = field(default_factory=dict)
 
     @property
     def jour(self) -> date:
@@ -136,6 +138,19 @@ def _lire_cotes(ligne: dict[str, str]) -> dict[str, Cotes]:
     return trouvees
 
 
+_STATS = {"tirs_dom": "HS", "tirs_ext": "AS", "cadres_dom": "HST", "cadres_ext": "AST"}
+
+
+def _lire_stats(ligne: dict[str, str]) -> dict[str, int]:
+    stats: dict[str, int] = {}
+    for cle, col in _STATS.items():
+        try:
+            stats[cle] = int(float((ligne.get(col) or "").strip()))
+        except ValueError:
+            return {}  # stats incomplètes : on n'en garde aucune
+    return stats
+
+
 def _lire_date(ligne: dict[str, str]) -> datetime | None:
     brut = (ligne.get("Date") or "").strip()
     heure = (ligne.get("Time") or "").strip()
@@ -178,7 +193,8 @@ def lire_fichier(fichier: Path, ligue: str, saison: str) -> tuple[list[Match], i
             if any((v or "").strip() for v in ligne.values()):
                 ignores += 1
             continue
-        matchs.append(Match(ligue, saison, d, dom, ext, bd, be, resultat, _lire_cotes(ligne)))
+        matchs.append(Match(ligue, saison, d, dom, ext, bd, be, resultat, _lire_cotes(ligne),
+                            _lire_stats(ligne)))
     return matchs, ignores
 
 

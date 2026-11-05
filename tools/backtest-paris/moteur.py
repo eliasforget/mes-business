@@ -36,10 +36,23 @@ class PariJoue:
 
 
 @dataclass
+class Qualite:
+    """Qualité des probabilités d'un modèle, comparée au marché sur les MÊMES matchs (log-loss :
+    plus c'est bas, meilleure est la prédiction)."""
+    n: int = 0
+    ll_modele: float = 0.0
+    ll_pinnacle: float = 0.0
+    n_cloture: int = 0
+    ll_modele_c: float = 0.0
+    ll_cloture: float = 0.0
+
+
+@dataclass
 class Resultat:
     strategie: Strategie
     paris: list[PariJoue] = field(default_factory=list)
     ruine: bool = False
+    qualite: Qualite | None = None
 
 
 def _cotes_effectives(cotes: Cotes, decote: float) -> Cotes:
@@ -72,7 +85,7 @@ def simuler(matchs: list[Match], strategies: list[Strategie], source: str, param
             ) -> tuple[list[Resultat], dict[str, float]]:
     """Rejoue les matchs dans l'ordre. Pour chaque journée : toutes les décisions d'abord
     (sans connaître aucun résultat du jour), puis révélation des résultats aux stratégies."""
-    resultats = [Resultat(s) for s in strategies]
+    resultats = [Resultat(s, qualite=Qualite() if hasattr(s, "probas") else None) for s in strategies]
     bankrolls = [params.bankroll] * len(strategies)
     marges: list[float] = []
     sans_cote = 0
@@ -109,6 +122,27 @@ def simuler(matchs: list[Match], strategies: list[Strategie], source: str, param
                 if bankrolls[k] < 0.01 or (params.mode == "fixe" and bankrolls[k] < params.mise):
                     res.ruine = True
 
+        for m in journee:  # qualité des prédictions, toujours AVANT d'apprendre le résultat
+            pinnacle, cloture = m.cotes.get("ps"), m.cotes.get("ps_c")
+            if pinnacle is None:
+                continue
+            k = ISSUES.index(m.resultat)
+            for strat, res in zip(strategies, resultats):
+                if res.qualite is None:
+                    continue
+                p = strat.probas(m)  # type: ignore[attr-defined]
+                if p is None:
+                    continue
+                q = res.qualite
+                ll = -math.log(max(p[k], 1e-9))
+                q.n += 1
+                q.ll_modele += ll
+                q.ll_pinnacle += -math.log(probas_sans_marge(pinnacle)[k])
+                if cloture is not None:
+                    q.n_cloture += 1
+                    q.ll_modele_c += ll
+                    q.ll_cloture += -math.log(probas_sans_marge(cloture)[k])
+
         for m in journee:  # les résultats du jour ne sont connus qu'ici
             for strat in strategies:
                 strat.apprendre(m)
@@ -121,17 +155,31 @@ def simuler(matchs: list[Match], strategies: list[Strategie], source: str, param
     return resultats, infos
 
 
+def qualite(res: Resultat) -> dict | None:
+    q = res.qualite
+    if q is None or q.n == 0:
+        return None
+    return {
+        "n": q.n,
+        "modele": q.ll_modele / q.n,
+        "pinnacle": q.ll_pinnacle / q.n,
+        "n_cloture": q.n_cloture,
+        "modele_c": q.ll_modele_c / q.n_cloture if q.n_cloture else None,
+        "cloture": q.ll_cloture / q.n_cloture if q.n_cloture else None,
+    }
+
+
 def statistiques(res: Resultat, bankroll_initiale: float) -> dict:
     paris = res.paris
     n = len(paris)
     if n == 0:
-        return {"n": 0, "ruine": res.ruine}
+        return {"n": 0, "ruine": res.ruine, "qualite": qualite(res)}
 
     mises = sum(p.mise for p in paris)
     profit = sum(p.gain for p in paris)
     rendements = [p.gain / p.mise for p in paris]
     roi = profit / mises
-    ecart = statistics.stdev(rendements) / math.sqrt(n) if n > 1 else math.inf
+    ecart = statistics.stdev(rendements) / math.sqrt(n) if n > 1 else None
 
     pic, dd_max = bankroll_initiale, 0.0
     serie, serie_max = 0, 0
@@ -159,7 +207,7 @@ def statistiques(res: Resultat, bankroll_initiale: float) -> dict:
         "mises": mises,
         "profit": profit,
         "roi": roi,
-        "ic95": (roi - 1.96 * ecart, roi + 1.96 * ecart),
+        "ic95": (roi - 1.96 * ecart, roi + 1.96 * ecart) if ecart is not None else None,
         "bankroll_finale": paris[-1].bankroll,
         "drawdown_max": dd_max,
         "serie_perdante_max": serie_max,
@@ -167,12 +215,29 @@ def statistiques(res: Resultat, bankroll_initiale: float) -> dict:
         "clv_positif": sum(1 for c in clvs if c > 0) / len(clvs) if clvs else None,
         "par_saison": dict(sorted(par_saison.items())),
         "ruine": res.ruine,
+        "qualite": qualite(res),
     }
+
+
+def verdict_qualite(q: dict | None) -> str:
+    if q is None:
+        return ""
+    f = lambda x: f"{x:.4f}".replace(".", ",")  # noqa: E731
+    chiffres = f"(log-loss {f(q['modele'])} contre {f(q['pinnacle'])} sur {q['n']} matchs)"
+    ecart = q["modele"] - q["pinnacle"]
+    if ecart > 0.002:
+        return (f" Prédictions moins précises que Pinnacle avant-match {chiffres} : le modèle ne bat pas le "
+                "marché, ses « bonnes affaires » sont surtout ses erreurs.")
+    if ecart > -0.002:
+        return (f" Prédictions à peu près aussi précises que Pinnacle avant-match {chiffres} : pas d'avantage "
+                "net sur le marché.")
+    return (f" Prédictions plus précises que Pinnacle avant-match {chiffres} : c'est rare, vérifie que ça "
+            "tient sur d'autres saisons et ligues avant d'y croire.")
 
 
 def verdict(stats: dict) -> str:
     if stats["n"] < 100:
-        return "Trop peu de paris (< 100) pour conclure quoi que ce soit."
+        return "Trop peu de paris (< 100) pour conclure quoi que ce soit." + verdict_qualite(stats.get("qualite"))
     bas, haut = stats["ic95"]
     if haut < 0:
         texte = "Perte nette, et ce n'est pas de la malchance : la stratégie perd structurellement."
@@ -193,4 +258,4 @@ def verdict(stats: dict) -> str:
             texte += " CLV proche de 0 : aucun avantage visible face au marché."
     if stats.get("ruine"):
         texte += " Bankroll ruinée en cours de route : les paris se sont arrêtés là."
-    return texte
+    return texte + verdict_qualite(stats.get("qualite"))

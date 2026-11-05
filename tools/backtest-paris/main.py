@@ -1,7 +1,7 @@
 """backtest-paris : teste des stratégies de paris foot 1X2 sur l'historique, sans argent réel.
 
     py main.py telecharger [--ligues F1,E0] [--saisons 2324,2425] [--forcer] [--dry-run]
-    py main.py lancer [--strategies favori,value_pinnacle,poisson] [--cotes avg] [--decote 0.05]
+    py main.py lancer [--strategies favori,value_pinnacle,poisson,tirs,mixte] [--cotes avg] [--decote 0.05]
                       [--mise fixe|kelly] [--ouvrir]
 """
 from __future__ import annotations
@@ -27,11 +27,13 @@ DEFAUTS = {
     "SAISONS": "2122,2223,2324,2425,2526",
     "DATA_DIR": "",
     "OUTPUT_DIR": "",
-    "STRATEGIES": "favori,value_pinnacle,poisson",
+    "STRATEGIES": "favori,value_pinnacle,poisson,tirs,mixte",
     "SOURCE_COTES": "avg",
     "DECOTE": "0",
     "SEUIL_VALUE": "0.03",
-    "SEUIL_POISSON": "0.05",
+    "SEUIL_MODELE": "0.05",
+    "SEUIL_MIXTE": "0.03",
+    "POIDS_MODELE": "0.3",
     "COTE_MIN": "1.2",
     "COTE_MAX": "8",
     "MODE_MISE": "fixe",
@@ -81,7 +83,9 @@ def cmd_lancer(args: argparse.Namespace, log) -> int:
     noms = _liste(args.strategies, "STRATEGIES")
     if source == "ps" and "value_pinnacle" in noms:
         log.warning("value_pinnacle avec les cotes Pinnacle elles-mêmes ne trouvera jamais de value.")
-    strats = strategies.construire(noms, env_float("SEUIL_VALUE"), env_float("SEUIL_POISSON"))
+    strats = strategies.construire(noms, strategies.Reglages(
+        seuil_value=env_float("SEUIL_VALUE"), seuil_modele=env_float("SEUIL_MODELE"),
+        seuil_mixte=env_float("SEUIL_MIXTE"), poids_modele=env_float("POIDS_MODELE")))
 
     matchs = donnees.charger(_dossier("DATA_DIR", ICI / "data"), ligues, saisons, log)
     if not matchs:

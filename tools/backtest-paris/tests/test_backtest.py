@@ -106,7 +106,7 @@ class TestSimulation(unittest.TestCase):
         cls.tmp.cleanup()
 
     def _lancer(self, matchs, source="avg"):
-        strats = strategies.construire(["favori", "value_pinnacle", "poisson"], 0.03, 0.05)
+        strats = strategies.construire(list(strategies.DISPONIBLES))
         res, _ = moteur.simuler(matchs, strats, source, moteur.ParamsMise(mise=10, bankroll=1e9))
         return res
 
@@ -158,11 +158,59 @@ class TestSimulation(unittest.TestCase):
 
     def test_poisson_parie_seulement_apres_historique(self):
         res = self._lancer(self.matchs)
-        premiers = res[2].paris[:1]
+        premiers = res[2].paris[:1]  # poisson
         self.assertTrue(premiers)
         # 60 matchs de ligue minimum avant le premier pari
         rang = next(i for i, m in enumerate(self.matchs) if m.date == premiers[0].date)
         self.assertGreaterEqual(rang, 60)
+
+
+class TestModeles(unittest.TestCase):
+    def test_probas_score(self):
+        for rho in (0.0, -0.1):
+            p = strategies.probas_score(1.5, 1.1, rho)
+            self.assertAlmostEqual(sum(p), 1.0)
+        # La correction de Dixon-Coles (rho < 0) augmente la probabilité du nul
+        self.assertGreater(strategies.probas_score(1.3, 1.1, -0.1)[1], strategies.probas_score(1.3, 1.1, 0.0)[1])
+        # Équipes identiques sans avantage du terrain : symétrie
+        h, _, a = strategies.probas_score(1.2, 1.2)
+        self.assertAlmostEqual(h, a)
+
+    def test_lecture_stats_tirs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            f = Path(tmp) / "F1_2324.csv"
+            f.write_text("Div,Date,HomeTeam,AwayTeam,FTHG,FTAG,FTR,HS,AS,HST,AST,AvgH,AvgD,AvgA\n"
+                         "F1,11/08/2023,Nice,Lille,1,1,D,12,9,5,3,2.5,3.2,2.9\n"
+                         "F1,12/08/2023,Lens,Brest,0,2,A,,,,,1.8,3.6,4.5\n", encoding="utf-8")
+            matchs, _ = donnees.lire_fichier(f, "F1", "2324")
+        self.assertEqual(matchs[0].stats, {"tirs_dom": 12, "tirs_ext": 9, "cadres_dom": 5, "cadres_ext": 3})
+        self.assertEqual(matchs[1].stats, {})
+
+    def test_mixte_sans_modele_egale_value_pinnacle(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            generer(Path(tmp), saisons=("2122", "2223"))
+            matchs = donnees.charger(Path(tmp), ["F1"], ["2122", "2223"], LOG)
+        mixte = strategies.Mixte(seuil=0.03, poids_modele=0.0)
+        value = strategies.ValuePinnacle(seuil=0.03)
+        res, _ = moteur.simuler(matchs, [mixte, value], "max", moteur.ParamsMise(bankroll=1e9))
+        # Mixte ne parie qu'une fois son modèle prêt : ses paris sont un sous-ensemble identique de value_pinnacle
+        paris_value = {(p.date, p.match, p.issue) for p in res[1].paris}
+        self.assertTrue(res[0].paris)
+        self.assertTrue({(p.date, p.match, p.issue) for p in res[0].paris} <= paris_value)
+
+    def test_qualite_mesuree_et_tirs_meilleur_que_buts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            saisons = ("2122", "2223", "2324", "2425")
+            generer(Path(tmp), saisons=saisons, graine=7)
+            matchs = donnees.charger(Path(tmp), ["F1"], list(saisons), LOG)
+        strats = strategies.construire(["poisson", "tirs", "favori"])
+        res, _ = moteur.simuler(matchs, strats, "avg", moteur.ParamsMise(bankroll=1e9))
+        qp, qt = moteur.qualite(res[0]), moteur.qualite(res[1])
+        self.assertIsNone(moteur.qualite(res[2]))  # favori n'estime pas de probabilités
+        self.assertGreater(qp["n"], 500)
+        self.assertEqual(qp["n"], qt["n"])  # comparés sur les mêmes matchs
+        # Dans la simulation, les tirs cadrés portent plus d'information que les buts
+        self.assertLess(qt["modele"], qp["modele"])
 
 
 class TestEnv(unittest.TestCase):

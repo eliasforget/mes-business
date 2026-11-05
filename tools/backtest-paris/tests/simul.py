@@ -55,7 +55,11 @@ def generer(dossier: Path, ligue: str = "F1", saisons=("2122", "2223", "2324"), 
             jour = debut + timedelta(days=7 * (k // par_journee))
             lh, la = 1.45 * attaque[h] * defense[a], 1.15 * attaque[a] * defense[h]
             vraies = _probas(lh, la)
-            bh, ba = _poisson(rng, lh), _poisson(rng, la)
+            # Tirs cadrés ~ Poisson(λ/0.3) puis 30 % deviennent des buts : buts ~ Poisson(λ), comme dans la réalité
+            # les tirs cadrés portent plus d'information sur la force des équipes que les buts.
+            ch, ca = _poisson(rng, lh / 0.3), _poisson(rng, la / 0.3)
+            bh = sum(rng.random() < 0.3 for _ in range(ch))
+            ba = sum(rng.random() < 0.3 for _ in range(ca))
             res = "H" if bh > ba else "D" if bh == ba else "A"
             ps = _cotes(rng, vraies, 0.025, 0.02)      # Pinnacle : faible marge, proche du vrai
             avg = _cotes(rng, vraies, 0.055, 0.04)     # moyenne du marché
@@ -65,6 +69,7 @@ def generer(dossier: Path, ligue: str = "F1", saisons=("2122", "2223", "2324"), 
             lignes.append({
                 "Div": ligue, "Date": jour.strftime(fmt), "Time": "20:00", "HomeTeam": h, "AwayTeam": a,
                 "FTHG": bh, "FTAG": ba, "FTR": res,
+                "HS": ch + _poisson(rng, 2.5 * lh), "AS": ca + _poisson(rng, 2.5 * la), "HST": ch, "AST": ca,
                 "PSH": ps[0], "PSD": ps[1], "PSA": ps[2],
                 "AvgH": avg[0], "AvgD": avg[1], "AvgA": avg[2],
                 "MaxH": mx[0], "MaxD": mx[1], "MaxA": mx[2],
