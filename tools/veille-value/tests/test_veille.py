@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import os
 import sys
 import tempfile
@@ -156,7 +157,9 @@ class TestCommandes(unittest.TestCase):
         debut = veille.maintenant() + timedelta(hours=20)
         maj = veille.maintenant() - timedelta(minutes=5)
         odds = [evenement("e1", debut, [book("pinnacle", PIN, maj), book("betclic_fr", {"Lyon": 2.0, "Draw": 3.3, "Nice": 3.9}, maj)])]
-        with tempfile.TemporaryDirectory() as tmp:
+        # ignore_cleanup_errors : sous Windows, un fichier encore ouvert ne peut pas être supprimé.
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+            self.addCleanup(self._fermer_logs)
             env = {"ODDS_API_KEY": "CLE-SECRETE", "SPORTS": "soccer_france_ligue_one,soccer_epl",
                    "BOOKMAKERS_FR": "betclic_fr", "JOURNAL": str(Path(tmp) / "journal.csv"), "LOG_DIR": tmp}
             t = FauxTransport({"soccer_france_ligue_one/odds": odds, "soccer_epl/odds": []})
@@ -170,6 +173,15 @@ class TestCommandes(unittest.TestCase):
             self.assertEqual([p.id for p in journal], ["e1|Nice"])
             logs = "".join(f.read_text(encoding="utf-8") for f in Path(tmp).rglob("*.log"))
             self.assertNotIn("CLE-SECRETE", logs)
+            self._fermer_logs()  # avant la suppression du dossier temporaire
+
+    @staticmethod
+    def _fermer_logs():
+        """Ferme et retire les handlers du logger de l'outil (sinon le .log reste verrouillé sous Windows)."""
+        logger = logging.getLogger("autom.veille-value")
+        for h in list(logger.handlers):
+            h.close()
+            logger.removeHandler(h)
 
 
 if __name__ == "__main__":
