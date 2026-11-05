@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from itertools import groupby
 
-from donnees import ISSUES, Cotes, Match
+from donnees import Cotes, Match
 from strategies import Strategie, marge, probas_sans_marge
 
 
@@ -113,10 +113,10 @@ def simuler(matchs: list[Match], strategies: list[Strategie], source: str, param
                 mise = _mise(params, bankrolls[k], pari.proba, cote)
                 if mise < 0.01:
                     continue
-                gagne = ISSUES[pari.issue] == m.resultat
+                gagne = m.issues[pari.issue] == m.resultat
                 gain = round(mise * (cote - 1), 2) if gagne else -mise
                 bankrolls[k] = round(bankrolls[k] + gain, 2)
-                res.paris.append(PariJoue(m.date, m.ligue, m.saison, m.libelle, ISSUES[pari.issue],
+                res.paris.append(PariJoue(m.date, m.ligue, m.saison, m.libelle, m.libelle_issue(pari.issue),
                                           cote, pari.proba, mise, gain, bankrolls[k],
                                           _clv(m, pari.issue, cote)))
                 if bankrolls[k] < 0.01 or (params.mode == "fixe" and bankrolls[k] < params.mise):
@@ -126,7 +126,7 @@ def simuler(matchs: list[Match], strategies: list[Strategie], source: str, param
             pinnacle, cloture = m.cotes.get("ps"), m.cotes.get("ps_c")
             if pinnacle is None:
                 continue
-            k = ISSUES.index(m.resultat)
+            k = m.issues.index(m.resultat)
             for strat, res in zip(strategies, resultats):
                 if res.qualite is None:
                     continue
@@ -258,4 +258,9 @@ def verdict(stats: dict) -> str:
             texte += " CLV proche de 0 : aucun avantage visible face au marché."
     if stats.get("ruine"):
         texte += " Bankroll ruinée en cours de route : les paris se sont arrêtés là."
-    return texte + verdict_qualite(stats.get("qualite"))
+    texte += verdict_qualite(stats.get("qualite"))
+    q = stats.get("qualite")
+    if q is not None and bas > 0 and q["modele"] - q["pinnacle"] > 0.002:
+        texte += (" Le gain ne vient donc pas du modèle mais des écarts de cotes entre bookmakers : il dépend "
+                  "entièrement de l'accès à ces meilleures cotes.")
+    return texte

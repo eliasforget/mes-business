@@ -12,12 +12,12 @@ from dataclasses import dataclass
 
 from donnees import Cotes, ISSUES, Match
 
-Probas = tuple[float, float, float]
+Probas = tuple[float, ...]  # 3 issues au foot, 2 au tennis
 
 
 @dataclass
 class Pari:
-    issue: int                  # 0 = domicile, 1 = nul, 2 = extérieur
+    issue: int                  # foot : 0 = domicile, 1 = nul, 2 = extérieur ; tennis : 0 / 1 = joueur 1 / 2
     proba: float | None = None  # probabilité estimée par la stratégie (None si elle n'en a pas)
 
 
@@ -25,7 +25,7 @@ def probas_sans_marge(cotes: Cotes) -> Probas:
     """Probabilités implicites, marge du bookmaker retirée (méthode proportionnelle)."""
     inv = [1 / c for c in cotes]
     total = sum(inv)
-    return (inv[0] / total, inv[1] / total, inv[2] / total)
+    return tuple(x / total for x in inv)
 
 
 def marge(cotes: Cotes) -> float:
@@ -66,7 +66,7 @@ def probas_score(lam_dom: float, lam_ext: float, rho: float = 0.0, max_buts: int
 
 def _meilleur_avantage(probas: Probas, cotes: Cotes, seuil: float) -> Pari | None:
     avantages = [p * c - 1 for p, c in zip(probas, cotes)]
-    i = max(range(3), key=lambda k: avantages[k])
+    i = max(range(len(avantages)), key=lambda k: avantages[k])
     return Pari(i, probas[i]) if avantages[i] > seuil else None
 
 
@@ -86,7 +86,7 @@ class Favori(Strategie):
     description = "Mise toujours sur l'issue la moins cotée. C'est la règle de mesure, pas une stratégie à suivre."
 
     def choisir(self, match: Match, cotes: Cotes) -> Pari | None:
-        i = min(range(3), key=lambda k: cotes[k])
+        i = min(range(len(cotes)), key=lambda k: cotes[k])
         return Pari(i, None)
 
 
@@ -158,6 +158,8 @@ class ModeleForces(Strategie):
         return w * xg_dom + (1 - w) * match.buts_dom, w * xg_ext + (1 - w) * match.buts_ext
 
     def probas(self, match: Match) -> Probas | None:
+        if match.sport != "foot":
+            return None
         lg = self.ligues.get(match.ligue)
         dom = self.equipes.get((match.ligue, match.domicile))
         ext = self.equipes.get((match.ligue, match.exterieur))
@@ -174,6 +176,8 @@ class ModeleForces(Strategie):
         return None if p is None else _meilleur_avantage(p, cotes, self.seuil)
 
     def apprendre(self, match: Match) -> None:
+        if match.sport != "foot":
+            return
         lg = self.ligues.setdefault(match.ligue, _Ligue())
         dom = self.equipes.setdefault((match.ligue, match.domicile), _Equipe())
         ext = self.equipes.setdefault((match.ligue, match.exterieur), _Equipe())
@@ -213,35 +217,100 @@ class Tirs(ModeleForces):
     utilise_tirs = True
 
 
+class Elo(Strategie):
+    nom = "elo"
+    description = ("Tennis : classement Elo de chaque joueur, général et par surface (terre, dur, gazon), mis à "
+                   "jour après chaque match ; un joueur qui bat un mieux classé gagne beaucoup de points. "
+                   "Mise si l'avantage estimé dépasse le seuil.")
+
+    def __init__(self, seuil: float = 0.05, min_matchs: int = 10, poids_surface: float = 0.5,
+                 min_matchs_surface: int = 5):
+        self.seuil = seuil
+        self.min_matchs = min_matchs
+        self.poids_surface = poids_surface
+        self.min_matchs_surface = min_matchs_surface
+        self.general: dict[tuple[str, str], list[float]] = {}   # (circuit, joueur) -> [elo, nb matchs]
+        self.surface: dict[tuple[str, str, str], list[float]] = {}
+
+    @staticmethod
+    def _k(n: float) -> float:
+        # Gros ajustements pour les nouveaux joueurs, plus stables ensuite (méthode FiveThirtyEight).
+        return 250 / (n + 5) ** 0.4
+
+    def _note(self, m: Match, joueur: str) -> float | None:
+        g = self.general.get((m.ligue, joueur))
+        if g is None or g[1] < self.min_matchs:
+            return None
+        s = self.surface.get((m.ligue, m.contexte.get("surface", ""), joueur))
+        if s is None or s[1] < self.min_matchs_surface:
+            return g[0]
+        return (1 - self.poids_surface) * g[0] + self.poids_surface * s[0]
+
+    def probas(self, match: Match) -> Probas | None:
+        if match.sport != "tennis":
+            return None
+        ra, rb = self._note(match, match.domicile), self._note(match, match.exterieur)
+        if ra is None or rb is None:
+            return None
+        p = 1 / (1 + 10 ** ((rb - ra) / 400))
+        return (p, 1 - p)
+
+    def choisir(self, match: Match, cotes: Cotes) -> Pari | None:
+        p = self.probas(match)
+        return None if p is None else _meilleur_avantage(p, cotes, self.seuil)
+
+    def _maj(self, table: dict, cle_a: tuple, cle_b: tuple, a_gagne: bool) -> None:
+        a = table.setdefault(cle_a, [1500.0, 0])
+        b = table.setdefault(cle_b, [1500.0, 0])
+        attendu = 1 / (1 + 10 ** ((b[0] - a[0]) / 400))
+        score = 1.0 if a_gagne else 0.0
+        a[0] += self._k(a[1]) * (score - attendu)
+        b[0] -= self._k(b[1]) * (score - attendu)
+        a[1] += 1
+        b[1] += 1
+
+    def apprendre(self, match: Match) -> None:
+        if match.sport != "tennis":
+            return
+        a_gagne = match.resultat == "1"
+        c, surf = match.ligue, match.contexte.get("surface", "")
+        self._maj(self.general, (c, match.domicile), (c, match.exterieur), a_gagne)
+        self._maj(self.surface, (c, surf, match.domicile), (c, surf, match.exterieur), a_gagne)
+
+
 class Mixte(Strategie):
     nom = "mixte"
-    description = ("Part des probabilités de Pinnacle (le marché le plus précis) et les corrige un peu avec "
-                   "le modèle « tirs ». Mise si l'avantage dépasse le seuil. C'est l'approche des parieurs "
-                   "qui utilisent un modèle : ne pas l'opposer au marché, mais s'en servir pour l'ajuster.")
+    description = ("Part des probabilités de Pinnacle (le marché le plus précis) et les corrige un peu avec un "
+                   "modèle maison (« tirs » au foot, « elo » au tennis). Mise si l'avantage dépasse le seuil. "
+                   "C'est l'approche des parieurs qui utilisent un modèle : s'en servir pour ajuster le marché, "
+                   "pas pour s'y opposer.")
 
     def __init__(self, seuil: float = 0.03, poids_modele: float = 0.3):
         self.seuil = seuil
         self.poids = poids_modele
-        self.modele = Tirs(seuil=0)
+        self.modeles: dict[str, Strategie] = {"foot": Tirs(seuil=0), "tennis": Elo(seuil=0)}
 
     def probas(self, match: Match) -> Probas | None:
         pinnacle = match.cotes.get("ps")
-        pm = self.modele.probas(match)
+        modele = self.modeles.get(match.sport)
+        pm = modele.probas(match) if modele is not None else None  # type: ignore[attr-defined]
         if pinnacle is None or pm is None:
             return None
         marche = probas_sans_marge(pinnacle)
         w = self.poids
-        return (w * pm[0] + (1 - w) * marche[0], w * pm[1] + (1 - w) * marche[1], w * pm[2] + (1 - w) * marche[2])
+        return tuple(w * a + (1 - w) * b for a, b in zip(pm, marche))
 
     def choisir(self, match: Match, cotes: Cotes) -> Pari | None:
         p = self.probas(match)
         return None if p is None else _meilleur_avantage(p, cotes, self.seuil)
 
     def apprendre(self, match: Match) -> None:
-        self.modele.apprendre(match)
+        for modele in self.modeles.values():
+            modele.apprendre(match)
 
 
-DISPONIBLES = {cls.nom: cls for cls in (Favori, ValuePinnacle, Poisson, Tirs, Mixte)}
+DISPONIBLES = {cls.nom: cls for cls in (Favori, ValuePinnacle, Poisson, Tirs, Elo, Mixte)}
+PAR_DEFAUT = {"foot": "favori,value_pinnacle,poisson,tirs,mixte", "tennis": "favori,value_pinnacle,elo,mixte"}
 
 
 @dataclass
@@ -263,10 +332,12 @@ def construire(noms: list[str], r: Reglages | None = None) -> list[Strategie]:
         "value_pinnacle": lambda: ValuePinnacle(r.seuil_value),
         "poisson": lambda: Poisson(r.seuil_modele),
         "tirs": lambda: Tirs(r.seuil_modele),
+        "elo": lambda: Elo(r.seuil_modele),
         "mixte": lambda: Mixte(r.seuil_mixte, r.poids_modele),
     }
     return [fabriques[n]() for n in noms]
 
 
-__all__ = ["Pari", "Strategie", "Favori", "ValuePinnacle", "Poisson", "Tirs", "Mixte", "DISPONIBLES",
+__all__ = ["Pari", "Strategie", "Favori", "ValuePinnacle", "Poisson", "Tirs", "Elo", "Mixte", "DISPONIBLES",
+           "PAR_DEFAUT",
            "Reglages", "construire", "probas_sans_marge", "probas_score", "marge", "ISSUES"]

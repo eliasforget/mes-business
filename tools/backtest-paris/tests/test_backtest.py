@@ -106,7 +106,7 @@ class TestSimulation(unittest.TestCase):
         cls.tmp.cleanup()
 
     def _lancer(self, matchs, source="avg"):
-        strats = strategies.construire(list(strategies.DISPONIBLES))
+        strats = strategies.construire(strategies.PAR_DEFAUT["foot"].split(","))
         res, _ = moteur.simuler(matchs, strats, source, moteur.ParamsMise(mise=10, bankroll=1e9))
         return res
 

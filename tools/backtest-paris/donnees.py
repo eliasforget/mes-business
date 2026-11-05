@@ -33,7 +33,7 @@ COLONNES: dict[str, list[tuple[str, str, str]]] = {
 SOURCES_PARI = ("avg", "max", "b365", "ps")
 ISSUES = ("H", "D", "A")
 
-Cotes = tuple[float, float, float]
+Cotes = tuple[float, ...]  # 3 cotes (1/N/2) au foot, 2 au tennis
 
 
 @dataclass
@@ -45,10 +45,22 @@ class Match:
     exterieur: str
     buts_dom: int
     buts_ext: int
-    resultat: str  # "H", "D" ou "A"
+    resultat: str  # foot : "H", "D" ou "A" ; tennis : "1" ou "2"
     cotes: dict[str, Cotes] = field(default_factory=dict)
     # Statistiques du match (révélées APRÈS le match) : tirs_dom, tirs_ext, cadres_dom, cadres_ext
     stats: dict[str, int] = field(default_factory=dict)
+    sport: str = "foot"  # "foot" (1/N/2) ou "tennis" (joueur 1 / joueur 2)
+    # Infos connues AVANT le match (tennis : surface, tournoi, tour...)
+    contexte: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def issues(self) -> tuple[str, ...]:
+        return ISSUES if self.sport == "foot" else ("1", "2")
+
+    def libelle_issue(self, i: int) -> str:
+        if self.sport == "foot":
+            return ISSUES[i]
+        return (self.domicile, self.exterieur)[i]
 
     @property
     def jour(self) -> date:

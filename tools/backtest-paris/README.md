@@ -1,6 +1,6 @@
 # backtest-paris
 
-Rejoue des stratégies de paris foot 1X2 sur plusieurs saisons passées, **avec de l'argent fictif**, et dit honnêtement si une stratégie gagne, perd, ou si le résultat ne se distingue pas du hasard. Les données (résultats + cotes de plusieurs bookmakers) viennent gratuitement de [football-data.co.uk](https://www.football-data.co.uk).
+Rejoue des stratégies de paris (**foot** 1X2 et **tennis** ATP/WTA) sur plusieurs saisons passées, **avec de l'argent fictif**, et dit honnêtement si une stratégie gagne, perd, ou si le résultat ne se distingue pas du hasard. Les données (résultats + cotes de plusieurs bookmakers) viennent gratuitement de [football-data.co.uk](https://www.football-data.co.uk) et [tennis-data.co.uk](https://www.tennis-data.co.uk) : **usage privé uniquement**, comme le demandent ces sites.
 
 Python 3.13, **aucune dépendance** (bibliothèque standard uniquement).
 
@@ -12,6 +12,21 @@ Copy-Item .env.example .env      # facultatif : tout a une valeur par défaut
 py main.py telecharger           # ~25 fichiers CSV, quelques Mo
 ```
 
+## Tennis
+
+Le site demande de ne pas aspirer ses fichiers automatiquement : on les télécharge à la main, l'outil s'occupe du reste.
+
+1. Sur [tennis-data.co.uk/alldata.php](https://www.tennis-data.co.uk/alldata.php), télécharge les années voulues pour l'ATP et/ou la WTA (un fichier Excel par année, ex. 2021 à 2025). Ne t'occupe pas des noms : Windows appellera le second `2024 (1).xlsx`, ce n'est pas grave.
+2. Range-les automatiquement :
+   ```powershell
+   py main.py importer-tennis              # cherche dans Téléchargements, copie vers data\tennis\ATP_2024.xlsx...
+   py main.py importer-tennis --dry-run    # pour voir avant
+   ```
+   L'outil reconnaît tout seul ATP/WTA et l'année, ignore les autres fichiers Excel, ne supprime rien, et remplace un fichier par sa version plus récente (la saison en cours est mise à jour chaque semaine).
+3. Lance : `py main.py lancer --sport tennis --ouvrir`
+
+Particularités : les abandons et forfaits sont exclus (chaque bookmaker les règle différemment) ; les joueurs sont rangés par ordre alphabétique pour que le vainqueur ne soit jamais « le joueur 1 » ; il n'y a pas de cotes de clôture séparées, donc pas de CLV au tennis.
+
 ## Utilisation
 
 ```powershell
@@ -20,6 +35,7 @@ py main.py lancer --cotes max                       # « si j'avais toujours la 
 py main.py lancer --cotes avg --decote 0.05         # plus proche d'un bookmaker français
 py main.py lancer --strategies poisson --mise kelly
 py main.py lancer --ligues F1 --saisons 2324,2425
+py main.py lancer --sport tennis --ligues ATP --saisons 2024,2025
 py main.py telecharger --ligues F2 --saisons 2425 --dry-run
 ```
 
@@ -35,7 +51,8 @@ Chaque lancement crée `resultats\AAAA-MM-JJ_HHMMSS\` avec :
 | `value_pinnacle` | Pinnacle (bookmaker « sharp ») donne les vraies probabilités ; on parie quand une autre cote les dépasse | La seule approche avec un avantage documenté, à condition d'avoir accès aux meilleures cotes. |
 | `poisson` | Modèle maison sur les **buts** : force d'attaque/défense par équipe, recalculée après chaque match, loi de Poisson corrigée pour les nuls (Dixon-Coles) | Battre le marché avec son propre modèle est très difficile. |
 | `tirs` | Même modèle, mais la forme est mesurée surtout par les **tirs cadrés** (70 %), moins soumis à la chance que les buts | Une meilleure donnée améliore les prédictions… suffit-il pour battre le marché ? |
-| `mixte` | Probabilités Pinnacle corrigées à 30 % par le modèle `tirs` | L'approche des parieurs qui ont un modèle : s'en servir pour ajuster le marché, pas pour s'y opposer. |
+| `elo` (tennis) | Classement Elo de chaque joueur, général et par surface, mis à jour après chaque match | Le modèle de référence au tennis : simple, mais déjà assez bon. |
+| `mixte` | Probabilités Pinnacle corrigées à 30 % par le modèle maison (`tirs` au foot, `elo` au tennis) | L'approche des parieurs qui ont un modèle : s'en servir pour ajuster le marché, pas pour s'y opposer. |
 
 Les modèles **apprennent en continu** : après chaque journée, ils intègrent les résultats et les stats des matchs joués, et les matchs récents comptent plus que les anciens. Ils ne voient jamais le résultat d'un match avant d'avoir décidé.
 
@@ -60,7 +77,7 @@ Pour ajouter une stratégie : une classe dans `strategies.py` avec `choisir(matc
 
 ```powershell
 py -m unittest discover -s tests -v
-py tests\simul.py data_demo        # génère des saisons fictives pour tester hors ligne
+py tests\simul.py data_demo        # génère des saisons de foot fictives pour tester hors ligne
 ```
 
 Les tests vérifient notamment qu'**aucune stratégie ne voit le résultat d'un match du jour avant de décider** (pas de fuite du futur), les calculs (ROI, drawdown, Kelly, ruine, log-loss), la lecture des tirs, la correction des nuls, et que le modèle `tirs` prédit mieux que `poisson` quand les tirs portent de l'information.

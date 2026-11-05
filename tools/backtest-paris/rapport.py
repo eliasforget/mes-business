@@ -257,7 +257,7 @@ li {{ margin-bottom: .6rem; }}
 </head>
 <body>
 <h1>Backtest paris sportifs (argent fictif)</h1>
-<p class="meta">{params['horodatage']} · {int(infos['matchs'])} matchs · ligues {html.escape(', '.join(params['ligues']))}
+<p class="meta">{params['horodatage']} · {int(infos['matchs'])} matchs · {params.get('sport', 'foot')} · compétitions {html.escape(', '.join(params['ligues']))}
  · saisons {html.escape(', '.join(params['saisons']))}<br>
 cotes « {params['source']} » (marge moyenne du marché {pct(infos['marge_moyenne'], False)}) · décote {pct(params['decote'], False)}
  · mise {params['mode']} · bankroll de départ {eur(params['bankroll'])}</p>

@@ -1,7 +1,8 @@
-"""backtest-paris : teste des stratégies de paris foot 1X2 sur l'historique, sans argent réel.
+"""backtest-paris : teste des stratégies de paris (foot 1X2, tennis) sur l'historique, sans argent réel.
 
-    py main.py telecharger [--ligues F1,E0] [--saisons 2324,2425] [--forcer] [--dry-run]
-    py main.py lancer [--strategies favori,value_pinnacle,poisson,tirs,mixte] [--cotes avg] [--decote 0.05]
+    py main.py telecharger [--ligues F1,E0] [--saisons 2324,2425] [--forcer] [--dry-run]     (foot)
+    py main.py importer-tennis [--depuis DOSSIER] [--dry-run]                                 (tennis)
+    py main.py lancer [--sport foot|tennis] [--strategies ...] [--cotes avg] [--decote 0.05]
                       [--mise fixe|kelly] [--ouvrir]
 """
 from __future__ import annotations
@@ -18,6 +19,7 @@ sys.path.insert(0, str(ICI.parents[1] / "shared" / "python"))
 from autoshared import env_float, env_list, get_logger, load_env  # noqa: E402
 
 import donnees  # noqa: E402
+import donnees_tennis  # noqa: E402
 import moteur  # noqa: E402
 import rapport  # noqa: E402
 import strategies  # noqa: E402
@@ -27,7 +29,12 @@ DEFAUTS = {
     "SAISONS": "2122,2223,2324,2425,2526",
     "DATA_DIR": "",
     "OUTPUT_DIR": "",
-    "STRATEGIES": "favori,value_pinnacle,poisson,tirs,mixte",
+    "SPORT": "foot",
+    "STRATEGIES": strategies.PAR_DEFAUT["foot"],
+    "STRATEGIES_TENNIS": strategies.PAR_DEFAUT["tennis"],
+    "TENNIS_CIRCUITS": "ATP,WTA",
+    "TENNIS_ANNEES": "2021,2022,2023,2024,2025",
+    "TENNIS_IMPORT_DEPUIS": "",
     "SOURCE_COTES": "avg",
     "DECOTE": "0",
     "SEUIL_VALUE": "0.03",
@@ -67,9 +74,26 @@ def cmd_telecharger(args: argparse.Namespace, log) -> int:
     return 0
 
 
+def cmd_importer_tennis(args: argparse.Namespace, log) -> int:
+    source = Path(args.depuis).expanduser() if args.depuis else _dossier("TENNIS_IMPORT_DEPUIS", Path.home() / "Downloads")
+    dossier = _dossier("DATA_DIR", ICI / "data") / "tennis"
+    log.info("Recherche des fichiers tennis-data dans %s", source)
+    n = donnees_tennis.importer(source, dossier, log, dry_run=args.dry_run)
+    presents = sorted(f.stem for f in dossier.glob("*.xlsx")) if dossier.exists() else []
+    log.info("%s fichier(s) importé(s). Disponibles : %s", n, ", ".join(presents) or "aucun")
+    return 0 if presents or args.dry_run else 1
+
+
 def cmd_lancer(args: argparse.Namespace, log) -> int:
-    ligues = _liste(args.ligues, "LIGUES")
-    saisons = _liste(args.saisons, "SAISONS")
+    sport = args.sport or env_list("SPORT")[0]
+    if sport not in ("foot", "tennis"):
+        raise ValueError("SPORT doit valoir 'foot' ou 'tennis'.")
+    if sport == "tennis":
+        ligues = [c.upper() for c in _liste(args.ligues, "TENNIS_CIRCUITS")]
+        saisons = _liste(args.saisons, "TENNIS_ANNEES")
+    else:
+        ligues = _liste(args.ligues, "LIGUES")
+        saisons = _liste(args.saisons, "SAISONS")
     source = args.cotes or env_list("SOURCE_COTES")[0]
     if source not in donnees.SOURCES_PARI:
         raise ValueError(f"Source de cotes inconnue : {source} (choix : {', '.join(donnees.SOURCES_PARI)})")
@@ -80,16 +104,22 @@ def cmd_lancer(args: argparse.Namespace, log) -> int:
     if mode not in ("fixe", "kelly"):
         raise ValueError("MODE_MISE doit valoir 'fixe' ou 'kelly'.")
 
-    noms = _liste(args.strategies, "STRATEGIES")
+    noms = _liste(args.strategies, "STRATEGIES_TENNIS" if sport == "tennis" else "STRATEGIES")
     if source == "ps" and "value_pinnacle" in noms:
         log.warning("value_pinnacle avec les cotes Pinnacle elles-mêmes ne trouvera jamais de value.")
     strats = strategies.construire(noms, strategies.Reglages(
         seuil_value=env_float("SEUIL_VALUE"), seuil_modele=env_float("SEUIL_MODELE"),
         seuil_mixte=env_float("SEUIL_MIXTE"), poids_modele=env_float("POIDS_MODELE")))
 
-    matchs = donnees.charger(_dossier("DATA_DIR", ICI / "data"), ligues, saisons, log)
+    data = _dossier("DATA_DIR", ICI / "data")
+    if sport == "tennis":
+        matchs = donnees_tennis.charger(data / "tennis", ligues, saisons, log)
+        aide = "py main.py importer-tennis"
+    else:
+        matchs = donnees.charger(data, ligues, saisons, log)
+        aide = "py main.py telecharger"
     if not matchs:
-        log.error("Aucun match chargé. Lance d'abord : py main.py telecharger")
+        log.error("Aucun match chargé. Lance d'abord : %s", aide)
         return 1
     log.info("%s matchs chargés (%s -> %s)", len(matchs), matchs[0].jour, matchs[-1].jour)
 
@@ -102,7 +132,7 @@ def cmd_lancer(args: argparse.Namespace, log) -> int:
     horodatage = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     sortie = _dossier("OUTPUT_DIR", ICI / "resultats") / horodatage
     sortie.mkdir(parents=True, exist_ok=True)
-    params = {"source": source, "decote": decote, "mode": mode, "bankroll": params_mise.bankroll,
+    params = {"sport": sport, "source": source, "decote": decote, "mode": mode, "bankroll": params_mise.bankroll,
               "ligues": ligues, "saisons": saisons, "horodatage": datetime.strptime(horodatage, "%Y-%m-%d_%H%M%S").strftime("%d/%m/%Y %H:%M")}
 
     print(rapport.tableau_console(resultats, stats, infos, params))
@@ -133,19 +163,25 @@ def main(argv: list[str] | None = None) -> int:
     t.add_argument("--dry-run", action="store_true", help="affiche ce qui serait téléchargé")
 
     l = sub.add_parser("lancer", help="lance le backtest et produit le rapport")  # noqa: E741
-    l.add_argument("--ligues")
-    l.add_argument("--saisons")
+    l.add_argument("--sport", choices=("foot", "tennis"))
+    l.add_argument("--ligues", help="foot : F1,E0... ; tennis : ATP,WTA")
+    l.add_argument("--saisons", help="foot : 2324,2425... ; tennis : 2024,2025...")
     l.add_argument("--strategies", help=f"parmi : {', '.join(strategies.DISPONIBLES)}")
     l.add_argument("--cotes", choices=donnees.SOURCES_PARI, help="cotes auxquelles on « parie »")
     l.add_argument("--decote", type=float, help="ex. 0.05 = cotes 5 %% moins bonnes (bookmaker FR)")
     l.add_argument("--mise", choices=("fixe", "kelly"))
     l.add_argument("--ouvrir", action="store_true", help="ouvre le rapport HTML à la fin")
 
+    i = sub.add_parser("importer-tennis", help="range les fichiers tennis-data téléchargés à la main")
+    i.add_argument("--depuis", help="dossier où chercher (défaut : Téléchargements)")
+    i.add_argument("--dry-run", action="store_true", help="affiche ce qui serait importé")
+
     args = parser.parse_args(argv)
     load_env(tool_dir=ICI, defaults=DEFAUTS)
     log = get_logger("backtest-paris")
     try:
-        return cmd_telecharger(args, log) if args.commande == "telecharger" else cmd_lancer(args, log)
+        commandes = {"telecharger": cmd_telecharger, "importer-tennis": cmd_importer_tennis, "lancer": cmd_lancer}
+        return commandes[args.commande](args, log)
     except (ValueError, OSError) as err:
         log.error("%s", err)
         return 1

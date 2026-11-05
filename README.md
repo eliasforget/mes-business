@@ -6,7 +6,7 @@ Petits outils d'automatisation pour mon PC perso (Windows 11). Chaque outil est 
 
 | Outil | Ce qu'il fait | Langage | Lancement | Statut |
 |-------|---------------|---------|-----------|--------|
-| [backtest-paris](tools/backtest-paris) | Teste des stratégies de paris foot sur l'historique, en argent fictif | Python | Manuel (+ données le lundi) | 🧪 |
+| [backtest-paris](tools/backtest-paris) | Teste des stratégies de paris (foot, tennis) sur l'historique, en argent fictif | Python | Manuel (+ données foot le lundi) | ✅ |
 
 Statuts : 🧪 en test · ✅ en service · 💤 en pause · 🗄️ archivé
 
