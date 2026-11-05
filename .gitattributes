@@ -1,0 +1,13 @@
+# Fins de ligne normalisées en LF dans le dépôt (évite les warnings CRLF sous Windows).
+* text=auto eol=lf
+
+# Scripts Windows : CRLF obligatoire pour .cmd/.bat, recommandé pour .ps1.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binaires
+*.png binary
+*.jpg binary
+*.ico binary
+*.exe binary

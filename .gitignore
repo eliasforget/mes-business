@@ -1,0 +1,52 @@
+# ── Secrets / config locale ──────────────────────────────
+.env
+.env.*
+!.env.example
+*.local.json
+
+# ── Logs & sorties ───────────────────────────────────────
+logs/
+*.log
+tmp/
+out/
+
+# ── Node.js / TypeScript ─────────────────────────────────
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.npm/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+pip-wheel-metadata/
+
+# ── Windows ──────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+desktop.ini
+$RECYCLE.BIN/
+*.stackdump
+*.lnk
+
+# ── Éditeurs ─────────────────────────────────────────────
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*~
