@@ -6,7 +6,7 @@ Petits outils d'automatisation pour mon PC perso (Windows 11). Chaque outil est 
 
 | Outil | Ce qu'il fait | Langage | Lancement | Statut |
 |-------|---------------|---------|-----------|--------|
-| _aucun pour l'instant_ | | | | |
+| [backtest-paris](tools/backtest-paris) | Teste des stratégies de paris foot sur l'historique, en argent fictif | Python | Manuel (+ données le lundi) | 🧪 |
 
 Statuts : 🧪 en test · ✅ en service · 💤 en pause · 🗄️ archivé
 
@@ -16,10 +16,11 @@ Statuts : 🧪 en test · ✅ en service · 💤 en pause · 🗄️ archivé
 automatisations/
 ├── tools/              # un dossier par outil (README, .env.example, code)
 │   └── <nom-outil>/
-├── shared/             # utilitaires TypeScript communs
+├── shared/             # utilitaires communs
 │   ├── env.ts          # chargement .env + variables obligatoires
 │   ├── logger.ts       # logs console + fichier
-│   └── index.ts
+│   ├── index.ts
+│   └── python/autoshared/   # mêmes utilitaires pour les outils Python (stdlib)
 ├── logs/               # créé automatiquement, non versionné
 ├── .env.example        # réglages communs (copier en .env)
 ├── package.json        # outillage TS (typecheck uniquement)
@@ -97,6 +98,20 @@ import { createLogger } from '../../shared/index.ts';
 const log = createLogger('mon-outil');   // appeler APRÈS loadEnv() pour prendre LOG_LEVEL en compte
 log.info('Démarrage', { dryRun });
 log.error('Échec', err);
+```
+
+### Côté Python : `shared/python/autoshared`
+
+Même comportement (priorité des .env, format et dossier des logs), sans dépendance :
+
+```python
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared" / "python"))
+from autoshared import load_env, get_logger, env_float
+
+load_env(tool_dir=Path(__file__).parent, required=["SOURCE_DIR"], defaults={"MAX": "500"})
+log = get_logger("mon-outil")
 ```
 
 ## Ajouter un outil
