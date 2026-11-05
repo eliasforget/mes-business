@@ -26,21 +26,29 @@ Python 3.13, aucune dépendance. Données : [The Odds API](https://the-odds-api.
 py main.py scanner --dry-run   # voir ce qui serait noté, sans rien écrire
 py main.py tout                # scanner + regler + bilan
 py main.py bilan               # gratuit : relit seulement le journal
+py main.py bilan --markdown suivi\BILAN.md
 ```
 
-Le journal `data\journal.csv` s'ouvre directement dans Excel : une ligne par pari fictif, avec la cote prise, la cote juste de Pinnacle, l'avantage annoncé et le résultat.
+Dans `suivi\` :
+- `journal.csv` : une ligne par pari fictif (cote prise, cote juste de Pinnacle, avantage annoncé, résultat), s'ouvre dans Excel ;
+- `scans.csv` : une ligne par compétition et par scan, avec le **meilleur écart** observé entre la meilleure cote française et la cote juste de Pinnacle. Même sans aucun pari, ça montre si les bookmakers français s'en approchent ou restent loin ;
+- `BILAN.md` : le bilan lisible.
 
-## Lancement automatique (une fois par jour)
+## Lancement automatique dans le cloud (recommandé : PC éteint)
+
+Le workflow `.github/workflows/veille-value.yml` lance `tout` chaque jour à 11 h 40 (heure de Paris en hiver) sur les serveurs de GitHub, puis enregistre le journal et le bilan dans le dépôt. Pour un dépôt privé, ça consomme environ 1 minute par jour sur les 2 000 minutes gratuites mensuelles de GitHub.
+
+1. Sur GitHub, ouvre ton dépôt > **Settings** > **Secrets and variables** > **Actions** > **New repository secret** : nom `ODDS_API_KEY`, valeur = ta clé.
+2. Onglet **Actions** > **veille-value** > **Run workflow** pour un premier passage immédiat.
+3. Le bilan est dans **`tools/veille-value/suivi/BILAN.md`** (lisible directement sur github.com ou dans l'appli GitHub), et dans le résumé de chaque exécution de l'onglet Actions.
+
+Le dossier `suivi/` (journal, historique des scans, bilan) est versionné : fais un `git pull` avant de travailler en local, sinon ton `git push` sera refusé.
+
+N'utilise pas en même temps la tâche planifiée Windows : les crédits seraient consommés deux fois et le journal se dédoublerait. Pour la supprimer :
 
 ```powershell
-$dossier = Join-Path $HOME 'dev\automatisations\tools\veille-value'
-$action  = New-ScheduledTaskAction -Execute (Get-Command py).Source -Argument 'main.py tout' -WorkingDirectory $dossier
-$trigger = New-ScheduledTaskTrigger -Daily -At 11:40am
-Register-ScheduledTask -TaskName 'veille-value' -TaskPath '\Automatisations\' -Action $action -Trigger $trigger `
-  -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable) -Force
+Unregister-ScheduledTask -TaskName 'veille-value' -TaskPath '\Automatisations\' -Confirm:$false
 ```
-
-Si le PC est éteint à 11 h 40, la tâche se lance au démarrage suivant. Les logs sont dans `logs\veille-value\` à la racine du dépôt. Pour arrêter : `Unregister-ScheduledTask -TaskName 'veille-value' -Confirm:$false`.
 
 ## Lire le résultat honnêtement
 

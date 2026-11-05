@@ -72,7 +72,7 @@ def ecrire_journal(chemin: Path, paris: list[PariFictif]) -> None:
     tmp = chemin.with_suffix(".tmp")
     noms = [f.name for f in fields(PariFictif)]
     with tmp.open("w", encoding="utf-8-sig", newline="") as f:  # ';' + virgule décimale : Excel FR
-        w = csv.writer(f, delimiter=";")
+        w = csv.writer(f, delimiter=";", lineterminator="\n")
         w.writerow(noms)
         for p in paris:
             w.writerow([_texte(v) for v in asdict(p).values()])
@@ -99,7 +99,8 @@ def chercher_value(evenements: list[dict], sport: str, books_fr: list[str], seui
     Ignore les matchs déjà commencés, trop lointains, et les cotes trop anciennes (souvent fausses).
     """
     t = instant or maintenant()
-    compteur = {"matchs": 0, "sans_pinnacle": 0, "cotes_perimees": 0, "value": 0}
+    compteur: dict = {"matchs": 0, "sans_pinnacle": 0, "cotes_perimees": 0, "value": 0,
+                      "comparees": 0, "marche_different": 0, "meilleur_avantage": None}
     trouves: list[PariFictif] = []
     for ev in evenements:
         debut = lire_date(ev["commence_time"])
@@ -121,9 +122,12 @@ def chercher_value(evenements: list[dict], sport: str, books_fr: list[str], seui
             meilleure: tuple[float, str] | None = None
             for book in books_fr:
                 cotes, maj = par_book.get(book, ({}, None))
-                c = cotes.get(issue)
-                if c is None or set(cotes) != set(pin):  # marché différent (ex. sans nul) : on ignore
+                if not cotes:
                     continue
+                if set(cotes) != set(pin):  # issues aux noms différents ou marché sans nul : on ignore
+                    compteur["marche_different"] += 1
+                    continue
+                c = cotes[issue]
                 if maj is None or t - maj > age_max:
                     continue
                 if meilleure is None or c > meilleure[0]:
@@ -132,6 +136,9 @@ def chercher_value(evenements: list[dict], sport: str, books_fr: list[str], seui
                 continue
             cote, book = meilleure
             avantage = p * cote - 1
+            compteur["comparees"] += 1
+            if compteur["meilleur_avantage"] is None or avantage > compteur["meilleur_avantage"]:
+                compteur["meilleur_avantage"] = avantage
             if avantage > seuil and cote_min <= cote <= cote_max:
                 compteur["value"] += 1
                 trouves.append(PariFictif(
@@ -189,6 +196,47 @@ def sports_a_regler(paris: list[PariFictif], instant: datetime | None = None,
     return sorted({p.sport for p in paris if p.statut == "en_attente" and t - p.date_debut > duree_match})
 
 
+# ── Historique des scans ───────────────────────────────────────────────────
+
+CHAMPS_SCANS = ["date", "sport", "matchs", "cotes_comparees", "marche_different", "value", "meilleur_avantage"]
+
+
+def ajouter_scans(chemin: Path, lignes: list[dict]) -> None:
+    """Ajoute une ligne par compétition scannée : permet de voir si les cotes FR s'approchent de Pinnacle."""
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    nouveau = not chemin.exists()
+    with chemin.open("a", encoding="utf-8-sig" if nouveau else "utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=CHAMPS_SCANS, delimiter=";", lineterminator="\n")
+        if nouveau:
+            w.writeheader()
+        for l in lignes:
+            w.writerow({k: _texte(l.get(k, "")) if l.get(k) is not None else "" for k in CHAMPS_SCANS})
+
+
+def charger_scans(chemin: Path) -> list[dict]:
+    if not chemin.exists():
+        return []
+    with chemin.open(encoding="utf-8-sig", newline="") as f:
+        return list(csv.DictReader(f, delimiter=";"))
+
+
+def resume_scans(scans: list[dict]) -> dict | None:
+    if not scans:
+        return None
+    nombre = lambda v: float(v.replace(",", ".")) if v else None  # noqa: E731
+    meilleurs = [m for s in scans if (m := nombre(s.get("meilleur_avantage", ""))) is not None]
+    jours = sorted({s["date"][:10] for s in scans})
+    return {
+        "jours": len(jours), "premier": jours[0], "dernier": jours[-1],
+        "matchs": int(sum(nombre(s["matchs"]) or 0 for s in scans)),
+        "comparees": int(sum(nombre(s["cotes_comparees"]) or 0 for s in scans)),
+        "marche_different": int(sum(nombre(s["marche_different"]) or 0 for s in scans)),
+        "value": int(sum(nombre(s["value"]) or 0 for s in scans)),
+        "meilleur": max(meilleurs) if meilleurs else None,
+        "mediane_meilleurs": statistics.median(meilleurs) if meilleurs else None,
+    }
+
+
 # ── Bilan ──────────────────────────────────────────────────────────────────
 
 def bilan(paris: list[PariFictif]) -> dict:
@@ -240,3 +288,63 @@ def verdict(b: dict) -> str:
         return "Perte nette, pas due au hasard : les cotes françaises ne battent pas Pinnacle. Arrête l'expérience."
     return ("Résultat indiscernable du hasard pour l'instant. Si le ROI reste proche de l'avantage annoncé, "
             "continue ; s'il en est loin, la value détectée est surtout du bruit (cotes Pinnacle en retard...).")
+
+
+# ── Bilan au format Markdown (BILAN.md lisible sur GitHub) ─────────────────
+
+def _pct(x: float | None) -> str:
+    return "-" if x is None else f"{x * 100:+.1f} %".replace(".", ",")
+
+
+def _eur(x: float) -> str:
+    return f"{x:,.2f} €".replace(",", " ").replace(".", ",")
+
+
+def bilan_markdown(paris: list[PariFictif], scans: dict | None, genere_le: datetime | None = None) -> str:
+    b = bilan(paris)
+    t = (genere_le or maintenant()).astimezone()
+    l = [f"# Bilan veille-value", "", f"_Mis à jour le {t:%d/%m/%Y à %H:%M}. Paris fictifs, aucun argent réel._", ""]
+
+    l += ["## Ce que montrent les scans", ""]
+    if scans:
+        l += [f"- **{scans['jours']} jour(s)** de veille (du {scans['premier']} au {scans['dernier']}), "
+              f"**{scans['matchs']} match(s)** scanné(s), **{scans['comparees']} cotes françaises** comparées à Pinnacle.",
+              f"- Meilleur écart jamais vu entre la meilleure cote française et la cote juste de Pinnacle : "
+              f"**{_pct(scans['meilleur'])}** (écart typique du meilleur cas de chaque scan : {_pct(scans['mediane_meilleurs'])}).",
+              f"- Paris fictifs déclenchés : **{scans['value']}**."]
+        if scans["comparees"] == 0 and scans["matchs"] > 0:
+            l.append("- ⚠️ Aucune cote comparée alors que des matchs ont été scannés : problème de données à vérifier.")
+        if scans["marche_different"]:
+            l.append(f"- {scans['marche_different']} cotes ignorées car leurs issues ne correspondaient pas à celles de Pinnacle.")
+        if scans["meilleur"] is not None and scans["meilleur"] <= 0:
+            l.append("- **Lecture :** jusqu'ici, aucune cote française n'a jamais dépassé la cote juste de Pinnacle. "
+                     "Si ça reste vrai pendant 2 à 3 semaines, la réponse est claire : pas de value chez les bookmakers français.")
+    else:
+        l.append("Aucun scan enregistré pour l'instant.")
+
+    l += ["", "## Résultat des paris fictifs", "",
+          f"{b['total']} paris au total : {b['regles']} réglés, {b['en_attente']} en attente, {b['non_reglables']} sans résultat.", ""]
+    if b["regles"]:
+        ic = f"{_pct(b['ic95'][0])} à {_pct(b['ic95'][1])}" if b["ic95"] else "-"
+        l += ["| Indicateur | Valeur |", "|---|---|",
+              f"| Paris gagnés | {b['gagnes']} / {b['regles']} |",
+              f"| Cote moyenne | {b['cote_moyenne']:.2f} |".replace(".", ","),
+              f"| Misé / profit | {_eur(b['mises'])} / {_eur(b['profit'])} |",
+              f"| **ROI** | **{_pct(b['roi'])}** |",
+              f"| Fourchette de confiance 95 % | {ic} |",
+              f"| Avantage moyen annoncé | {_pct(b['avantage_moyen_annonce'])} |", "",
+              "| Bookmaker | Paris | ROI |", "|---|---|---|"]
+        l += [f"| {nom} | {d['n']} | {_pct(d['roi'])} |" for nom, d in b["par_bookmaker"].items()]
+        l.append("")
+    l += [f"**Verdict :** {verdict(b)}", ""]
+
+    derniers = sorted(paris, key=lambda p: p.detecte_le, reverse=True)[:20]
+    if derniers:
+        l += ["## Derniers paris fictifs", "", "| Match (UTC) | Pari | Cote | Bookmaker | Avantage | Statut |", "|---|---|---|---|---|---|"]
+        for p in derniers:
+            statut = {"gagne": f"✅ {_eur(p.gain)}", "perdu": f"❌ {_eur(p.gain)}", "en_attente": "⏳",
+                      "non_reglable": "—"}.get(p.statut, p.statut)
+            cote = f"{p.cote:.2f}".replace(".", ",")
+            l.append(f"| {p.debut[:16].replace('T', ' ')} {p.match} | {p.pari} | {cote} | "
+                     f"{NOMS_BOOKMAKERS.get(p.bookmaker, p.bookmaker)} | {_pct(p.avantage)} | {statut} |")
+    return "\n".join(l) + "\n"

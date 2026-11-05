@@ -7,7 +7,7 @@ Petits outils d'automatisation pour mon PC perso (Windows 11). Chaque outil est 
 | Outil | Ce qu'il fait | Langage | Lancement | Statut |
 |-------|---------------|---------|-----------|--------|
 | [backtest-paris](tools/backtest-paris) | Teste des stratégies de paris (foot, tennis) sur l'historique, en argent fictif | Python | Manuel (+ données foot le lundi) | ✅ |
-| [veille-value](tools/veille-value) | Test à blanc : repère les cotes FR plus généreuses que Pinnacle sur les prochains matchs, règle les paris fictifs | Python | Tâche planifiée quotidienne | 🧪 |
+| [veille-value](tools/veille-value) | Test à blanc : repère les cotes FR plus généreuses que Pinnacle sur les prochains matchs, règle les paris fictifs | Python | GitHub Actions quotidien (PC éteint) | 🧪 |
 
 Statuts : 🧪 en test · ✅ en service · 💤 en pause · 🗄️ archivé
 

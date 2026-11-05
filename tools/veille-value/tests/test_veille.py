@@ -77,6 +77,40 @@ class TestDetection(unittest.TestCase):
         self.assertEqual(veille.chercher_value([ev], **ARGS)[0], [])
 
 
+class TestDiagnostic(unittest.TestCase):
+    def test_compteurs_et_meilleur_ecart(self):
+        evs = [
+            evenement("a", T0 + timedelta(hours=5), [book("pinnacle", PIN), book("betclic_fr", {"Lyon": 2.0, "Draw": 3.3, "Nice": 3.4})]),
+            evenement("b", T0 + timedelta(hours=6), [book("pinnacle", PIN), book("betclic_fr", {"OL": 2.0, "Nul": 3.3, "OGCN": 3.4})]),
+        ]
+        trouves, c = veille.chercher_value(evs, **ARGS)
+        self.assertEqual(trouves, [])
+        self.assertEqual(c["comparees"], 3)          # 3 issues du match « a »
+        self.assertEqual(c["marche_different"], 3)   # noms différents sur « b » : signalé, pas ignoré en silence
+        juste_nice = (1 / 3.6) / (1 / 2.1 + 1 / 3.5 + 1 / 3.6)
+        juste_lyon = (1 / 2.1) / (1 / 2.1 + 1 / 3.5 + 1 / 3.6)
+        juste_nul = (1 / 3.5) / (1 / 2.1 + 1 / 3.5 + 1 / 3.6)
+        self.assertAlmostEqual(c["meilleur_avantage"], max(juste_lyon * 2.0, juste_nul * 3.3, juste_nice * 3.4) - 1)
+        self.assertLess(c["meilleur_avantage"], 0)
+
+    def test_historique_des_scans_et_markdown(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            chemin = Path(tmp) / "suivi" / "scans.csv"
+            veille.ajouter_scans(chemin, [{"date": "2026-11-05T22:00:00+00:00", "sport": "s1", "matchs": 3,
+                                          "cotes_comparees": 9, "marche_different": 0, "value": 0, "meilleur_avantage": -0.021}])
+            veille.ajouter_scans(chemin, [{"date": "2026-11-06T10:40:00+00:00", "sport": "s1", "matchs": 4,
+                                          "cotes_comparees": 12, "marche_different": 0, "value": 0, "meilleur_avantage": -0.008},
+                                         {"date": "2026-11-06T10:40:00+00:00", "sport": "s2", "matchs": 0,
+                                          "cotes_comparees": 0, "marche_different": 0, "value": 0, "meilleur_avantage": None}])
+            r = veille.resume_scans(veille.charger_scans(chemin))
+        self.assertEqual((r["jours"], r["matchs"], r["comparees"], r["value"]), (2, 7, 21, 0))
+        self.assertAlmostEqual(r["meilleur"], -0.008)
+        md = veille.bilan_markdown([], r, genere_le=T0)
+        self.assertIn("**7 match(s)** scanné(s)", md)
+        self.assertIn("-0,8 %", md)
+        self.assertIn("aucune cote française n'a jamais dépassé", md)
+
+
 class TestReglement(unittest.TestCase):
     def _pari(self, pari: str, debut: datetime, cote: float = 3.9) -> veille.PariFictif:
         return veille.PariFictif(id=f"e1|{pari}", detecte_le=ISO(T0), sport="s", evenement_id="e1", match="Lyon - Nice",
@@ -169,7 +203,11 @@ class TestCommandes(unittest.TestCase):
                     self.assertFalse((Path(tmp) / "journal.csv").exists())
                     self.assertEqual(main.main(["tout"]), 0)
                     self.assertEqual(main.main(["scanner"]), 0)  # relancé : pas de doublon
+                    self.assertEqual(main.main(["bilan", "--markdown", str(Path(tmp) / "BILAN.md")]), 0)
                 journal = veille.charger_journal(Path(tmp) / "journal.csv")
+                scans = veille.charger_scans(Path(tmp) / "scans.csv")
+            self.assertEqual(len(scans), 4)  # 2 scans enregistrés x 2 compétitions (le dry-run n'écrit rien)
+            self.assertIn("Lyon - Nice", (Path(tmp) / "BILAN.md").read_text(encoding="utf-8"))
             self.assertEqual([p.id for p in journal], ["e1|Nice"])
             logs = "".join(f.read_text(encoding="utf-8") for f in Path(tmp).rglob("*.log"))
             self.assertNotIn("CLE-SECRETE", logs)

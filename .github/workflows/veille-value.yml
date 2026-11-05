@@ -1,0 +1,55 @@
+# Lance veille-value chaque jour dans le cloud GitHub : PC éteint, rien à faire.
+# Prérequis : secret ODDS_API_KEY (Settings > Secrets and variables > Actions > New repository secret).
+# Résultat : tools/veille-value/suivi/BILAN.md (mis à jour à chaque passage) + résumé dans l'onglet Actions.
+name: veille-value
+
+on:
+  schedule:
+    - cron: "40 10 * * *"   # heure UTC : 11 h 40 à Paris en hiver, 12 h 40 en été
+  workflow_dispatch:         # bouton « Run workflow » pour lancer à la main
+
+permissions:
+  contents: write            # pour enregistrer le journal et le bilan dans le dépôt
+
+concurrency:
+  group: veille-value
+  cancel-in-progress: false
+
+jobs:
+  veille:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: Europe/Paris
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Scanner, régler, faire le bilan
+        working-directory: tools/veille-value
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: |
+          if [ -z "$ODDS_API_KEY" ]; then
+            echo "::error::Secret ODDS_API_KEY manquant : Settings > Secrets and variables > Actions"
+            exit 1
+          fi
+          python -m unittest discover -s tests
+          python main.py tout --markdown suivi/BILAN.md
+          cat suivi/BILAN.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enregistrer le suivi dans le dépôt
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/veille-value/suivi
+          if git diff --cached --quiet; then
+            echo "Rien de nouveau à enregistrer."
+            exit 0
+          fi
+          git commit -m "veille-value : suivi du $(date +%Y-%m-%d)"
+          git pull --rebase origin main
+          git push

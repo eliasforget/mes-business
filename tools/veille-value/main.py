@@ -35,6 +35,7 @@ DEFAUTS = {
     "AGE_MAX_MINUTES": "60",
     "CREDITS_RESERVE": "25",
     "JOURNAL": "",
+    "SCANS": "",
 }
 
 
@@ -46,9 +47,15 @@ def _pct(x: float) -> str:
     return f"{x * 100:+.1f} %".replace(".", ",")
 
 
+
 def _journal() -> Path:
     brut = env_list("JOURNAL")
-    return Path(brut[0]).expanduser() if brut else ICI / "data" / "journal.csv"
+    return Path(brut[0]).expanduser() if brut else ICI / "suivi" / "journal.csv"
+
+
+def _scans() -> Path:
+    brut = env_list("SCANS")
+    return Path(brut[0]).expanduser() if brut else _journal().with_name("scans.csv")
 
 
 def _client() -> ClientOdds:
@@ -71,6 +78,8 @@ def cmd_scanner(args, log, client: ClientOdds | None = None) -> int:
     deja = {p.id for p in journal}
     books = env_list("BOOKMAKERS_FR")
     nouveaux: list[veille.PariFictif] = []
+    lignes_scans: list[dict] = []
+    horodatage = veille.maintenant().isoformat(timespec="seconds")
 
     for sport in env_list("SPORTS"):
         try:
@@ -88,9 +97,16 @@ def cmd_scanner(args, log, client: ClientOdds | None = None) -> int:
         frais = [p for p in trouves if p.id not in deja]
         deja.update(p.id for p in frais)
         nouveaux.extend(frais)
-        log.info("%s : %s matchs dans les %sh, %s sans Pinnacle, %s cotes trop anciennes, %s value (%s nouvelle(s))",
-                 sport, c["matchs"], env_list("HORIZON_HEURES")[0], c["sans_pinnacle"], c["cotes_perimees"],
-                 c["value"], len(frais))
+        meilleur = _pct(c["meilleur_avantage"]) if c["meilleur_avantage"] is not None else "-"
+        log.info("%s : %s matchs dans les %sh, %s cotes FR comparées (meilleur écart vs Pinnacle %s), "
+                 "%s value (%s nouvelle(s))", sport, c["matchs"], env_list("HORIZON_HEURES")[0], c["comparees"],
+                 meilleur, c["value"], len(frais))
+        if c["sans_pinnacle"] or c["cotes_perimees"] or c["marche_different"]:
+            log.info("    ignorés : %s sans Pinnacle, %s cotes trop anciennes, %s issues différentes de Pinnacle",
+                     c["sans_pinnacle"], c["cotes_perimees"], c["marche_different"])
+        lignes_scans.append({"date": horodatage, "sport": sport, "matchs": c["matchs"],
+                             "cotes_comparees": c["comparees"], "marche_different": c["marche_different"],
+                             "value": c["value"], "meilleur_avantage": c["meilleur_avantage"]})
 
     for p in nouveaux:
         log.info("  PARI FICTIF  %s UTC | %s -> %s @ %s chez %s (cote juste Pinnacle %s, avantage %s)",
@@ -98,10 +114,13 @@ def cmd_scanner(args, log, client: ClientOdds | None = None) -> int:
                  veille.NOMS_BOOKMAKERS.get(p.bookmaker, p.bookmaker), f"{1 / p.proba_pinnacle:.2f}".replace(".", ","),
                  _pct(p.avantage))
     if args.dry_run:
-        log.info("[dry-run] %s pari(s) fictif(s) non enregistré(s).", len(nouveaux))
-    elif nouveaux:
-        veille.ecrire_journal(chemin, journal + nouveaux)
-        log.info("%s pari(s) fictif(s) ajouté(s) au journal %s", len(nouveaux), chemin)
+        log.info("[dry-run] %s pari(s) fictif(s) non enregistré(s), historique des scans non mis à jour.", len(nouveaux))
+    else:
+        if nouveaux:
+            veille.ecrire_journal(chemin, journal + nouveaux)
+            log.info("%s pari(s) fictif(s) ajouté(s) au journal %s", len(nouveaux), chemin)
+        if lignes_scans:
+            veille.ajouter_scans(_scans(), lignes_scans)
     log.info("Crédits API restants : %s", client.restants if client.restants is not None else "?")
     return 0
 
@@ -135,7 +154,13 @@ def cmd_regler(args, log, client: ClientOdds | None = None) -> int:
 
 
 def cmd_bilan(args, log) -> int:
-    b = veille.bilan(veille.charger_journal(_journal()))
+    paris = veille.charger_journal(_journal())
+    scans = veille.resume_scans(veille.charger_scans(_scans()))
+    b = veille.bilan(paris)
+    if scans:
+        print()
+        print(f"Scans : {scans['jours']} jour(s), {scans['matchs']} matchs, {scans['comparees']} cotes FR comparées, "
+              f"meilleur écart vs Pinnacle {_pct(scans['meilleur']) if scans['meilleur'] is not None else '-'}")
     print()
     print(f"Paris fictifs : {b['total']} au total, {b['regles']} réglés, {b['en_attente']} en attente, "
           f"{b['non_reglables']} sans résultat.")
@@ -150,6 +175,11 @@ def cmd_bilan(args, log) -> int:
             print(f"  {nom:<14}{d['n']:>5} paris  ROI {_pct(d['roi'])}")
     print()
     print(veille.verdict(b))
+    if getattr(args, "markdown", None):
+        cible = Path(args.markdown)
+        cible.parent.mkdir(parents=True, exist_ok=True)
+        cible.write_text(veille.bilan_markdown(paris, scans), encoding="utf-8")
+        log.info("Bilan écrit dans %s", cible)
     return 0
 
 
@@ -166,7 +196,9 @@ def main(argv: list[str] | None = None) -> int:
         p = sub.add_parser(nom)
         p.add_argument("--dry-run", action="store_true", help="n'écrit rien dans le journal")
     sub.add_parser("regler")
-    sub.add_parser("bilan")
+    b = sub.add_parser("bilan")
+    for p in (b, sub.choices["tout"]):
+        p.add_argument("--markdown", help="écrit aussi le bilan dans ce fichier .md (ex. suivi/BILAN.md)")
     sub.add_parser("sports")
     args = parser.parse_args(argv)
 
