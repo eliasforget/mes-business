@@ -1,11 +1,11 @@
 # Bilan veille-value
 
-_Mis à jour le 21/11/2026 à 18:46. Paris fictifs, aucun argent réel._
+_Mis à jour le 22/11/2026 à 19:01. Paris fictifs, aucun argent réel._
 
 ## Ce que montrent les scans
 
-- **17 jour(s)** de veille (du 2026-11-05 au 2026-11-21), **194 match(s)** scanné(s), **582 cotes françaises** comparées à Pinnacle.
-- Meilleur écart jamais vu entre la meilleure cote française et la cote juste de Pinnacle : **+7,9 %** (écart typique du meilleur cas de chaque scan : -4,2 %).
+- **18 jour(s)** de veille (du 2026-11-05 au 2026-11-22), **200 match(s)** scanné(s), **600 cotes françaises** comparées à Pinnacle.
+- Meilleur écart jamais vu entre la meilleure cote française et la cote juste de Pinnacle : **+7,9 %** (écart typique du meilleur cas de chaque scan : -4,3 %).
 - Paris fictifs déclenchés : **0**.
 
 ## Résultat des paris fictifs
