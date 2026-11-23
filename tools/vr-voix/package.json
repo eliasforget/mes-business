@@ -1,0 +1,10 @@
+{
+  "name": "vr-voix",
+  "private": true,
+  "type": "module",
+  "description": "Vice Radar : voix off ElevenLabs + alignement pour vr-video",
+  "scripts": {
+    "voix": "node --experimental-strip-types --no-warnings=ExperimentalWarning voix.ts",
+    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test tests/voix.test.ts"
+  }
+}

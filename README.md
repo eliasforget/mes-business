@@ -8,6 +8,9 @@ Petits outils d'automatisation pour mon PC perso (Windows 11). Chaque outil est 
 |-------|---------------|---------|-----------|--------|
 | [backtest-paris](tools/backtest-paris) | Teste des stratégies de paris (foot, tennis) sur l'historique, en argent fictif | Python | Manuel (+ données foot le lundi) | ✅ |
 | [veille-value](tools/veille-value) | Test à blanc : repère les cotes FR plus généreuses que Pinnacle sur les prochains matchs, règle les paris fictifs | Python | GitHub Actions quotidien (PC éteint) | 🧪 |
+| [vr-video](tools/vr-video) | Vice Radar : Short 9:16 animé (accroche dès l'image 0, sous-titres karaoké, fonds qui changent) à partir d'un script JSON | TypeScript (Remotion) | Manuel (`.\rendu.cmd`) | 🧪 |
+| [vr-voix](tools/vr-voix) | Vice Radar : voix off ElevenLabs + minutage par mot depuis le script de vr-video (sans redépense si rien n'a changé) | TypeScript | Manuel (`.\voix.cmd`) | 🧪 |
+| [vr-fonds](tools/vr-fonds) | Vice Radar : clips verticaux Pexels choisis d'après les mots-clés des scènes, avec crédits | TypeScript | Manuel (`.\fonds.cmd`) | 🧪 |
 
 Statuts : 🧪 en test · ✅ en service · 💤 en pause · 🗄️ archivé
 

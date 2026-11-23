@@ -17,5 +17,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["shared/**/*.ts", "tools/**/*.ts"]
+  "include": ["shared/**/*.ts", "tools/**/*.ts"],
+  // vr-video a son propre tsconfig (React/JSX, bundler Remotion)
+  "exclude": ["**/node_modules", "tools/vr-video"]
 }

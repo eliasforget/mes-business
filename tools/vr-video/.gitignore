@@ -1,0 +1,10 @@
+node_modules/
+sortie/
+.rendu/
+bibliotheque/
+# Les scripts des vidéos sont versionnés, pas les fichiers lourds
+videos/**/*.mp3
+videos/**/*.wav
+videos/**/*.m4a
+videos/**/*.mp4
+videos/**/*.mov

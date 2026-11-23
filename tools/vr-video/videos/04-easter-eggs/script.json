@@ -1,0 +1,43 @@
+{
+  "titre": "Rockstar a caché un vrai œuf de Pâques dans GTA 6",
+  "fin": "Abonne-toi pour le secret n°5",
+  "scenes": [
+    {
+      "tag": "SECRET N°1",
+      "lignes": [
+        { "texte": "Un vrai", "style": "normal" },
+        { "texte": "Œuf", "style": "gros" },
+        { "texte": "de Pâques", "style": "normal" },
+        { "texte": "tout en haut de GTA 6.", "style": "accent" }
+      ],
+      "voix": "Rockstar a caché un vrai œuf de Pâques tout en haut de GTA 6.",
+      "motsCles": ["miami", "nuit", "tour"]
+    },
+    {
+      "tag": "COMMENT",
+      "chiffre": { "valeur": 6, "suffixe": "MIN" },
+      "lignes": [{ "texte": "d'escalade jusqu'au sommet.", "style": "petit" }],
+      "voix": "Grimpe la plus haute tour radio de la ville : six minutes d'escalade, et l'œuf t'attend là-haut.",
+      "motsCles": ["ville", "nuit"]
+    },
+    {
+      "tag": "SECRET N°2",
+      "lignes": [
+        { "texte": "Dexter", "style": "gros" },
+        { "texte": "son appartement est", "style": "petit" },
+        { "texte": "dans le jeu.", "style": "accent" }
+      ],
+      "voix": "L'appartement de Dexter est reproduit à l'identique, jusqu'au frigo.",
+      "motsCles": ["miami", "appartement"]
+    },
+    {
+      "tag": "SECRET N°3",
+      "lignes": [
+        { "texte": "Bigfoot", "style": "gros" },
+        { "texte": "aperçu dans les marais.", "style": "accent" }
+      ],
+      "voix": "Et Bigfoot a déjà été aperçu dans les marais de Leonida. Le secret numéro cinq va te choquer.",
+      "motsCles": ["marais", "floride"]
+    }
+  ]
+}
