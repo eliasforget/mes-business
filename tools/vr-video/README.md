@@ -42,7 +42,7 @@ videos\05-nouvelle-video\
 ├── voix.mp3               voix off (sans voix : vidéo muette, pour les aperçus)
 ├── voix.mots.json         minutage de chaque mot  [{ "mot": "Rockstar", "debut": 0.12, "fin": 0.48 }, ...]
 │   ou voix.alignement.json   réponse brute ElevenLabs « with-timestamps » (convertie automatiquement)
-├── musique.mp3            facultatif (sinon MUSIQUE du .env)
+├── musique.mp3            facultatif (sinon un morceau du dossier musique\)
 └── fonds\*.mp4            facultatif : clips propres à cette vidéo (prioritaires)
 ```
 
@@ -88,6 +88,16 @@ Sans fichier de minutage, les sous-titres sont calés approximativement sur la d
 ## Clips de fond
 
 Mets des MP4 verticaux dans `bibliotheque\` (ou le dossier `BIBLIOTHEQUE_FONDS`), nommés avec des mots-clés : `miami-nuit-neons-01.mp4`, `voiture-sport-route-02.mp4`, `marais-floride-03.mp4`. Utilise des vidéos libres de droits pour un usage commercial (Pixabay ou Pexels par exemple), **pas des extraits d'autres créateurs**. `vr-fonds` remplit ce dossier automatiquement depuis Pixabay.
+
+## Musique
+
+Dépose quelques morceaux instrumentaux dans `musique\` (mp3, wav, m4a). Chaque vidéo en prend un d'après son nom : elle garde toujours le même, et les vidéos suivantes varient. Un `musique.mp3` dans le dossier d'une vidéo passe avant. Le morceau tourne en boucle, avec un fondu au début et à la fin, au volume `VOLUME_MUSIQUE` (0,12 par défaut) sous la voix.
+
+Source conseillée : **Eleven Music** (elevenlabs.io → Music), usage commercial inclus dès l'offre Starter, environ 900 crédits par minute. Génère 3 ou 4 morceaux d'une minute une fois pour toutes, en **instrumental**. Évite les musiques « libres de droits » marquées Content ID (icône bouclier sur Pixabay) : sur YouTube, un Short de plus d'une minute qui reçoit une réclamation Content ID est bloqué.
+
+## Durée
+
+Une vidéo plus courte que `DUREE_MIN_CIBLE` (30 s par défaut) déclenche un avertissement, avec le nombre de mots à ajouter. `vr-voix` fait la même estimation **avant** de générer, pour ne pas payer une voix trop courte. Repère : environ 2,8 mots par seconde, donc 30 s ≈ 85 mots de voix, 40 s ≈ 110 mots.
 
 ## Temps de rendu
 

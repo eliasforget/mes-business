@@ -6,7 +6,7 @@ TypeScript, aucune dépendance (fetch natif de Node).
 
 ## Installation
 
-1. Clé API : elevenlabs.io > Profil > **API Keys** > Create.
+1. Clé API : elevenlabs.io > **Developers** > **API Keys** > Créer une clé. Garde « Restreindre la clé » et donne seulement : Text to Speech = Accès, Voix = Lire, Utilisateur = Accès.
 2. Configuration :
    ```powershell
    Set-Location (Join-Path $HOME 'dev\automatisations\tools\vr-voix')

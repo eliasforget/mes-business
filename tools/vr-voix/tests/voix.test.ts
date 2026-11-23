@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
 import { ErreurElevenLabs, type Fetch } from '../elevenlabs.ts';
-import { coutEstime, dossierVideo, empreinte, genererVoix, texteDuScript, type Config } from '../voix.ts';
+import { coutEstime, dossierVideo, dureeEstimee, empreinte, genererVoix, motsManquants, texteDuScript, type Config } from '../voix.ts';
 
 const CFG: Config = {
   cle: 'CLE-SECRETE', voixId: 'voix123', modele: 'eleven_multilingual_v2',
@@ -124,4 +124,11 @@ test('alerte offre gratuite (droits commerciaux)', async () => {
   await genererVoix(d, CFG, { fetchImpl: fauxFetch({ tier: 'free' }).f, log: (m) => messages.push(m) });
   assert.ok(messages.some((m) => m.includes('pas d\'usage commercial') && m.includes('ElevenLabs')));
   rmSync(d, { recursive: true, force: true });
+});
+
+test('durée estimée et mots manquants pour atteindre la cible', () => {
+  const texte63 = Array.from({ length: 63 }, (_, i) => `mot${i}`).join(' ');
+  assert.ok(Math.abs(dureeEstimee(texte63, 1.05) - 22.2) < 0.5, 'étalonnage : 63 mots ≈ 22 s à 1,05');
+  assert.equal(motsManquants(texte63, 1.05, 30), 23);
+  assert.equal(motsManquants(texte63, 1.05, 20), 0);
 });

@@ -56,6 +56,21 @@ export function coutEstime(texte: string, modele: string): number {
   return Math.ceil(texte.length * (/flash|turbo/.test(modele) ? 0.5 : 1));
 }
 
+/**
+ * Durée parlée estimée, en secondes. Étalonnée sur une vraie voix ElevenLabs en français :
+ * ~2,7 mots/s à vitesse 1 (63 mots ≈ 22 s à 1,05).
+ */
+export function dureeEstimee(texte: string, vitesse = 1): number {
+  const mots = texte.split(/\s+/).filter(Boolean).length;
+  return mots / (2.7 * vitesse);
+}
+
+/** Mots à ajouter pour atteindre la durée visée (0 si c'est déjà bon). */
+export function motsManquants(texte: string, vitesse: number, cible: number): number {
+  const manque = cible - dureeEstimee(texte, vitesse);
+  return manque > 0 ? Math.ceil(manque * 2.7 * vitesse) : 0;
+}
+
 function ecrireAtomique(fichier: string, contenu: string | Buffer): void {
   const tmp = `${fichier}.tmp`;
   writeFileSync(tmp, contenu);
@@ -68,7 +83,7 @@ export interface Resultat {
   cout: number;
 }
 
-export async function genererVoix(dossier: string, cfg: Config, opts: { dryRun?: boolean; forcer?: boolean; fetchImpl?: Fetch; log?: (m: string) => void } = {}): Promise<Resultat> {
+export async function genererVoix(dossier: string, cfg: Config, opts: { dryRun?: boolean; forcer?: boolean; fetchImpl?: Fetch; log?: (m: string) => void; dureeMinCible?: number } = {}): Promise<Resultat> {
   const log = opts.log ?? (() => {});
   const fichierScript = path.join(dossier, 'script.json');
   let script: unknown;
@@ -85,6 +100,12 @@ export async function genererVoix(dossier: string, cfg: Config, opts: { dryRun?:
   const fichierAlignement = path.join(dossier, 'voix.alignement.json');
 
   log(`Texte (${texte.length} caractères, ~${cout} crédits) : « ${texte} »`);
+  const vitesse = cfg.reglages.speed ?? 1;
+  const duree = dureeEstimee(texte, vitesse);
+  const manque = opts.dureeMinCible ? motsManquants(texte, vitesse, opts.dureeMinCible) : 0;
+  log(manque
+    ? `ATTENTION : ~${Math.round(duree)} s estimées, sous les ${opts.dureeMinCible} s visées. Ajoute ~${manque} mots dans les « voix » du script avant de générer (sinon tu paies une voix trop courte).`
+    : `Durée estimée : ~${Math.round(duree)} s.`);
 
   if (!opts.forcer && existsSync(fichierAudio) && existsSync(fichierAlignement) && existsSync(fichierMeta)) {
     const meta = JSON.parse(readFileSync(fichierMeta, 'utf8')) as { empreinte?: string };
@@ -147,11 +168,11 @@ async function main(): Promise<number> {
     toolDir: ICI,
     defaults: {
       ELEVENLABS_API_KEY: '', ELEVENLABS_VOIX_ID: '', ELEVENLABS_MODELE: 'eleven_multilingual_v2',
-      STABILITE: '0.45', SIMILARITE: '0.8', STYLE: '0.35', VITESSE: '1.05',
+      STABILITE: '0.45', SIMILARITE: '0.8', STYLE: '0.35', VITESSE: '1.05', DUREE_MIN_CIBLE: '30',
     },
   });
   const besoinCle = values.lister || !values['dry-run'];
-  if (besoinCle && !env.ELEVENLABS_API_KEY) throw new Error('ELEVENLABS_API_KEY manquante : copie .env.example en .env et colle ta clé (ElevenLabs > Profil > API Keys).');
+  if (besoinCle && !env.ELEVENLABS_API_KEY) throw new Error('ELEVENLABS_API_KEY manquante : copie .env.example en .env et colle ta clé (ElevenLabs > Developers > API Keys ; accès Text to Speech, Voix : Lire, Utilisateur).');
 
   if (values.lister) {
     const client = new ClientElevenLabs(env.ELEVENLABS_API_KEY);
@@ -183,7 +204,7 @@ async function main(): Promise<number> {
   };
   const dossier = dossierVideo(positionals[0]!);
   log.info('Vidéo : %s', dossier);
-  await genererVoix(dossier, cfg, { dryRun: values['dry-run'], forcer: values.forcer, log: (m) => log.info(m) });
+  await genererVoix(dossier, cfg, { dryRun: values['dry-run'], forcer: values.forcer, log: (m) => log.info(m), dureeMinCible: nombre(env, 'DUREE_MIN_CIBLE', 0, 180) });
   return 0;
 }
 

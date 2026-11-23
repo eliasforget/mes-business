@@ -2,6 +2,7 @@ node_modules/
 sortie/
 .rendu/
 bibliotheque/
+musique/
 # Les scripts des vidéos sont versionnés, pas les fichiers lourds
 videos/**/*.mp3
 videos/**/*.wav

@@ -10,10 +10,11 @@
  *   voix.mp3 | voix.wav               voix off (sinon vidéo muette au rythme de lecture)
  *   voix.mots.json                    minutage [{ mot, debut, fin }] (écrit par vr-voix)
  *   voix.alignement.json              ou alignement brut ElevenLabs (characters + start/end times)
- *   musique.mp3                       musique propre à la vidéo (sinon MUSIQUE du .env)
+ *   musique.mp3                       musique propre à la vidéo (sinon un morceau de musique\ ou de MUSIQUE)
  *   fonds/*.mp4                       clips propres à la vidéo (prioritaires sur la bibliothèque)
  */
-import { copyFileSync, existsSync, linkSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { copyFileSync, existsSync, linkSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { format, parseArgs } from 'node:util';
@@ -25,11 +26,12 @@ import {
 
 const ICI = import.meta.dirname;
 const EXTENSIONS_VIDEO = new Set(['.mp4', '.mov', '.webm', '.m4v']);
+const EXTENSIONS_AUDIO = new Set(['.mp3', '.wav', '.m4a', '.ogg']);
 
 const env = loadEnv({
   toolDir: ICI,
   defaults: {
-    BIBLIOTHEQUE_FONDS: '', MUSIQUE: '', VOLUME_MUSIQUE: '0.12', RYTHME_FONDS: '2.2', CRF: '18', CONCURRENCE: '',
+    BIBLIOTHEQUE_FONDS: '', MUSIQUE: '', VOLUME_MUSIQUE: '0.12', DUREE_MIN_CIBLE: '30', RYTHME_FONDS: '2.2', CRF: '18', CONCURRENCE: '',
     NAVIGATEUR: '', MARQUE_NOM: 'VICE', MARQUE_ACCENT: 'RADAR', DOSSIER_SORTIE: '',
   },
 });
@@ -79,6 +81,26 @@ function motsClesClip(fichier: string, index: Record<string, { motsCles?: string
   const nom = path.basename(fichier, path.extname(fichier));
   const depuisNom = nom.split(/[-_\s.]+/).filter((t) => t && !/^\d+$/.test(t));
   return [...new Set([...depuisNom, ...(index[path.basename(fichier)]?.motsCles ?? [])].map(normaliser))];
+}
+
+/**
+ * Musique de la vidéo : musique.* dans son dossier, sinon un morceau pris dans MUSIQUE (fichier ou dossier),
+ * sinon dans tools\vr-video\musique\. Dans un dossier, le choix dépend du nom de la vidéo : chaque vidéo a
+ * toujours le même morceau (rendu reproductible) et les vidéos successives varient.
+ */
+function choisirMusique(dossierVideo: string, nomVideo: string, reglage: string, parDefaut: string): string | null {
+  const propre = premierExistant(dossierVideo, ['musique.mp3', 'musique.wav', 'musique.m4a']);
+  if (propre) return propre;
+  const source = reglage ? path.resolve(reglage) : parDefaut;
+  if (!existsSync(source)) {
+    if (reglage) throw new Error(`MUSIQUE introuvable : ${source}`);
+    return null;
+  }
+  if (!statSync(source).isDirectory()) return source;
+  const morceaux = readdirSync(source).filter((f) => EXTENSIONS_AUDIO.has(path.extname(f).toLowerCase())).sort();
+  if (!morceaux.length) return null;
+  const h = createHash('sha256').update(nomVideo).digest().readUInt32BE(0);
+  return path.join(source, morceaux[h % morceaux.length]!);
 }
 
 /** Copie (ou lien physique, instantané) d'un fichier dans le dossier public du rendu. */
@@ -180,7 +202,7 @@ async function main(): Promise<number> {
   // Les clips propres à la vidéo sont prioritaires : on ne garde la bibliothèque que si la scène n'en a pas.
   const plan = construirePlan(script, mots, clips, nombre('RYTHME_FONDS', 0.8, 10));
 
-  const musique = premierExistant(dossier, ['musique.mp3', 'musique.wav', 'musique.m4a']) ?? (env.MUSIQUE && existsSync(env.MUSIQUE) ? path.resolve(env.MUSIQUE) : null);
+  const musique = choisirMusique(dossier, nom, env.MUSIQUE, path.join(ICI, 'musique'));
 
   // ── Résumé du plan ──
   log.info('« %s » : %ss, %d scènes, %d sous-titres, %d plans de fond (%d avec clip), voix %s, musique %s',
@@ -188,6 +210,13 @@ async function main(): Promise<number> {
     plan.fonds.filter((f) => f.clip).length, voix ? path.basename(voix) : 'aucune', musique ? path.basename(musique) : 'aucune');
   plan.scenes.forEach((s, i) => log.info('  scène %d  %s → %ss  %s', i + 1, s.debut.toFixed(2).padStart(6), s.fin.toFixed(2), s.tag ?? s.lignes?.[0]?.texte ?? ''));
   if (!clips.length) log.info('  Aucun clip trouvé (%s) : fond synthwave animé.', dossierBiblio);
+  if (!musique) log.warn('  Pas de musique : mets des morceaux dans %s (ou musique.mp3 dans le dossier de la vidéo).', path.join(ICI, 'musique'));
+  const cible = nombre('DUREE_MIN_CIBLE', 0, 180);
+  if (cible && plan.duree < cible) {
+    const motsParSeconde = mots.length / Math.max(1, mots[mots.length - 1]?.fin ?? plan.duree);
+    log.warn('  Vidéo de %ss, sous les %s s visées : ajoute ~%d mots dans les « voix » du script (une scène de plus, par exemple), puis régénère la voix.',
+      plan.duree.toFixed(1), cible, Math.ceil((cible - plan.duree) * motsParSeconde));
+  }
 
   const dossierSortie = env.DOSSIER_SORTIE ? path.resolve(env.DOSSIER_SORTIE) : path.join(ICI, 'sortie');
   mkdirSync(dossierSortie, { recursive: true });
