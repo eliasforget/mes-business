@@ -2,7 +2,7 @@
   "name": "vr-fonds",
   "private": true,
   "type": "module",
-  "description": "Vice Radar : clips de fond verticaux Pexels pour vr-video",
+  "description": "Vice Radar : clips de fond Pixabay pour vr-video",
   "scripts": {
     "fonds": "node --experimental-strip-types --no-warnings=ExperimentalWarning fonds.ts",
     "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test tests/fonds.test.ts"

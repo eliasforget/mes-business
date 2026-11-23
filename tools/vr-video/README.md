@@ -87,7 +87,7 @@ Sans fichier de minutage, les sous-titres sont calés approximativement sur la d
 
 ## Clips de fond
 
-Mets des MP4 verticaux dans `bibliotheque\` (ou le dossier `BIBLIOTHEQUE_FONDS`), nommés avec des mots-clés : `miami-nuit-neons-01.mp4`, `voiture-sport-route-02.mp4`, `marais-floride-03.mp4`. Utilise des vidéos libres de droits pour un usage commercial (Pexels par exemple), **pas des extraits d'autres créateurs**. `vr-fonds` remplit ce dossier automatiquement depuis Pexels.
+Mets des MP4 verticaux dans `bibliotheque\` (ou le dossier `BIBLIOTHEQUE_FONDS`), nommés avec des mots-clés : `miami-nuit-neons-01.mp4`, `voiture-sport-route-02.mp4`, `marais-floride-03.mp4`. Utilise des vidéos libres de droits pour un usage commercial (Pixabay ou Pexels par exemple), **pas des extraits d'autres créateurs**. `vr-fonds` remplit ce dossier automatiquement depuis Pixabay.
 
 ## Temps de rendu
 
@@ -102,7 +102,7 @@ Copy-Item (Join-Path $t 'vr-video\exemples\04-easter-eggs') (Join-Path $t 'vr-vi
 notepad (Join-Path $t 'vr-video\videos\05-nouvelle-video\script.json')
 # 2. Voix off + minutage (ElevenLabs)
 Set-Location (Join-Path $t 'vr-voix');  .\voix.cmd 05-nouvelle-video
-# 3. Clips de fond (Pexels)
+# 3. Clips de fond (Pixabay)
 Set-Location (Join-Path $t 'vr-fonds'); .\fonds.cmd 05-nouvelle-video
 # 4. Vérifier puis rendre
 Set-Location (Join-Path $t 'vr-video'); .\rendu.cmd videos\05-nouvelle-video --apercu 0,1.5

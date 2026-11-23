@@ -1,6 +1,7 @@
 /**
- * vr-fonds : remplit la bibliothèque de clips de fond de vr-video avec des vidéos verticales Pexels
- * (licence gratuite, usage commercial autorisé), choisies d'après les mots-clés des scènes.
+ * vr-fonds : remplit la bibliothèque de clips de fond de vr-video avec des vidéos Pixabay
+ * (licence Pixabay : usage commercial autorisé, attribution non obligatoire), choisies d'après
+ * les mots-clés des scènes. Verticales en priorité, sinon horizontales 4K recadrées par vr-video.
  *
  *   .\fonds.cmd 05-nouvelle-video                     → clips pour chaque scène du script
  *   .\fonds.cmd 05-nouvelle-video --dry-run           → montre ce qui serait téléchargé
@@ -13,19 +14,21 @@ import { pipeline } from 'node:stream/promises';
 import { pathToFileURL } from 'node:url';
 import { format, parseArgs } from 'node:util';
 import { createLogger, loadEnv, REPO_ROOT } from '../../shared/index.ts';
-import { ClientPexels, ErreurPexels, choisirFichier, type Fetch, type VideoPexels } from './pexels.ts';
+import { ClientPixabay, choisirFichier, type Fetch, type FichierChoisi, type VideoPixabay } from './pixabay.ts';
 
 const ICI = import.meta.dirname;
 
 export interface EntreeIndex {
   motsCles: string[];
-  pexelsId: number;
+  source: 'pixabay';
+  id: number;
   url: string;
   auteur: string;
   auteurUrl: string;
   duree: number;
   largeur: number | null;
   hauteur: number | null;
+  vertical: boolean;
   telecharge_le: string;
 }
 export type Index = Record<string, EntreeIndex>;
@@ -40,7 +43,7 @@ export interface Reglages {
   dureeMin: number;
   dureeMax: number;
   maxMo: number;
-  reserveRequetes: number;
+  accepterPaysage: boolean;
 }
 
 export function normaliser(mot: string): string {
@@ -48,9 +51,14 @@ export function normaliser(mot: string): string {
 }
 
 /** Nom de fichier lisible par vr-video : les mots-clés deviennent les mots du nom. */
-export function nomFichier(motsCles: string[], pexelsId: number): string {
+export function nomFichier(motsCles: string[], id: number): string {
   const slug = motsCles.map(normaliser).filter(Boolean).join('-').slice(0, 60) || 'clip';
-  return `${slug}-pexels-${pexelsId}.mp4`;
+  return `${slug}-pixabay-${id}.mp4`;
+}
+
+/** Identifiant unique d'une vidéo dans la bibliothèque, toutes sources confondues. */
+function cleVideo(e: EntreeIndex): string {
+  return `${e.source}-${e.id}`;
 }
 
 /** Une recherche par scène, à partir de ses motsCles (sinon les mots-clés par défaut du thème). */
@@ -80,30 +88,40 @@ export function ecrireIndex(dossier: string, index: Index): void {
   const tmp = path.join(dossier, 'index.json.tmp');
   writeFileSync(tmp, JSON.stringify(index, null, 2));
   renameSync(tmp, path.join(dossier, 'index.json'));
-  // Crédits des vidéastes (Pexels demande de les créditer quand c'est possible) : à reprendre en description.
+  // Crédits des vidéastes : non obligatoires avec la licence Pixabay, mais utiles (et appréciés) en description.
   const lignes = Object.entries(index)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([f, e]) => `- \`${f}\` : vidéo de [${e.auteur}](${e.auteurUrl}) sur [Pexels](${e.url})`);
-  writeFileSync(path.join(dossier, 'CREDITS.md'), `# Crédits des clips de fond\n\nVidéos : Pexels (licence Pexels, usage commercial autorisé).\n\n${lignes.join('\n')}\n`);
+    .map(([f, e]) => `- \`${f}\` : vidéo de [${e.auteur}](${e.auteurUrl}) sur [Pixabay](${e.url})`);
+  writeFileSync(path.join(dossier, 'CREDITS.md'), `# Crédits des clips de fond\n\nVidéos : Pixabay (licence Pixabay, usage commercial autorisé, attribution non obligatoire).\n\n${lignes.join('\n')}\n`);
 }
 
-/** Candidats d'une recherche : requête complète, puis chaque mot-clé seul si pas assez de résultats. */
-export async function trouverCandidats(client: ClientPexels, r: Recherche, exclus: Set<number>, reglages: Reglages): Promise<VideoPexels[]> {
+export interface Candidat {
+  video: VideoPixabay;
+  fichier: FichierChoisi;
+}
+
+/**
+ * Candidats d'une recherche : requête complète, puis chaque mot-clé seul si pas assez de résultats.
+ * Les vidéos verticales passent avant les horizontales (qui ne servent qu'à compléter).
+ */
+export async function trouverCandidats(client: ClientPixabay, r: Recherche, exclus: Set<string>, reglages: Reglages): Promise<Candidat[]> {
   const requetes = [r.motsCles.join(' '), ...(r.motsCles.length > 1 ? r.motsCles : [])];
-  const retenus: VideoPexels[] = [];
+  const verticaux: Candidat[] = [];
+  const paysages: Candidat[] = [];
+  const vus = new Set<string>();
   for (const q of requetes) {
-    if (retenus.length >= r.nombre) break;
-    if (client.restantes !== null && client.restantes <= reglages.reserveRequetes) {
-      throw new ErreurPexels(429, `Plus que ${client.restantes} requêtes Pexels ce mois-ci (réserve ${reglages.reserveRequetes}) : arrêt.`);
-    }
+    if (verticaux.length >= r.nombre) break;
     for (const v of await client.rechercher(q)) {
-      if (retenus.length >= r.nombre) break;
-      if (exclus.has(v.id) || v.height <= v.width || v.duration < reglages.dureeMin || v.duration > reglages.dureeMax) continue;
-      if (!choisirFichier(v)) continue;
-      exclus.add(v.id);
-      retenus.push(v);
+      const cle = `pixabay-${v.id}`;
+      if (exclus.has(cle) || vus.has(cle) || v.duration < reglages.dureeMin || v.duration > reglages.dureeMax) continue;
+      const fichier = choisirFichier(v, reglages.accepterPaysage, reglages.maxMo);
+      if (!fichier) continue;
+      vus.add(cle);
+      (fichier.vertical ? verticaux : paysages).push({ video: v, fichier });
     }
   }
+  const retenus = [...verticaux, ...paysages].slice(0, r.nombre);
+  for (const c of retenus) exclus.add(`pixabay-${c.video.id}`);
   return retenus;
 }
 
@@ -130,36 +148,38 @@ export interface BilanFonds {
 }
 
 export async function remplirBibliotheque(
-  recherches: Recherche[], dossier: string, client: ClientPexels, reglages: Reglages,
+  recherches: Recherche[], dossier: string, client: ClientPixabay, reglages: Reglages,
   opts: { dryRun?: boolean; fetchImpl?: Fetch; log?: (m: string) => void } = {},
 ): Promise<BilanFonds> {
   const log = opts.log ?? (() => {});
   const fetchImpl = opts.fetchImpl ?? client.fetch;
   const index = lireIndex(dossier);
-  const exclus = new Set(Object.values(index).map((e) => e.pexelsId)); // jamais deux fois la même vidéo
+  const exclus = new Set(Object.values(index).map(cleVideo)); // jamais deux fois la même vidéo
   const bilan: BilanFonds = { telecharges: [], ignores: 0, erreurs: 0 };
 
   for (const r of recherches) {
     const candidats = await trouverCandidats(client, r, exclus, reglages);
-    log(`${r.etiquette} « ${r.motsCles.join(' ')} » : ${candidats.length}/${r.nombre} clip(s) trouvé(s)`);
-    for (const v of candidats) {
-      const fichier = choisirFichier(v)!;
+    const nbPaysage = candidats.filter((c) => !c.fichier.vertical).length;
+    log(`${r.etiquette} « ${r.motsCles.join(' ')} » : ${candidats.length}/${r.nombre} clip(s) trouvé(s)${nbPaysage ? ` dont ${nbPaysage} horizontal(aux) 4K recadré(s)` : ''}`);
+    for (const { video: v, fichier } of candidats) {
       const nom = nomFichier(r.motsCles, v.id);
+      const desc = `${fichier.largeur}x${fichier.hauteur}${fichier.vertical ? '' : ' recadré'}, ${v.duration} s`;
       if (opts.dryRun) {
-        log(`  [dry-run] ${nom}  (${fichier.width}x${fichier.height}, ${v.duration} s, par ${v.user.name})`);
+        log(`  [dry-run] ${nom}  (${desc}${fichier.octets ? `, ~${Math.round(fichier.octets / 1048576)} Mo` : ''}, par ${v.user})`);
         bilan.telecharges.push(nom);
         continue;
       }
       try {
         mkdirSync(dossier, { recursive: true });
-        const octets = await telecharger(fichier.link, path.join(dossier, nom), reglages.maxMo, fetchImpl);
+        const octets = await telecharger(fichier.url, path.join(dossier, nom), reglages.maxMo, fetchImpl);
         index[nom] = {
-          motsCles: r.motsCles.flatMap((m) => normaliser(m).split('-')).filter(Boolean), pexelsId: v.id, url: v.url, auteur: v.user.name, auteurUrl: v.user.url,
-          duree: v.duration, largeur: fichier.width, hauteur: fichier.height, telecharge_le: new Date().toISOString(),
+          motsCles: r.motsCles.flatMap((m) => normaliser(m).split('-')).filter(Boolean), source: 'pixabay', id: v.id, url: v.pageURL,
+          auteur: v.user, auteurUrl: `https://pixabay.com/users/${encodeURIComponent(v.user)}-${v.user_id}/`,
+          duree: v.duration, largeur: fichier.largeur, hauteur: fichier.hauteur, vertical: fichier.vertical, telecharge_le: new Date().toISOString(),
         };
         ecrireIndex(dossier, index); // après chaque clip : relançable même si on coupe au milieu
         bilan.telecharges.push(nom);
-        log(`  + ${nom}  (${fichier.width}x${fichier.height}, ${v.duration} s${octets ? `, ${Math.round(octets / 1048576)} Mo` : ''})`);
+        log(`  + ${nom}  (${desc}${octets ? `, ${Math.round(octets / 1048576)} Mo` : ''})`);
       } catch (err) {
         bilan.erreurs += 1;
         log(`  ! ${nom} ignoré : ${(err as Error).message}`);
@@ -204,10 +224,10 @@ async function main(): Promise<number> {
   if (!values.requete && optionNpm('requete') && optionNpm('requete') !== 'true') values.requete = optionNpm('requete');
   const env = loadEnv({
     toolDir: ICI,
-    required: ['PEXELS_API_KEY'],
+    required: ['PIXABAY_API_KEY'],
     defaults: {
       BIBLIOTHEQUE_FONDS: '', CLIPS_PAR_SCENE: '3', MOTS_CLES_PAR_DEFAUT: 'miami nuit,neons ville,voiture de sport,palmiers floride',
-      DUREE_MIN: '5', DUREE_MAX: '60', MAX_MO: '80', RESERVE_REQUETES: '50',
+      DUREE_MIN: '5', DUREE_MAX: '60', MAX_MO: '120', ACCEPTER_PAYSAGE: 'oui',
     },
   });
   const entier = (v: string, nom: string) => {
@@ -231,13 +251,15 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  const client = new ClientPexels(env.PEXELS_API_KEY);
+  // Cache des recherches (24 h, exigé par Pixabay) : un --dry-run suivi du vrai lancement ne coûte qu'une série de requêtes.
+  const client = new ClientPixabay(env.PIXABAY_API_KEY, { cacheFichier: path.join(dossier, '.cache-pixabay.json') });
   const bilan = await remplirBibliotheque(recherches, dossier, client, {
-    dureeMin: Number(env.DUREE_MIN), dureeMax: Number(env.DUREE_MAX), maxMo: Number(env.MAX_MO), reserveRequetes: Number(env.RESERVE_REQUETES),
+    dureeMin: Number(env.DUREE_MIN), dureeMax: Number(env.DUREE_MAX), maxMo: Number(env.MAX_MO),
+    accepterPaysage: !/^(non|no|false|0)$/i.test(env.ACCEPTER_PAYSAGE.trim()),
   }, { dryRun: values['dry-run'], log: (m) => info(m) });
-  info('%s : %d clip(s)%s, %d erreur(s). Bibliothèque : %s. Requêtes Pexels restantes ce mois : %s',
+  info('%s : %d clip(s)%s, %d erreur(s). Bibliothèque : %s. Requêtes Pixabay : %d (+ %d depuis le cache)',
     values['dry-run'] ? '[dry-run] À télécharger' : 'Téléchargés', bilan.telecharges.length,
-    bilan.ignores ? `, ${bilan.ignores} manquant(s) faute de résultat` : '', bilan.erreurs, dossier, client.restantes ?? '?');
+    bilan.ignores ? `, ${bilan.ignores} manquant(s) faute de résultat` : '', bilan.erreurs, dossier, client.requetesReseau, client.depuisCache);
   return bilan.erreurs && !bilan.telecharges.length ? 1 : 0;
 }
 
