@@ -1,0 +1,55 @@
+{
+  "titre": "GTA 6 : 4 nouveaux secrets (partie 2)",
+  "fin": "Lequel tu testes ce soir ?",
+  "scenes": [
+    {
+      "tag": "SECRET N°5",
+      "lignes": [
+        { "texte": "Un", "style": "normal" },
+        { "texte": "OVNI", "style": "gros" },
+        { "texte": "peut t'enlever.", "style": "accent" }
+      ],
+      "voix": "Dans GTA 6, un OVNI peut t'enlever. À deux heures du matin, près de Port Gellhorn, et tu te réveilles trois jours plus tard.",
+      "motsCles": ["ciel nuit", "etoiles"]
+    },
+    {
+      "tag": "LE TROPHÉE",
+      "lignes": [
+        { "texte": "The Truth", "style": "normal" },
+        { "texte": "Is Out There", "style": "normal" },
+        { "texte": "trophée secret à débloquer.", "style": "accent" }
+      ],
+      "voix": "Bonus : ça débloque un trophée secret, The Truth Is Out There.",
+      "motsCles": ["foret nuit", "brouillard"]
+    },
+    {
+      "tag": "SECRET N°6",
+      "chiffre": { "valeur": 1200, "suffixe": "$" },
+      "lignes": [
+        { "texte": "déterrés par un chien", "style": "petit" },
+        { "texte": "en jet-ski.", "style": "accent" }
+      ],
+      "voix": "Perdu en pleine mer ? Un chien à lunettes arrive en jet-ski pour te ramener. Reste avec lui : il déterre 1200 dollars sur une île.",
+      "motsCles": ["jet ski", "mer"]
+    },
+    {
+      "tag": "SECRET N°7",
+      "lignes": [
+        { "texte": "Crabe", "style": "gros" },
+        { "texte": "géant mutant", "style": "normal" },
+        { "texte": "caché dans les marais.", "style": "accent" }
+      ],
+      "voix": "Dans les marais de Gullet Marsh, lis le journal sur l'ordinateur d'un avant-poste : un crabe géant mutant t'attaque.",
+      "motsCles": ["marais", "floride"]
+    },
+    {
+      "tag": "SECRET N°8",
+      "lignes": [
+        { "texte": "Cette maison", "style": "normal" },
+        { "texte": "cachée depuis 2021.", "style": "accent" }
+      ],
+      "voix": "Et cette maison de Belville était déjà cachée dans un remaster sorti en 2021. Dedans, un complotiste persuadé d'être coincé dans un jeu vidéo. Lequel tu testes ce soir ?",
+      "motsCles": ["maison", "palmiers"]
+    }
+  ]
+}

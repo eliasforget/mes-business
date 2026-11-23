@@ -55,6 +55,17 @@ const STYLES: Record<string, React.CSSProperties> = {
   petit: { fontFamily: TEXTE, fontWeight: 800, fontSize: 60, lineHeight: 1.18, color: COULEURS.blanc, textShadow: CONTOUR },
 };
 
+/** Largeur utile du bloc titre (1080 - 2 × 70 de marge). */
+const LARGEUR_TITRE = 940;
+/**
+ * Les lignes « gros » (un mot énorme, Anton en capitales) rétrécissent si le mot est trop long pour
+ * tenir sur la largeur : « AVENGERS » débordait à 290 px. ~0,46 em par caractère pour Anton en capitales.
+ */
+export function tailleGros(texte: string, base = 290): number {
+  const plusLongMot = Math.max(1, ...texte.split(/\s+/).map((m) => m.length));
+  return Math.min(base, Math.floor(LARGEUR_TITRE / (plusLongMot * 0.46)));
+}
+
 /**
  * Titre d'une scène. Chaque ligne arrive en rebond, décalée de 3 images. Sur la toute première scène,
  * tout est déjà presque en place à l'image 0 : c'est cette image que le spectateur voit en premier dans le flux.
@@ -102,7 +113,8 @@ export const BlocTitre: React.FC<{ scene: ScenePlanifiee; immediat: boolean; dur
           {scene.tag}
         </div>, 'tag')}
       {scene.chiffre && ligne(<ChiffreAnime chiffre={scene.chiffre} frame={frame} immediat={immediat} />, 'chiffre')}
-      {(scene.lignes ?? []).map((l, i) => ligne(<div style={STYLES[l.style ?? 'normal']}>{l.texte}</div>, `l${i}`, l.style))}
+      {(scene.lignes ?? []).map((l, i) => ligne(
+        <div style={l.style === 'gros' ? { ...STYLES.gros, fontSize: tailleGros(l.texte) } : STYLES[l.style ?? 'normal']}>{l.texte}</div>, `l${i}`, l.style))}
     </div>
   );
 };
@@ -159,9 +171,11 @@ export const AppelAction: React.FC<{ texte: string }> = ({ texte }) => {
   const p = spring({ frame, fps, config: { damping: 12 } });
   const pulse = 1 + 0.04 * Math.sin((frame / fps) * 6);
   return (
-    <div style={{ position: 'absolute', top: 1560, left: 0, right: 0, display: 'flex', justifyContent: 'center' }}>
+    <div style={{ position: 'absolute', top: 1560, left: 70, right: 70, display: 'flex', justifyContent: 'center' }}>
       <div style={{
-        fontFamily: TEXTE, fontWeight: 900, fontSize: 52, color: COULEURS.marine, background: COULEURS.blanc,
+        // Texte long : plus petit, centré, et jamais plus large que l'écran (le rebond du ressort dépasse 1).
+        fontFamily: TEXTE, fontWeight: 900, fontSize: texte.length > 30 ? 44 : 52, lineHeight: 1.2, textAlign: 'center', maxWidth: 860,
+        color: COULEURS.marine, background: COULEURS.blanc,
         padding: '18px 40px', borderRadius: 60, transform: `scale(${p * pulse})`, boxShadow: `0 0 0 6px ${COULEURS.rose}, 0 12px 40px rgba(0,0,0,0.5)`,
       }}>
         {texte}
