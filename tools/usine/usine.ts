@@ -33,6 +33,7 @@ const env = loadEnv({
     MAX_PAR_JOUR: '4',
     GIT_AUTO: 'true',
     POUSSER_RAPPORT: 'true',
+    DOSSIER_CAPTURES: '',
   },
 });
 const log = createLogger('usine');
@@ -85,11 +86,11 @@ function git(args: string[], timeout = 120_000): { ok: boolean; sortie: string }
 }
 
 /** Lance un outil du dépôt (node + TypeScript), sortie dans la console et dans son propre journal. */
-function lancerOutil(outil: string, fichier: string, args: string[]): boolean {
+function lancerOutil(outil: string, fichier: string, args: string[], envEnPlus: Record<string, string> = {}): boolean {
   const script = path.join(OUTILS, outil, fichier);
   log.info(`  → ${outil} ${args.join(' ')}`);
   const r = spawnSync(process.execPath, ['--experimental-strip-types', '--no-warnings=ExperimentalWarning', script, ...args], {
-    cwd: path.join(OUTILS, outil), stdio: 'inherit', windowsHide: true, timeout: 2 * 3600_000,
+    cwd: path.join(OUTILS, outil), stdio: 'inherit', windowsHide: true, timeout: 2 * 3600_000, env: { ...process.env, ...envEnPlus },
   });
   return r.status === 0;
 }
@@ -126,6 +127,32 @@ function installerDependances(changes: string[]): void {
     log.info(`Installation des dépendances de ${outil} (npm ci)…`);
     const r = spawnSync('npm', ['ci', '--no-audit', '--no-fund'], { cwd: dossier, stdio: 'inherit', shell: true, windowsHide: true, timeout: 20 * 60_000 });
     if (r.status !== 0) log.error(`npm ci a échoué dans ${outil} : les rendus risquent d'échouer.`);
+  }
+}
+
+// ─────────────── Étape 1 bis : captures PS5 déposées (vr-clips) ───────────────
+const EXT_VIDEO = new Set(['.mp4', '.mov', '.webm', '.m4v']);
+/** Dossier des captures : DOSSIER_CAPTURES de l'usine (ex. un dossier Google Drive), sinon celui de vr-clips. */
+const dossierCaptures = env.DOSSIER_CAPTURES ? path.resolve(env.DOSSIER_CAPTURES) : '';
+
+/** Crée un dossier de vidéo gameplay par nouvelle capture, dans l'ordre de la liste de tournage (vr-clips). */
+function importerCaptures(dryRun: boolean): void {
+  const entree = dossierCaptures || path.join(OUTILS, 'vr-clips', 'entree');
+  if (dossierCaptures) mkdirSync(dossierCaptures, { recursive: true });
+  if (!existsSync(entree)) return;
+  const nb = readdirSync(entree).filter((f) => EXT_VIDEO.has(path.extname(f).toLowerCase())).length;
+  if (!nb) return;
+  log.info(`Captures PS5 trouvées dans ${entree} : import par vr-clips…`);
+  const ok = lancerOutil('vr-clips', 'clips.ts', dryRun ? ['--dry-run'] : [], dossierCaptures ? { CLIPS_ENTREE: dossierCaptures } : {});
+  if (!ok) log.warn('vr-clips a signalé un problème (voir logs\\vr-clips) : les captures seront réessayées au prochain passage.');
+}
+
+/** Expériences déjà importées par vr-clips (pour le tableau de bord). */
+function experiencesImportees(): Record<string, { dossier: string; capture: string }> {
+  try {
+    return (JSON.parse(lireTexte(path.join(OUTILS, 'vr-clips', '.importes.json'))) as { experiences?: Record<string, { dossier: string; capture: string }> }).experiences ?? {};
+  } catch {
+    return {};
   }
 }
 
@@ -202,8 +229,16 @@ function ecrireRapport(etat: Etat, videos: Video[], attente: string[]): void {
     pretes: prete.map((nom) => ({ nom, chaine: parNom.get(nom)?.chaine ?? '', le: etat.videos[nom]!.le })),
     erreurs: erreur.map((nom) => ({ nom, erreur: etat.videos[nom]!.erreur ?? '', essais: etat.videos[nom]!.essais ?? 1 })),
     enAttenteDeCapture: attente,
+    tournage: experiencesImportees(),
   };
   ecrireJson(FICHIER_RAPPORT, rapport);
+  // Copie lisible par le tableau de bord (via Google Drive si « A publier » est dans Drive).
+  try {
+    mkdirSync(dossierAPublier, { recursive: true });
+    writeFileSync(path.join(dossierAPublier, 'usine-rapport.txt'), JSON.stringify(rapport, null, 2) + '\n');
+  } catch (err) {
+    log.warn(`Copie du rapport dans ${dossierAPublier} impossible : ${(err as Error).message}`);
+  }
 }
 
 function pousserRapport(n: number): void {
@@ -241,6 +276,7 @@ async function main(): Promise<number> {
   try {
     const avecGit = !values['sans-git'] && envBool('GIT_AUTO', true);
     if (avecGit && !dryRun) recupererDepot();
+    importerCaptures(dryRun);
 
     const etat = compteurDuJour(lireEtat(), aujourdhui());
     const ignorees = lireIgnorees();
