@@ -1,0 +1,23 @@
+{
+  "majLe": "2026-11-24T14:52:13.707Z",
+  "pc": "Elias",
+  "pretes": [
+    {
+      "nom": "08-secrets-partie-4",
+      "chaine": "Vice Radar",
+      "le": "2026-11-24T14:46:23.931Z"
+    },
+    {
+      "nom": "09-rencontres-bizarres",
+      "chaine": "Vice Radar",
+      "le": "2026-11-24T14:49:30.692Z"
+    },
+    {
+      "nom": "10-premier-patch",
+      "chaine": "Vice Radar",
+      "le": "2026-11-24T14:52:13.702Z"
+    }
+  ],
+  "erreurs": [],
+  "enAttenteDeCapture": []
+}
