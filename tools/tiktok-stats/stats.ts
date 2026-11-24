@@ -127,10 +127,19 @@ async function mettreAJour(dryRun: boolean, sortieForcee?: string): Promise<numb
         if (!dryRun) ecrireCoffre(coffre); // TikTok peut renvoyer un nouveau refresh_token : on garde le dernier
       }
       const profil = await lireProfil(fetch, j.access_token);
-      const videos = await lireVideos(fetch, j.access_token, Math.max(1, Number(env.MAX_VIDEOS) || 60));
-      const r = resumer(profil, videos);
+      // Les vidéos peuvent échouer côté TikTok (erreur 500) : on garde quand même le profil (abonnés, likes).
+      let videos: Awaited<ReturnType<typeof lireVideos>> = [];
+      let avertissement = '';
+      try {
+        videos = await lireVideos(fetch, j.access_token, Math.max(1, Number(env.MAX_VIDEOS) || 60));
+      } catch (err) {
+        if (err instanceof ErreurTikTok && err.statut === 401) throw err;
+        avertissement = `vidéos indisponibles pour l'instant (${(err as Error).message})`;
+      }
+      const r = { ...resumer(profil, videos), ...(avertissement ? { avertissement } : {}) };
       resultat[nom] = r;
-      log.info('%s : %s abonnés, %d vues sur 30 jours (%d vidéos), meilleure : %s vues.', nom, r.abonnes ?? '?', r.vues30j, r.videos30j, r.meilleures[0]?.vues ?? 0);
+      if (avertissement) log.warn('%s : %s abonnés, %s likes au total. Les vues par vidéo ne sont pas disponibles : %s', nom, r.abonnes ?? '?', r.likes ?? '?', avertissement);
+      else log.info('%s : %s abonnés, %d vues sur 30 jours (%d vidéos), meilleure : %s vues.', nom, r.abonnes ?? '?', r.vues30j, r.videos30j, r.meilleures[0]?.vues ?? 0);
     } catch (err) {
       erreurs++;
       resultat[nom] = { erreur: (err as Error).message };

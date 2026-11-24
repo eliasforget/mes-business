@@ -110,9 +110,9 @@ async function appel<T>(f: Fetch, jeton: string, methode: 'GET' | 'POST', chemin
     headers: { Authorization: `Bearer ${jeton}`, ...(corps ? { 'Content-Type': 'application/json' } : {}) },
     body: corps ? JSON.stringify(corps) : undefined,
   });
-  const json = (await rep.json().catch(() => ({}))) as { data?: T; error?: { code?: string; message?: string } };
+  const json = (await rep.json().catch(() => ({}))) as { data?: T; error?: { code?: string; message?: string; log_id?: string } };
   const code = json.error?.code;
-  if (!rep.ok || (code && code !== 'ok')) throw new ErreurTikTok(`API TikTok ${chemin} (${rep.status}) : ${json.error?.message || code || 'erreur inconnue'}`, code, rep.status);
+  if (!rep.ok || (code && code !== 'ok')) throw new ErreurTikTok(`API TikTok ${chemin} (${rep.status}) : ${json.error?.message || code || 'erreur inconnue'}${json.error?.log_id ? ` [log_id ${json.error.log_id}]` : ''}`, code, rep.status);
   return json.data as T;
 }
 
@@ -126,17 +126,42 @@ export async function lireProfil(f: Fetch, jeton: string): Promise<Profil> {
   }
 }
 
-/** Dernières vidéos publiques (20 par page, au plus « max »). */
-export async function lireVideos(f: Fetch, jeton: string, max = 60): Promise<VideoTikTok[]> {
-  const videos: VideoTikTok[] = [];
-  let curseur: number | undefined;
-  while (videos.length < max) {
-    const d = await appel<{ videos?: VideoTikTok[]; cursor?: number; has_more?: boolean }>(f, jeton, 'POST', '/video/list/', CHAMPS_VIDEO, { max_count: 20, ...(curseur ? { cursor: curseur } : {}) });
-    videos.push(...(d.videos ?? []));
-    if (!d.has_more || !d.cursor || !(d.videos ?? []).length) break;
-    curseur = d.cursor;
+/** Champs minimaux, si TikTok refuse la liste complète (certains comptes ou le mode sandbox). */
+export const CHAMPS_VIDEO_MINI = ['id', 'create_time', 'view_count', 'like_count', 'comment_count', 'share_count'];
+
+const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Dernières vidéos publiques (au plus « max »). TikTok renvoie parfois une erreur 500 sur /video/list/ :
+ * on réessaie, puis avec moins de champs et des pages plus petites, avant d'abandonner.
+ */
+export async function lireVideos(f: Fetch, jeton: string, max = 60, attente = 1500): Promise<VideoTikTok[]> {
+  const essais: { champs: string[]; parPage: number }[] = [
+    { champs: CHAMPS_VIDEO, parPage: 20 },
+    { champs: CHAMPS_VIDEO, parPage: 20 },
+    { champs: CHAMPS_VIDEO_MINI, parPage: 20 },
+    { champs: CHAMPS_VIDEO_MINI, parPage: 10 },
+  ];
+  let derniere: unknown;
+  for (const [i, e] of essais.entries()) {
+    try {
+      const videos: VideoTikTok[] = [];
+      let curseur: number | undefined;
+      while (videos.length < max) {
+        const d = await appel<{ videos?: VideoTikTok[]; cursor?: number; has_more?: boolean }>(f, jeton, 'POST', '/video/list/', e.champs, { max_count: e.parPage, ...(curseur ? { cursor: curseur } : {}) });
+        videos.push(...(d.videos ?? []));
+        if (!d.has_more || !d.cursor || !(d.videos ?? []).length) break;
+        curseur = d.cursor;
+      }
+      return videos.slice(0, max);
+    } catch (err) {
+      derniere = err;
+      // Seules les erreurs passagères ou de serveur valent un nouvel essai (pas 401 ou portée manquante).
+      if (!(err instanceof ErreurTikTok) || (err.statut !== undefined && err.statut < 500 && err.statut !== 429)) throw err;
+      if (i < essais.length - 1) await pause(attente * (i + 1));
+    }
   }
-  return videos.slice(0, max);
+  throw derniere;
 }
 
 /** Résumé lisible pour le tableau de bord. */

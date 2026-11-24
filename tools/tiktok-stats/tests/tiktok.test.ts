@@ -48,3 +48,21 @@ test('vidéos : pagination par curseur, puis résumé', async () => {
   assert.equal(r.vues30j, 500);
   assert.equal(r.meilleures[0]!.titre, 'A');
 });
+
+test('lireVideos réessaie après une erreur 500, puis avec moins de champs', async () => {
+  const appels: string[] = [];
+  const f: Fetch = async (url) => {
+    appels.push(String(url));
+    const mini = !String(url).includes('video_description');
+    if (!mini) return new Response(JSON.stringify({ error: { code: 'internal_error', message: 'Something is wrong.' } }), { status: 500 });
+    return new Response(JSON.stringify({ data: { videos: [{ id: '1', view_count: 42 }], has_more: false }, error: { code: 'ok' } }), { status: 200 });
+  };
+  const v = await lireVideos(f, 'jeton', 60, 1);
+  assert.deepEqual(v.map((x) => x.view_count), [42]);
+  assert.equal(appels.length, 3); // 2 essais complets, puis champs réduits
+});
+
+test('lireVideos abandonne après tous les essais et garde l\'erreur', async () => {
+  const f: Fetch = async () => new Response(JSON.stringify({ error: { code: 'internal_error', message: 'Something is wrong.', log_id: 'abc' } }), { status: 500 });
+  await assert.rejects(lireVideos(f, 'jeton', 60, 1), /500.*log_id abc/);
+});
