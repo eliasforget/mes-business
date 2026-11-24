@@ -26,10 +26,12 @@ $lanceur = Join-Path $PSScriptRoot 'usine.cmd'
 # conhost --headless : aucune fenêtre ne s'ouvre pendant que tu joues ou travailles.
 $action = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument "--headless cmd.exe /c `"$lanceur`"" -WorkingDirectory $PSScriptRoot
 $regulier = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(2) -RepetitionInterval (New-TimeSpan -Minutes $Minutes)
-$ouverture = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+# Nom complet du compte (PC\utilisateur) : le nom court seul est refusé par le Planificateur sur certains PC.
+$moi = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+$ouverture = New-ScheduledTaskTrigger -AtLogOn -User $moi
 $reglages = New-ScheduledTaskSettingsSet -StartWhenAvailable -MultipleInstances IgnoreNew `
   -ExecutionTimeLimit (New-TimeSpan -Hours 3) -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RunOnlyIfNetworkAvailable
-$compte = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Limited
+$compte = New-ScheduledTaskPrincipal -UserId $moi -LogonType Interactive -RunLevel Limited
 
 Register-ScheduledTask -TaskName $NomTache -Action $action -Trigger $regulier, $ouverture -Settings $reglages -Principal $compte `
   -Description "Récupère sur GitHub les vidéos préparées par les agents, les fabrique (voix, fonds, rendu) et les range dans « A publier »." -Force | Out-Null
