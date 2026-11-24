@@ -12,6 +12,7 @@
  *   voix.alignement.json              ou alignement brut ElevenLabs (characters + start/end times)
  *   musique.mp3                       musique propre à la vidéo (sinon un morceau de musique\ ou de MUSIQUE)
  *   fonds/*.mp4                       clips propres à la vidéo (prioritaires sur la bibliothèque)
+ *   gameplay.mp4                      capture de jeu, si le script a une section « gameplay » (écrite par vr-clips)
  */
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, linkSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -20,8 +21,8 @@ import path from 'node:path';
 import { format, parseArgs } from 'node:util';
 import { createLogger, envBool, loadEnv } from '../../shared/index.ts';
 import {
-  construirePlan, motsDepuisElevenLabs, motsSynthetiques, normaliser, verifierScript,
-  type AlignementElevenLabs, type ClipDisponible, type Mot, type ScriptVideo,
+  construirePlan, construirePlanJeu, fenetreGameplay, motsDepuisElevenLabs, motsSynthetiques, normaliser, verifierScript,
+  type AlignementElevenLabs, type ClipDisponible, type Mot, type PlanVideo, type ScriptVideo,
 } from './src/plan.ts';
 
 const ICI = import.meta.dirname;
@@ -33,6 +34,7 @@ const env = loadEnv({
   defaults: {
     BIBLIOTHEQUE_FONDS: '', MUSIQUE: '', VOLUME_MUSIQUE: '0.12', DUREE_MIN_CIBLE: '30', RYTHME_FONDS: '2.2', CRF: '18', CONCURRENCE: '',
     NAVIGATEUR: '', MARQUE_NOM: 'VICE', MARQUE_ACCENT: 'RADAR', DOSSIER_SORTIE: '',
+    GARDER_S: '35', VOLUME_JEU: '1', VOLUME_JEU_SOUS_VOIX: '0.25', VOLUME_MUSIQUE_JEU: '0', CADRAGE: 'flou',
   },
 });
 const journal = createLogger('vr-video');
@@ -183,39 +185,99 @@ async function main(): Promise<number> {
     }
   }
 
-  // ── Clips de fond ──
-  const dossierBiblio = env.BIBLIOTHEQUE_FONDS ? path.resolve(env.BIBLIOTHEQUE_FONDS) : path.join(ICI, 'bibliotheque');
-  const index = existsSync(path.join(dossierBiblio, 'index.json')) ? lireJson<Record<string, { motsCles?: string[] }>>(path.join(dossierBiblio, 'index.json')) : {};
-  const sources = new Map<string, string>(); // chemin public → fichier réel
-  const clips: ClipDisponible[] = [];
-  for (const [prefixe, liste] of [['fonds', listerClips(path.join(dossier, 'fonds'))], ['biblio', listerClips(dossierBiblio)]] as const) {
-    for (const f of liste) {
-      const chemin = `${prefixe}/${path.basename(f)}`;
-      try {
-        clips.push({ chemin, duree: await dureeMedia(f), motsCles: motsClesClip(f, index) });
-        sources.set(chemin, f);
-      } catch (err) {
-        log.warn('Clip ignoré (illisible) : %s (%s)', path.basename(f), (err as Error).message);
+  const musique = choisirMusique(dossier, nom, env.MUSIQUE, path.join(ICI, 'musique'));
+  const marque = { nom: env.MARQUE_NOM, accent: env.MARQUE_ACCENT };
+  /** Fichiers à copier dans le dossier public du rendu : chemin public → fichier réel. */
+  const publics = new Map<string, string>();
+  if (voix) publics.set(`audio/voix${path.extname(voix)}`, voix);
+  if (musique) publics.set(`audio/musique${path.extname(musique)}`, musique);
+  const audio = voix ? `audio/voix${path.extname(voix)}` : null;
+  const cheminMusique = musique ? `audio/musique${path.extname(musique)}` : null;
+
+  let plan: PlanVideo;
+  let compositionId: string;
+  let inputProps: Record<string, unknown>;
+
+  if (script.gameplay) {
+    // ── Vidéo de gameplay : la capture remplace les clips de fond ──
+    const g = script.gameplay;
+    const fichierJeu = path.join(dossier, g.fichier ?? 'gameplay.mp4');
+    if (!existsSync(fichierJeu)) throw new Error(`Capture de jeu introuvable : ${fichierJeu}`);
+    const dureeClip = await dureeMedia(fichierJeu);
+    const fenetre = fenetreGameplay(dureeClip, g, nombre('GARDER_S', 3, 600));
+    plan = construirePlanJeu(script, mots, fenetre);
+    const finVoix = mots[mots.length - 1]?.fin ?? 0;
+    const cadrage = g.cadrage ?? (env.CADRAGE === 'remplir' ? 'remplir' : 'flou');
+    const publicJeu = `jeu/gameplay${path.extname(fichierJeu)}`;
+    publics.set(publicJeu, fichierJeu);
+    compositionId = 'ViceRadarJeu';
+    inputProps = {
+      plan,
+      gameplay: { src: publicJeu, depuis: fenetre.depuis, cadrage },
+      audio,
+      musique: cheminMusique,
+      volumeMusique: nombre('VOLUME_MUSIQUE_JEU', 0, 1),
+      volumeJeu: g.volume ?? nombre('VOLUME_JEU', 0, 1),
+      volumeJeuSousVoix: nombre('VOLUME_JEU_SOUS_VOIX', 0, 1),
+      finVoix,
+      marque,
+      appelAction: script.fin ?? null,
+      barreProgression: envBool('BARRE_PROGRESSION', true),
+    };
+    log.info('« %s » (gameplay) : %ss gardées sur %ss de capture (à partir de %ss), cadrage %s, voix %s (%ss), musique %s',
+      script.titre ?? nom, fenetre.duree.toFixed(1), dureeClip.toFixed(1), fenetre.depuis.toFixed(1), cadrage,
+      voix ? path.basename(voix) : 'aucune', finVoix.toFixed(1), musique && Number(inputProps.volumeMusique) > 0 ? path.basename(musique) : 'coupée');
+    if (finVoix > fenetre.duree - 2) log.warn('  La voix (%ss) est presque aussi longue que le passage de jeu (%ss) : raccourcis l\'accroche ou garde plus de jeu (gameplay.duree).', finVoix.toFixed(1), fenetre.duree.toFixed(1));
+  } else {
+    // ── Clips de fond ──
+    const dossierBiblio = env.BIBLIOTHEQUE_FONDS ? path.resolve(env.BIBLIOTHEQUE_FONDS) : path.join(ICI, 'bibliotheque');
+    const index = existsSync(path.join(dossierBiblio, 'index.json')) ? lireJson<Record<string, { motsCles?: string[] }>>(path.join(dossierBiblio, 'index.json')) : {};
+    const sources = new Map<string, string>(); // chemin public → fichier réel
+    const clips: ClipDisponible[] = [];
+    for (const [prefixe, liste] of [['fonds', listerClips(path.join(dossier, 'fonds'))], ['biblio', listerClips(dossierBiblio)]] as const) {
+      for (const f of liste) {
+        const chemin = `${prefixe}/${path.basename(f)}`;
+        try {
+          clips.push({ chemin, duree: await dureeMedia(f), motsCles: motsClesClip(f, index) });
+          sources.set(chemin, f);
+        } catch (err) {
+          log.warn('Clip ignoré (illisible) : %s (%s)', path.basename(f), (err as Error).message);
+        }
       }
     }
+    // Les clips propres à la vidéo sont prioritaires : on ne garde la bibliothèque que si la scène n'en a pas.
+    plan = construirePlan(script, mots, clips, nombre('RYTHME_FONDS', 0.8, 10));
+    for (const c of new Set(plan.fonds.map((f) => f.clip).filter((c): c is string => !!c))) publics.set(c, sources.get(c)!);
+    compositionId = 'ViceRadar';
+    inputProps = {
+      plan,
+      audio,
+      musique: cheminMusique,
+      volumeMusique: nombre('VOLUME_MUSIQUE', 0, 1),
+      marque,
+      appelAction: script.fin ?? null,
+      barreProgression: envBool('BARRE_PROGRESSION', true),
+      boucle: envBool('BOUCLE', true),
+    };
+
+    // ── Résumé du plan ──
+    log.info('« %s » : %ss, %d scènes, %d sous-titres, %d plans de fond (%d avec clip), voix %s, musique %s',
+      script.titre ?? nom, plan.duree.toFixed(1), plan.scenes.length, plan.sousTitres.length, plan.fonds.length,
+      plan.fonds.filter((f) => f.clip).length, voix ? path.basename(voix) : 'aucune', musique ? path.basename(musique) : 'aucune');
+    plan.scenes.forEach((s, i) => log.info('  scène %d  %s → %ss  %s', i + 1, s.debut.toFixed(2).padStart(6), s.fin.toFixed(2), s.tag ?? s.lignes?.[0]?.texte ?? ''));
+    if (!clips.length) log.info('  Aucun clip trouvé (%s) : fond synthwave animé.', dossierBiblio);
+    if (!musique) log.warn('  Pas de musique : mets des morceaux dans %s (ou musique.mp3 dans le dossier de la vidéo).', path.join(ICI, 'musique'));
   }
-  // Les clips propres à la vidéo sont prioritaires : on ne garde la bibliothèque que si la scène n'en a pas.
-  const plan = construirePlan(script, mots, clips, nombre('RYTHME_FONDS', 0.8, 10));
 
-  const musique = choisirMusique(dossier, nom, env.MUSIQUE, path.join(ICI, 'musique'));
-
-  // ── Résumé du plan ──
-  log.info('« %s » : %ss, %d scènes, %d sous-titres, %d plans de fond (%d avec clip), voix %s, musique %s',
-    script.titre ?? nom, plan.duree.toFixed(1), plan.scenes.length, plan.sousTitres.length, plan.fonds.length,
-    plan.fonds.filter((f) => f.clip).length, voix ? path.basename(voix) : 'aucune', musique ? path.basename(musique) : 'aucune');
-  plan.scenes.forEach((s, i) => log.info('  scène %d  %s → %ss  %s', i + 1, s.debut.toFixed(2).padStart(6), s.fin.toFixed(2), s.tag ?? s.lignes?.[0]?.texte ?? ''));
-  if (!clips.length) log.info('  Aucun clip trouvé (%s) : fond synthwave animé.', dossierBiblio);
-  if (!musique) log.warn('  Pas de musique : mets des morceaux dans %s (ou musique.mp3 dans le dossier de la vidéo).', path.join(ICI, 'musique'));
   const cible = nombre('DUREE_MIN_CIBLE', 0, 180);
   if (cible && plan.duree < cible) {
-    const motsParSeconde = mots.length / Math.max(1, mots[mots.length - 1]?.fin ?? plan.duree);
-    log.warn('  Vidéo de %ss, sous les %s s visées : ajoute ~%d mots dans les « voix » du script (une scène de plus, par exemple), puis régénère la voix.',
-      plan.duree.toFixed(1), cible, Math.ceil((cible - plan.duree) * motsParSeconde));
+    if (script.gameplay) {
+      log.warn('  Vidéo de %ss, sous les %s s visées : garde plus de jeu (gameplay.duree dans le script, ou GARDER_S).', plan.duree.toFixed(1), cible);
+    } else {
+      const motsParSeconde = mots.length / Math.max(1, mots[mots.length - 1]?.fin ?? plan.duree);
+      log.warn('  Vidéo de %ss, sous les %s s visées : ajoute ~%d mots dans les « voix » du script (une scène de plus, par exemple), puis régénère la voix.',
+        plan.duree.toFixed(1), cible, Math.ceil((cible - plan.duree) * motsParSeconde));
+    }
   }
 
   const dossierSortie = env.DOSSIER_SORTIE ? path.resolve(env.DOSSIER_SORTIE) : path.join(ICI, 'sortie');
@@ -230,28 +292,14 @@ async function main(): Promise<number> {
   // ── Dossier public du rendu : uniquement les fichiers utilisés ──
   const publicDir = path.join(ICI, '.rendu', nom, 'public');
   rmSync(path.join(ICI, '.rendu', nom), { recursive: true, force: true });
-  const utilises = new Set(plan.fonds.map((f) => f.clip).filter((c): c is string => !!c));
-  for (const c of utilises) placer(sources.get(c)!, path.join(publicDir, c));
-  if (voix) placer(voix, path.join(publicDir, `audio/voix${path.extname(voix)}`));
-  if (musique) placer(musique, path.join(publicDir, `audio/musique${path.extname(musique)}`));
-
-  const inputProps = {
-    plan,
-    audio: voix ? `audio/voix${path.extname(voix)}` : null,
-    musique: musique ? `audio/musique${path.extname(musique)}` : null,
-    volumeMusique: nombre('VOLUME_MUSIQUE', 0, 1),
-    marque: { nom: env.MARQUE_NOM, accent: env.MARQUE_ACCENT },
-    appelAction: script.fin ?? null,
-    barreProgression: envBool('BARRE_PROGRESSION', true),
-    boucle: envBool('BOUCLE', true),
-  };
+  for (const [cible, source] of publics) placer(source, path.join(publicDir, cible));
 
   const { bundle } = await import('@remotion/bundler');
   const { renderMedia, renderStill, selectComposition } = await import('@remotion/renderer');
   log.info('Préparation du rendu (la première fois prend plus longtemps)…');
   const serveUrl = await bundle({ entryPoint: path.join(ICI, 'src', 'index.ts'), publicDir });
   const browserExecutable = env.NAVIGATEUR || null;
-  const composition = await selectComposition({ serveUrl, id: 'ViceRadar', inputProps, browserExecutable });
+  const composition = await selectComposition({ serveUrl, id: compositionId, inputProps, browserExecutable });
 
   if (values.apercu) {
     for (const s of values.apercu.split(/[,;\s]+/).filter(Boolean).map((x) => Number(x.replace(',', '.')))) {

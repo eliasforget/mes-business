@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import {
-  construirePlan, decouperMots, grouperSousTitres, motsDepuisElevenLabs, motsSynthetiques, placerScenes,
+  construirePlan, construirePlanJeu, decouperMots, fenetreGameplay, grouperSousTitres, motsDepuisElevenLabs, motsSynthetiques, placerScenes,
   planifierFonds, verifierScript, type ClipDisponible, type Mot, type Scene, type ScriptVideo,
 } from '../src/plan.ts';
 
@@ -91,5 +91,34 @@ test('vérification du script : exemple valide, erreurs lisibles sinon', () => {
   assert.deepEqual(verifierScript(exemple), []);
   assert.deepEqual(verifierScript({ scenes: [] }), ['« scenes » doit être une liste non vide.']);
   const e = verifierScript({ scenes: [{ voix: '', lignes: [{ texte: 'x', style: 'énorme' }], chiffre: { valeur: '3' } }] });
+  assert.equal(e.length, 3);
+});
+
+test('gameplay : par défaut les dernières secondes du clip, sinon début/durée demandés, jamais au-delà du clip', () => {
+  assert.deepEqual(fenetreGameplay(60, {}, 35), { depuis: 60 - 0.05 - 35, duree: 35 });
+  // Clip plus court que la durée voulue : on garde tout.
+  const court = fenetreGameplay(20, {}, 35);
+  assert.equal(court.depuis, 0);
+  assert.ok(Math.abs(court.duree - 19.95) < 1e-9);
+  assert.deepEqual(fenetreGameplay(60, { debut: 10, duree: 30 }), { depuis: 10, duree: 30 });
+  assert.ok(Math.abs(fenetreGameplay(60, { debut: 50, duree: 30 }).duree - 9.95) < 1e-9);
+  assert.ok(Math.abs(fenetreGameplay(60, { duree: 40 }).depuis - 19.95) < 1e-9);
+  // Début après la fin du clip : ramené dans le clip.
+  const loin = fenetreGameplay(30, { debut: 99 });
+  assert.ok(loin.depuis < 30 && loin.duree > 0);
+});
+
+test('gameplay : la vidéo dure le passage gardé, sans fonds, la dernière scène va jusqu\'au bout', () => {
+  const script: ScriptVideo = { gameplay: {}, scenes: [{ voix: 'Que se passe-t-il si tu restes sur la route ?' }] };
+  const plan = construirePlanJeu(script, motsSynthetiques(script.scenes), { depuis: 20, duree: 35 });
+  assert.equal(plan.duree, 35);
+  assert.equal(plan.fonds.length, 0);
+  assert.equal(plan.scenes[0]!.fin, 35);
+  assert.ok(plan.sousTitres.length > 0);
+});
+
+test('gameplay : vérification des réglages', () => {
+  assert.deepEqual(verifierScript({ scenes: [{ voix: 'a' }], gameplay: { fichier: 'gameplay.mp4', duree: 30, cadrage: 'flou' } }), []);
+  const e = verifierScript({ scenes: [{ voix: 'a' }], gameplay: { duree: -1, volume: 2, cadrage: 'carre' } });
   assert.equal(e.length, 3);
 });

@@ -11,6 +11,7 @@ Petits outils d'automatisation pour mon PC perso (Windows 11). Chaque outil est 
 | [vr-video](tools/vr-video) | Vice Radar : Short 9:16 animé (accroche dès l'image 0, sous-titres karaoké, fonds qui changent) à partir d'un script JSON | TypeScript (Remotion) | Manuel (`.\rendu.cmd`) | 🧪 |
 | [vr-voix](tools/vr-voix) | Vice Radar : voix off ElevenLabs + minutage par mot depuis le script de vr-video (sans redépense si rien n'a changé) | TypeScript | Manuel (`.\voix.cmd`) | 🧪 |
 | [vr-fonds](tools/vr-fonds) | Vice Radar : clips Pixabay (verticaux, sinon 4K recadrés) choisis d'après les mots-clés des scènes, avec crédits | TypeScript | Manuel (`.\fonds.cmd`) | 🧪 |
+| [vr-clips](tools/vr-clips) | Vice Radar : captures PS5 → vidéos de gameplay (liste de tournage, accroche, textes de publication), puis voix et rendu en une commande | TypeScript | Manuel (`.\clips.cmd --produire`) | 🧪 |
 
 Statuts : 🧪 en test · ✅ en service · 💤 en pause · 🗄️ archivé
 

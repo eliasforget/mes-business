@@ -38,11 +38,31 @@ export interface Scene {
   duree?: number;
 }
 
+/**
+ * Vidéo de gameplay (capture PS5) : la vidéo dure le temps du passage de jeu gardé, la voix ne fait que
+ * l'accroche du début. Sans « debut » ni « duree », on garde les dernières secondes du clip : avec la touche
+ * Créer, le moment intéressant est à la fin de l'enregistrement.
+ */
+export interface Gameplay {
+  /** Fichier vidéo dans le dossier de la vidéo (défaut : gameplay.mp4). */
+  fichier?: string;
+  /** Début du passage gardé, en secondes depuis le début du clip. */
+  debut?: number;
+  /** Durée gardée, en secondes (défaut : GARDER_S du .env). */
+  duree?: number;
+  /** Volume du son du jeu après l'accroche, de 0 à 1 (défaut : VOLUME_JEU du .env). */
+  volume?: number;
+  /** « flou » : image entière du jeu sur fond flouté (défaut). « remplir » : recadrée plein écran. */
+  cadrage?: 'flou' | 'remplir';
+}
+
 export interface ScriptVideo {
   titre?: string;
   scenes: Scene[];
   /** Texte d'appel à l'action affiché sur la fin (ex. « Abonne-toi pour le secret n°5 »). */
   fin?: string;
+  /** Présent : vidéo de gameplay (voir Gameplay) au lieu du motion design sur clips de fond. */
+  gameplay?: Gameplay;
 }
 
 export interface ScenePlanifiee extends Scene {
@@ -259,6 +279,39 @@ export function construirePlan(script: ScriptVideo, mots: Mot[], clips: ClipDisp
   return { scenes, mots, sousTitres: grouperSousTitres(mots), fonds: planifierFonds(scenes, clips, rythme), duree };
 }
 
+// ── Gameplay ───────────────────────────────────────────────────────────────
+
+export interface FenetreGameplay {
+  depuis: number; // secondes dans le clip
+  duree: number;  // secondes gardées
+}
+
+/**
+ * Passage du clip à garder. Par défaut les `garder` dernières secondes (le moment est à la fin d'un clip
+ * enregistré avec la touche Créer). On s'arrête 0,05 s avant la fin réelle : la toute dernière image d'un
+ * clip est parfois illisible.
+ */
+export function fenetreGameplay(dureeClip: number, g: Gameplay, garder = 35): FenetreGameplay {
+  const utile = Math.max(0.5, dureeClip - 0.05);
+  if (g.debut !== undefined) {
+    const depuis = Math.min(Math.max(0, g.debut), Math.max(0, utile - 0.5));
+    return { depuis, duree: Math.min(g.duree ?? utile - depuis, utile - depuis) };
+  }
+  const duree = Math.min(g.duree ?? garder, utile);
+  return { depuis: utile - duree, duree };
+}
+
+/**
+ * Plan d'une vidéo de gameplay : pas de clips de fond, la vidéo dure le passage gardé (ou la voix, si elle
+ * est plus longue), et la dernière scène court jusqu'au bout.
+ */
+export function construirePlanJeu(script: ScriptVideo, mots: Mot[], fenetre: FenetreGameplay): PlanVideo {
+  const plan = construirePlan(script, mots, []);
+  const duree = Math.max(fenetre.duree, plan.duree);
+  const scenes = plan.scenes.map((s, i) => (i === plan.scenes.length - 1 ? { ...s, fin: duree } : s));
+  return { ...plan, scenes, duree, fonds: [] };
+}
+
 /** Vérifie un script et renvoie la liste des problèmes (vide si tout va bien). */
 export function verifierScript(script: unknown): string[] {
   const erreurs: string[] = [];
@@ -273,5 +326,14 @@ export function verifierScript(script: unknown): string[] {
     if (sc?.chiffre && typeof sc.chiffre.valeur !== 'number') erreurs.push(`${n}.chiffre.valeur : nombre obligatoire.`);
     if (sc?.duree !== undefined && !(typeof sc.duree === 'number' && sc.duree > 0)) erreurs.push(`${n}.duree : nombre de secondes > 0.`);
   });
+  const g = s.gameplay;
+  if (g !== undefined) {
+    if (!g || typeof g !== 'object') return [...erreurs, '« gameplay » doit être un objet ({ "fichier": "gameplay.mp4" }).'];
+    if (g.fichier !== undefined && (typeof g.fichier !== 'string' || !g.fichier.trim())) erreurs.push('gameplay.fichier : nom de fichier vidéo.');
+    if (g.debut !== undefined && !(typeof g.debut === 'number' && g.debut >= 0)) erreurs.push('gameplay.debut : nombre de secondes ≥ 0.');
+    if (g.duree !== undefined && !(typeof g.duree === 'number' && g.duree > 0)) erreurs.push('gameplay.duree : nombre de secondes > 0.');
+    if (g.volume !== undefined && !(typeof g.volume === 'number' && g.volume >= 0 && g.volume <= 1)) erreurs.push('gameplay.volume : nombre entre 0 et 1.');
+    if (g.cadrage !== undefined && !['flou', 'remplir'].includes(g.cadrage)) erreurs.push('gameplay.cadrage : « flou » ou « remplir ».');
+  }
   return erreurs;
 }

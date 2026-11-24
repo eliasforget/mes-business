@@ -102,8 +102,11 @@ export async function genererVoix(dossier: string, cfg: Config, opts: { dryRun?:
   log(`Texte (${texte.length} caractères, ~${cout} crédits) : « ${texte} »`);
   const vitesse = cfg.reglages.speed ?? 1;
   const duree = dureeEstimee(texte, vitesse);
-  const manque = opts.dureeMinCible ? motsManquants(texte, vitesse, opts.dureeMinCible) : 0;
-  log(manque
+  // Vidéo de gameplay : la voix ne fait que l'accroche, la durée vient de la capture de jeu.
+  const gameplay = !!(script as { gameplay?: unknown }).gameplay;
+  const manque = opts.dureeMinCible && !gameplay ? motsManquants(texte, vitesse, opts.dureeMinCible) : 0;
+  if (gameplay) log(`Accroche d'une vidéo de gameplay : ~${Math.round(duree)} s de voix (la durée de la vidéo vient de la capture).`);
+  else log(manque
     ? `ATTENTION : ~${Math.round(duree)} s estimées, sous les ${opts.dureeMinCible} s visées. Ajoute ~${manque} mots dans les « voix » du script avant de générer (sinon tu paies une voix trop courte).`
     : `Durée estimée : ~${Math.round(duree)} s.`);
 

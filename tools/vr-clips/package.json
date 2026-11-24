@@ -1,0 +1,10 @@
+{
+  "name": "vr-clips",
+  "private": true,
+  "type": "module",
+  "description": "Vice Radar : captures PS5 → vidéos de gameplay prêtes à rendre (liste de tournage, script, textes de publication)",
+  "scripts": {
+    "clips": "node --experimental-strip-types --no-warnings=ExperimentalWarning clips.ts",
+    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test tests/clips.test.ts"
+  }
+}

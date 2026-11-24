@@ -132,3 +132,15 @@ test('durée estimée et mots manquants pour atteindre la cible', () => {
   assert.equal(motsManquants(texte63, 1.05, 30), 23);
   assert.equal(motsManquants(texte63, 1.05, 20), 0);
 });
+
+test('vidéo de gameplay : pas d\'alerte de durée sur une accroche courte', async () => {
+  const lignes: string[] = [];
+  const d = dossierTemp({ gameplay: {}, scenes: [{ voix: 'Que se passe-t-il si tu restes sur la route ?' }] });
+  try {
+    await genererVoix(d, CFG, { dryRun: true, dureeMinCible: 30, log: (m) => lignes.push(m) });
+    assert.ok(!lignes.some((l) => l.includes('ATTENTION')));
+    assert.ok(lignes.some((l) => l.includes('gameplay')));
+  } finally {
+    rmSync(d, { recursive: true, force: true });
+  }
+});

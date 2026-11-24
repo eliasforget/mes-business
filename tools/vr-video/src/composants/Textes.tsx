@@ -119,8 +119,8 @@ export const BlocTitre: React.FC<{ scene: ScenePlanifiee; immediat: boolean; dur
   );
 };
 
-/** Sous-titres « karaoké » : 1 à 3 mots, le mot prononcé est coloré et grossit. */
-export const SousTitres: React.FC<{ groupes: GroupeSousTitre[] }> = ({ groupes }) => {
+/** Sous-titres « karaoké » : 1 à 3 mots, le mot prononcé est coloré et grossit. `haut` : position verticale (px). */
+export const SousTitres: React.FC<{ groupes: GroupeSousTitre[]; haut?: number }> = ({ groupes, haut = 1310 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const t = frame / fps;
@@ -132,7 +132,7 @@ export const SousTitres: React.FC<{ groupes: GroupeSousTitre[] }> = ({ groupes }
   return (
     <AbsoluteFill style={{ justifyContent: 'flex-start', alignItems: 'center' }}>
       <div style={{
-        position: 'absolute', top: 1310, width: 960, display: 'flex', flexWrap: 'wrap', justifyContent: 'center',
+        position: 'absolute', top: haut, width: 960, display: 'flex', flexWrap: 'wrap', justifyContent: 'center',
         columnGap: 36, rowGap: 6, transform: `scale(${pop})`, fontFamily: TEXTE, fontWeight: 900, fontSize: 82, lineHeight: 1.15,
       }}>
         {groupe.mots.map((m, i) => {

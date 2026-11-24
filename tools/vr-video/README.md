@@ -85,6 +85,27 @@ Sans fichier de minutage, les sous-titres sont calés approximativement sur la d
 | `fonds` | noms de clips imposés pour cette scène |
 | `duree` | secondes, seulement sans voix |
 
+## Vidéos de gameplay
+
+Un script avec une section `gameplay` donne une vidéo construite autour d'une capture de jeu (dossiers créés par [vr-clips](../vr-clips)) :
+
+- la question de l'expérience reste affichée en haut pendant toute la vidéo ;
+- l'image du jeu occupe le centre, entière sur un fond flouté (`"cadrage": "remplir"` pour la recadrer plein écran) ;
+- la voix dit l'accroche au début, avec des sous-titres sous l'image. Le son du jeu reste bas pendant la voix (`VOLUME_JEU_SOUS_VOIX`), puis remonte ;
+- l'appel à l'action (`fin`) apparaît sur les 3,5 dernières secondes. Pas de musique par défaut (`VOLUME_MUSIQUE_JEU`).
+
+La vidéo dure le passage de jeu gardé : les `GARDER_S` dernières secondes de la capture (35 par défaut), ou `debut` et `duree` dans la section `gameplay`.
+
+```json
+{
+  "titre": "E01 — Planté au milieu de la route",
+  "gameplay": { "fichier": "gameplay.mp4", "duree": 35 },
+  "scenes": [{ "tag": "EXPÉRIENCE GTA 6", "lignes": [{ "texte": "Planté au milieu" }, { "texte": "de la route", "style": "accent" }],
+               "voix": "Que se passe-t-il si tu restes planté au milieu de la route dans GTA 6 ? Regarde bien la fin." }],
+  "fin": "Je teste quoi ensuite ? Dis-le en commentaire"
+}
+```
+
 ## Clips de fond
 
 Mets des MP4 verticaux dans `bibliotheque\` (ou le dossier `BIBLIOTHEQUE_FONDS`), nommés avec des mots-clés : `miami-nuit-neons-01.mp4`, `voiture-sport-route-02.mp4`, `marais-floride-03.mp4`. Utilise des vidéos libres de droits pour un usage commercial (Pixabay ou Pexels par exemple), **pas des extraits d'autres créateurs**. `vr-fonds` remplit ce dossier automatiquement depuis Pixabay.
