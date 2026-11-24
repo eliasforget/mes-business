@@ -5,6 +5,7 @@ import { construirePlan, construirePlanJeu, motsSynthetiques, type ScriptVideo }
 import { FPS, HAUTEUR, LARGEUR } from './theme';
 import { ViceRadar, type ProprietesViceRadar } from './ViceRadar';
 import { ViceRadarJeu, type ProprietesViceRadarJeu } from './ViceRadarJeu';
+import { Compilation, dureeCompilation, type ProprietesCompilation } from './Compilation';
 
 // Valeurs par défaut pour « npm run studio » : l'exemple, sans audio ni clips (fond synthwave animé).
 const script = exemple as ScriptVideo;
@@ -39,8 +40,21 @@ const parDefautJeu: ProprietesViceRadarJeu = {
   barreProgression: true,
 };
 
+// Compilation 16:9 : sans vidéos dans le studio, seulement le fond.
+const parDefautCompil: ProprietesCompilation = { videos: [], marque: { nom: 'VICE', accent: 'RADAR' } };
+
 export const RemotionRoot: React.FC = () => (
   <>
+    <Composition
+      id="Compilation"
+      component={Compilation}
+      width={1920}
+      height={1080}
+      fps={FPS}
+      durationInFrames={FPS * 5}
+      defaultProps={parDefautCompil}
+      calculateMetadata={({ props }) => ({ durationInFrames: Math.max(FPS, dureeCompilation(props.videos)) })}
+    />
     <Composition
       id="ViceRadar"
       component={ViceRadar}

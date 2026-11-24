@@ -12,8 +12,19 @@ export interface EntreeEtat {
   essais?: number;
 }
 
+export interface Compil {
+  nom: string;
+  chaine: string;
+  le: string;
+  titre: string;
+  description: string;
+}
+
 export interface Etat {
   videos: Record<string, EntreeEtat>;
+  /** Dernière compilation par chaîne (AAAA-MM-JJ) et les compilations faites (les 10 dernières). */
+  compilations?: Record<string, string>;
+  compilationsFaites?: Compil[];
   /** Compteur du jour, pour ne pas vider tous les crédits ElevenLabs d'un coup. */
   jour: string; // AAAA-MM-JJ
   faitesAujourdhui: number;
@@ -93,4 +104,30 @@ export function resumeRapport(etat: Etat): { prete: string[]; erreur: string[] }
     if (e.statut === 'erreur') erreur.push(nom);
   }
   return { prete: trier(prete), erreur: trier(erreur) };
+}
+
+// ─────────────── Compilation de la semaine ───────────────
+
+/** Titre court d'un Short pour un chapitre : sans « GTA 6 : » ni « E01 — ». */
+export function titreChapitre(titre: string): string {
+  return titre.replace(/^E\d+\s*[—–-]\s*/i, '').replace(/^GTA\s*6\s*:\s*/i, '').trim() || titre;
+}
+
+/** m:ss (ou h:mm:ss) pour les chapitres YouTube. */
+export function horodatage(s: number): string {
+  const t = Math.max(0, Math.round(s));
+  const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60;
+  return h ? `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}` : `${m}:${String(sec).padStart(2, '0')}`;
+}
+
+/** Titre et description YouTube d'une compilation (chapitres : 1er à 0:00, au moins 3, 10 s minimum chacun). */
+export function textesCompilation(chaine: string, chapitres: { titre: string; debut: number }[], dureeTotale: number): { titre: string; description: string } {
+  const n = chapitres.length;
+  const minutes = Math.max(1, Math.round(dureeTotale / 60));
+  const vr = chaine === 'Vice Radar';
+  const titre = vr ? `GTA 6 : ${n} secrets et expériences de la semaine (compilation)` : `${n} faits incroyables en ${minutes} minutes`;
+  const intro = vr ? `Les ${n} vidéos Vice Radar de la semaine réunies : secrets, records et expériences dans GTA 6.` : `${n} faits étonnants expliqués en animation, réunis en ${minutes} minutes.`;
+  const chap = chapitres.map((c) => `${horodatage(c.debut)} ${titreChapitre(c.titre)}`).join('\n');
+  const tags = vr ? '#GTA6 #GTAVI #ViceCity #Compilation' : '#Faits #LeSaviezVous #Science #Compilation';
+  return { titre, description: `${intro}\nLaquelle tu préfères ? Dis-le en commentaire.\n\nChapitres :\n${chap}\n\nVoix générée par IA.\n${tags}` };
 }

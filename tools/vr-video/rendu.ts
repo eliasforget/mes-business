@@ -25,6 +25,7 @@ import {
   type AlignementElevenLabs, type ClipDisponible, type Mot, type PlanVideo, type ScriptVideo,
 } from './src/plan.ts';
 import { estTheme, theme as themeDe } from './src/themes.ts';
+import { choisirPassage } from './passage.ts';
 
 const ICI = import.meta.dirname;
 const EXTENSIONS_VIDEO = new Set(['.mp4', '.mov', '.webm', '.m4v']);
@@ -35,7 +36,7 @@ const env = loadEnv({
   defaults: {
     BIBLIOTHEQUE_FONDS: '', MUSIQUE: '', VOLUME_MUSIQUE: '0.12', DUREE_MIN_CIBLE: '30', RYTHME_FONDS: '2.2', CRF: '18', CONCURRENCE: '',
     NAVIGATEUR: '', MARQUE_NOM: 'VICE', MARQUE_ACCENT: 'RADAR', DOSSIER_SORTIE: '',
-    GARDER_S: '35', VOLUME_JEU: '1', VOLUME_JEU_SOUS_VOIX: '0.25', VOLUME_MUSIQUE_JEU: '0', CADRAGE: 'flou',
+    GARDER_S: '35', PASSAGE_AUTO: 'true', VOLUME_JEU: '1', VOLUME_JEU_SOUS_VOIX: '0.25', VOLUME_MUSIQUE_JEU: '0', CADRAGE: 'flou',
   },
 });
 const journal = createLogger('vr-video');
@@ -212,7 +213,20 @@ async function main(): Promise<number> {
     const fichierJeu = path.join(dossier, g.fichier ?? 'gameplay.mp4');
     if (!existsSync(fichierJeu)) throw new Error(`Capture de jeu introuvable : ${fichierJeu}`);
     const dureeClip = await dureeMedia(fichierJeu);
-    const fenetre = fenetreGameplay(dureeClip, g, nombre('GARDER_S', 3, 600));
+    const garder = nombre('GARDER_S', 3, 600);
+    // Passage gardé : celui du script s'il est donné, sinon le moment fort repéré dans le son et l'image.
+    let reglage = g;
+    if (g.debut === undefined && g.duree === undefined && envBool('PASSAGE_AUTO', true)) {
+      const choix = choisirPassage(fichierJeu, dureeClip, garder);
+      if (choix) {
+        reglage = { ...g, debut: choix.debut, duree: choix.duree };
+        log.info('Passage choisi tout seul : moment fort vers %ss (netteté %s), gardé de %ss à %ss.', choix.pic, choix.nettete, choix.debut.toFixed(1), (choix.debut + choix.duree).toFixed(1));
+        if (choix.nettete < 0.25) log.warn('  Moment fort peu net : vérifie la vidéo, ou impose « debut » dans gameplay du script.json.');
+      } else {
+        log.info('Pas de moment fort net (ou capture courte) : les %s dernières secondes sont gardées.', garder);
+      }
+    }
+    const fenetre = fenetreGameplay(dureeClip, reglage, garder);
     plan = construirePlanJeu(script, mots, fenetre);
     const finVoix = mots[mots.length - 1]?.fin ?? 0;
     const cadrage = g.cadrage ?? (env.CADRAGE === 'remplir' ? 'remplir' : 'flou');

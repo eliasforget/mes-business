@@ -58,6 +58,12 @@ et cocher les expériences filmées.
 
 `ignorer.txt` : vidéos à ne jamais fabriquer (déjà publiées). Dans un `script.json`, `"auto": false` fait pareil.
 
+## Compilation du dimanche
+
+Chaque dimanche après 18 h, les vidéos de la semaine encore dans « A publier » (3 minimum) sont assemblées par chaîne
+en une vidéo 16:9 pour YouTube (`A publier\<chaîne>\Compilation-AAAA-MM-JJ\`), avec titre, description et chapitres
+dans `publication.txt`. Réglages : `COMPILATION_*` dans `.env`. Le tableau de bord la montre avec son bouton Télécharger.
+
 ## Utilisation à la main
 
 ```powershell

@@ -15,7 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { createLogger, envBool, loadEnv, REPO_ROOT } from '../../shared/index.ts';
-import { chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, MAX_ESSAIS, nomSur, resumeRapport, trier, type Etat } from './lib.ts';
+import { chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, MAX_ESSAIS, nomSur, resumeRapport, textesCompilation, titreChapitre, trier, type Etat } from './lib.ts';
 
 const ICI = import.meta.dirname;
 const OUTILS = path.join(REPO_ROOT, 'tools');
@@ -34,6 +34,10 @@ const env = loadEnv({
     GIT_AUTO: 'true',
     POUSSER_RAPPORT: 'true',
     DOSSIER_CAPTURES: '',
+    COMPILATION_AUTO: 'true',
+    COMPILATION_JOUR: '0',
+    COMPILATION_HEURE: '18',
+    COMPILATION_MIN: '3',
   },
 });
 const log = createLogger('usine');
@@ -219,6 +223,56 @@ function fabriquer(v: Video): string {
   return mp4;
 }
 
+// ─────────────── Étape 3 bis : compilation 16:9 de la semaine (le dimanche) ───────────────
+function compilationsDeLaSemaine(etat: Etat, videos: Video[], dryRun: boolean): void {
+  if (!envBool('COMPILATION_AUTO', true)) return;
+  const maintenant = new Date();
+  if (maintenant.getDay() !== entier('COMPILATION_JOUR', 0, 6) || maintenant.getHours() < entier('COMPILATION_HEURE', 0, 23)) return;
+  const jour = aujourdhui();
+  const parNom = new Map(videos.map((v) => [v.nom, v]));
+  const chaines = new Set(Object.keys(etat.videos).map((n) => parNom.get(n)?.chaine).filter((c): c is string => !!c));
+  for (const chaine of chaines) {
+    if (etat.compilations?.[chaine] === jour) continue;
+    const semaine = trier(Object.entries(etat.videos)
+      .filter(([nom, e]) => e.statut === 'prete' && parNom.get(nom)?.chaine === chaine && Date.now() - Date.parse(e.le) < 7 * 864e5)
+      .map(([nom]) => nom))
+      .map((nom) => ({ nom, fichier: path.join(dossierAPublier, nomSur(chaine), nomSur(nom), `${nomSur(nom)}.mp4`), titre: titreChapitre(String(parNom.get(nom)?.script.titre ?? nom)) }))
+      .filter((x) => existsSync(x.fichier));
+    if (semaine.length < entier('COMPILATION_MIN', 2, 50)) {
+      log.info(`Compilation ${chaine} : ${semaine.length} vidéo(s) cette semaine encore dans « A publier », pas assez.`);
+      continue;
+    }
+    const nom = `Compilation-${jour}`;
+    const cible = path.join(dossierAPublier, nomSur(chaine), nom);
+    const mp4 = path.join(cible, `${nom}.mp4`);
+    if (dryRun) {
+      log.info(`[dry-run] compilerait ${semaine.length} vidéos ${chaine} → ${mp4}`);
+      continue;
+    }
+    log.info(`▶ Compilation ${chaine} de la semaine (${semaine.length} vidéos)`);
+    const theme = parNom.get(semaine[0]!.nom)?.script.theme;
+    const liste = path.join(ICI, 'compilation.local.json');
+    ecrireJson(liste, { theme: typeof theme === 'string' ? theme : 'vice-radar', videos: semaine.map(({ fichier, titre }) => ({ fichier, titre })) });
+    if (!lancerOutil('vr-video', 'compil.ts', [liste, '--sortie', mp4])) {
+      log.error(`✘ Compilation ${chaine} en échec (voir logs\\vr-video) : réessayée au prochain passage.`);
+      continue;
+    }
+    let chapitres: { titre: string; debut: number }[] = [];
+    try {
+      chapitres = JSON.parse(lireTexte(path.join(cible, `${nom}.chapitres.json`)));
+    } catch {
+      /* pas de chapitres : description sans horodatage */
+    }
+    const duree = chapitres.length ? chapitres[chapitres.length - 1]!.debut + 35 : semaine.length * 35;
+    const t = textesCompilation(chaine, chapitres, duree);
+    writeFileSync(path.join(cible, 'publication.txt'), `${t.titre}\nChaîne : ${chaine} (YouTube, format 16:9)\n\n=== YOUTUBE ===\nTitre : ${t.titre}\n\n${t.description}\n`);
+    etat.compilations = { ...etat.compilations, [chaine]: jour };
+    etat.compilationsFaites = [{ nom, chaine, le: new Date().toISOString(), titre: t.titre, description: t.description }, ...(etat.compilationsFaites ?? [])].slice(0, 10);
+    ecrireJson(FICHIER_ETAT, etat);
+    log.info(`✔ Compilation ${chaine} prête : ${mp4}`);
+  }
+}
+
 // ─────────────── Étape 4 : rapport poussé sur GitHub (lu par les agents) ───────────────
 function ecrireRapport(etat: Etat, videos: Video[], attente: string[]): void {
   const parNom = new Map(videos.map((v) => [v.nom, v]));
@@ -230,6 +284,7 @@ function ecrireRapport(etat: Etat, videos: Video[], attente: string[]): void {
     erreurs: erreur.map((nom) => ({ nom, erreur: etat.videos[nom]!.erreur ?? '', essais: etat.videos[nom]!.essais ?? 1 })),
     enAttenteDeCapture: attente,
     tournage: experiencesImportees(),
+    compilations: etat.compilationsFaites ?? [],
   };
   ecrireJson(FICHIER_RAPPORT, rapport);
   // Copie lisible par le tableau de bord (via Google Drive si « A publier » est dans Drive).
@@ -304,6 +359,7 @@ async function main(): Promise<number> {
     else log.info(`${aFaire.length} vidéo(s) à fabriquer, ${Math.min(reste, aFaire.length)} maintenant (max ${parPassage} par passage, ${parJour} par jour, ${etat.faitesAujourdhui} déjà faite(s) aujourd'hui).`);
 
     if (dryRun) {
+      compilationsDeLaSemaine(etat, videos, true);
       aFaire.forEach(({ v, raison }, i) => log.info(`[dry-run] ${i < reste ? 'fabriquerait' : 'plus tard  '} ${v.nom} (${v.chaine}, ${raison}) → ${path.join(dossierAPublier, nomSur(v.chaine), nomSur(v.nom))}`));
       return 0;
     }
@@ -325,6 +381,7 @@ async function main(): Promise<number> {
       }
       ecrireJson(FICHIER_ETAT, etat); // sauvegarde après chaque vidéo : un arrêt du PC ne perd rien
     }
+    compilationsDeLaSemaine(etat, videos, false);
     ecrireJson(FICHIER_ETAT, etat);
     ecrireRapport(etat, videos, attente);
     if (avecGit && envBool('POUSSER_RAPPORT', true)) pousserRapport(faites);

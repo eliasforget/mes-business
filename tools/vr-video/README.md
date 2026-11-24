@@ -98,6 +98,22 @@ Sans fichier de minutage, les sous-titres sont calés approximativement sur la d
 dans `musique\<theme>\` (sinon `musique\`). Les vidéos Faits animés sont dans `videos\F01-…`.
 Les gros chiffres (`"chiffre"`) se réduisent tout seuls pour rester dans l'image.
 
+## Passage choisi tout seul (vidéos gameplay)
+
+Sans `debut` ni `duree` dans la section `gameplay` du script, le rendu analyse la capture (son et mouvement, seconde
+par seconde, avec le ffmpeg fourni par Remotion) et garde `GARDER_S` secondes autour du moment fort (choc, explosion,
+sirène, action rapide), le pic aux 70 % du passage. Rien de net (son et image plats) : il garde la fin, comme avant.
+`PASSAGE_AUTO=false` pour toujours garder la fin. Le journal indique le moment repéré et sa netteté.
+
+## Compilation 16:9 pour YouTube
+
+```powershell
+.\compil.cmd liste.json --sortie C:\...\compilation.mp4      # --apercu 3 pour une image test
+```
+`liste.json` : `{ "theme": "vice-radar", "videos": [{ "fichier": "C:\\...\\08.mp4", "titre": "4 secrets de plus" }] }`.
+Chaque Short au centre sur un fond flouté de lui-même, « Partie N » et son titre au début, logo de la chaîne.
+Écrit aussi `<nom>.chapitres.json` pour la description. L'usine le lance tout seul le dimanche.
+
 ## Vidéos de gameplay
 
 Un script avec une section `gameplay` donne une vidéo construite autour d'une capture de jeu (dossiers créés par [vr-clips](../vr-clips)) :

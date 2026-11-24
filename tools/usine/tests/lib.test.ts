@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, MAX_ESSAIS, nomSur, trier, type Etat, type InfosVideo } from '../lib.ts';
+import { chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, horodatage, MAX_ESSAIS, nomSur, textesCompilation, titreChapitre, trier, type Etat, type InfosVideo } from '../lib.ts';
 
 const video = (x: Partial<InfosVideo> = {}): InfosVideo => ({ nom: '08-x', script: {}, empreinte: 'e1', captureOk: true, dejaRendue: false, ...x });
 const etat = (videos: Etat['videos'] = {}): Etat => ({ ...ETAT_VIDE, videos });
@@ -48,4 +48,14 @@ test('chaîne, noms sûrs et ordre', () => {
   assert.equal(chaineDe({}), 'Vice Radar');
   assert.equal(nomSur('a:b?c. '), 'abc');
   assert.deepEqual(trier(['11-a', 'F01-b', '07-c', '10-d']), ['07-c', '10-d', '11-a', 'F01-b']);
+});
+
+test('textes de la compilation : chapitres YouTube à partir de 0:00', () => {
+  assert.equal(titreChapitre('GTA 6 : 4 secrets de plus (partie 4)'), '4 secrets de plus (partie 4)');
+  assert.equal(titreChapitre('E01 — Planté au milieu de la route'), 'Planté au milieu de la route');
+  assert.equal(horodatage(75), '1:15');
+  assert.equal(horodatage(3725), '1:02:05');
+  const t = textesCompilation('Faits animés', [{ titre: 'A', debut: 0 }, { titre: 'B', debut: 35 }, { titre: 'C', debut: 70 }], 105);
+  assert.equal(t.titre, '3 faits incroyables en 2 minutes');
+  assert.match(t.description, /0:00 A\n0:35 B\n1:10 C/);
 });
