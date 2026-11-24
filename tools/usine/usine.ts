@@ -284,7 +284,15 @@ function statsTikTok(etat: Etat & { statsLe?: string }): void {
 }
 
 // ─────────────── Étape 4 : rapport poussé sur GitHub (lu par les agents) ───────────────
-function ecrireRapport(etat: Etat, videos: Video[], attente: string[]): void {
+interface Quota {
+  faitesAujourdhui: number;
+  maxParJour: number;
+  maxParPassage: number;
+  /** Vidéos prêtes à fabriquer mais retenues par la limite du jour (reprises toutes seules dès demain). */
+  enAttente: string[];
+}
+
+function ecrireRapport(etat: Etat, videos: Video[], attente: string[], quota: Quota): void {
   const parNom = new Map(videos.map((v) => [v.nom, v]));
   const { prete, erreur } = resumeRapport(etat);
   const rapport = {
@@ -293,6 +301,8 @@ function ecrireRapport(etat: Etat, videos: Video[], attente: string[]): void {
     pretes: prete.map((nom) => ({ nom, chaine: parNom.get(nom)?.chaine ?? '', le: etat.videos[nom]!.le })),
     erreurs: erreur.map((nom) => ({ nom, erreur: etat.videos[nom]!.erreur ?? '', essais: etat.videos[nom]!.essais ?? 1 })),
     enAttenteDeCapture: attente,
+    enAttenteDeQuota: quota.enAttente,
+    quota: { faitesAujourdhui: quota.faitesAujourdhui, maxParJour: quota.maxParJour, maxParPassage: quota.maxParPassage },
     tournage: experiencesImportees(),
     compilations: etat.compilationsFaites ?? [],
   };
@@ -364,7 +374,9 @@ async function main(): Promise<number> {
 
     const parPassage = entier('MAX_PAR_PASSAGE', 1, 50);
     const parJour = entier('MAX_PAR_JOUR', 1, 100);
-    const reste = Math.max(0, Math.min(parPassage, parJour - etat.faitesAujourdhui));
+    // --video = demande explicite de ta part : la limite du jour (garde-fou crédits) ne s'applique pas.
+    const reste = values.video ? aFaire.length : Math.max(0, Math.min(parPassage, parJour - etat.faitesAujourdhui));
+    if (values.video) log.info(`Fabrication demandée à la main : limites par passage (${parPassage}) et par jour (${parJour}) ignorées.`);
     if (!aFaire.length) log.info('Aucune nouvelle vidéo à fabriquer.');
     else log.info(`${aFaire.length} vidéo(s) à fabriquer, ${Math.min(reste, aFaire.length)} maintenant (max ${parPassage} par passage, ${parJour} par jour, ${etat.faitesAujourdhui} déjà faite(s) aujourd'hui).`);
 
@@ -394,7 +406,12 @@ async function main(): Promise<number> {
     compilationsDeLaSemaine(etat, videos, false);
     statsTikTok(etat);
     ecrireJson(FICHIER_ETAT, etat);
-    ecrireRapport(etat, videos, attente);
+    ecrireRapport(etat, videos, attente, {
+      faitesAujourdhui: etat.faitesAujourdhui,
+      maxParJour: parJour,
+      maxParPassage: parPassage,
+      enAttente: aFaire.slice(reste).map(({ v }) => v.nom),
+    });
     if (avecGit && envBool('POUSSER_RAPPORT', true)) pousserRapport(faites);
     if (faites) log.info(`${faites} vidéo(s) prête(s) dans ${dossierAPublier}`);
     return 0;

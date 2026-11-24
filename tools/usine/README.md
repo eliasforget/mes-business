@@ -51,7 +51,7 @@ et cocher les expériences filmées.
 |---|---|---|
 | `USINE_ACTIVE` | `true` | `false` = l'usine ne fait plus rien |
 | `DOSSIER_A_PUBLIER` | `Vidéos\A publier` | où ranger les vidéos finies |
-| `MAX_PAR_PASSAGE` / `MAX_PAR_JOUR` | `3` / `4` | garde-fous sur les crédits ElevenLabs (~650 caractères par vidéo) |
+| `MAX_PAR_PASSAGE` / `MAX_PAR_JOUR` | `3` / `4` | garde-fous sur les crédits ElevenLabs (~650 caractères par vidéo). Les vidéos au-delà de la limite du jour attendent demain toutes seules ; `--video` ignore ces limites |
 | `GIT_AUTO` | `true` | `git pull` avant chaque passage |
 | `POUSSER_RAPPORT` | `true` | pousse `rapport.json` (vidéos prêtes / en erreur) pour les agents |
 | `DOSSIER_CAPTURES` | `tools\vr-clips\entree` | où tu déposes tes captures PS5 (importées par vr-clips) |
@@ -69,7 +69,7 @@ dans `publication.txt`. Réglages : `COMPILATION_*` dans `.env`. Le tableau de b
 ```powershell
 .\usine.cmd --dry-run              # ce qui serait fabriqué, sans rien dépenser
 .\usine.cmd                        # un passage tout de suite
-.\usine.cmd --video 08-secrets-partie-4   # refaire une vidéo précise
+.\usine.cmd --video 08-secrets-partie-4   # fabriquer / refaire une vidéo précise TOUT DE SUITE (ignore la limite du jour)
 Start-ScheduledTask -TaskName 'Usine videos (automatisations)'   # réveiller la tâche
 .\installer.ps1 -Desinstaller      # tout arrêter
 ```
@@ -78,6 +78,7 @@ Start-ScheduledTask -TaskName 'Usine videos (automatisations)'   # réveiller la
 
 - Nouvelle vidéo ou `script.json` / `publication.txt` modifié par un agent → fabriquée (la voix n'est repayée que si le texte change).
 - Vidéo gameplay (`"gameplay"` dans le script) → attend ta capture PS5 dans son dossier.
+- Limite du jour atteinte (`MAX_PAR_JOUR`) → les vidéos restantes sont listées dans `enAttenteDeQuota` du rapport et reprises le lendemain (ou tout de suite avec `--video`).
 - Échec → réessayée au passage suivant, abandonnée après 3 échecs (voir `logs\usine\` et `rapport.json`).
 - Ordre : Vice Radar d'abord (dossiers `07-…`), puis les autres chaînes (`F01-…` pour Faits animés).
 - Un seul passage à la fois (verrou), état gardé dans `etat.local.json` (non versionné).
