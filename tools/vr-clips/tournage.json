@@ -2,67 +2,181 @@
   "semaine": "2026-11-23",
   "tag": "EXPÉRIENCE GTA 6",
   "fin": "Je teste quoi ensuite ? Dis-le en commentaire",
-  "hashtags": ["#GTA6", "#GTAVI", "#gaming", "#jeuxvideo"],
+  "hashtags": [
+    "#GTA6",
+    "#GTAVI",
+    "#gaming",
+    "#jeuxvideo"
+  ],
   "experiences": [
     {
       "id": "E01",
       "titre": "Planté au milieu de la route",
       "accroche": "Que se passe-t-il si tu restes planté au milieu de la route dans GTA 6 ? Regarde bien la fin.",
-      "lignes": [{ "texte": "Planté au milieu", "style": "normal" }, { "texte": "de la route", "style": "accent" }]
+      "lignes": [
+        {
+          "texte": "Planté au milieu",
+          "style": "normal"
+        },
+        {
+          "texte": "de la route",
+          "style": "accent"
+        }
+      ]
     },
     {
       "id": "E02",
       "titre": "Suivre un piéton de très près",
       "accroche": "Combien de temps un piéton te laisse le suivre de très près dans GTA 6 ? Regarde jusqu'au bout.",
-      "lignes": [{ "texte": "Je suis", "style": "normal" }, { "texte": "un piéton", "style": "accent" }]
+      "lignes": [
+        {
+          "texte": "Je suis",
+          "style": "normal"
+        },
+        {
+          "texte": "un piéton",
+          "style": "accent"
+        }
+      ]
     },
     {
       "id": "E03",
       "titre": "Klaxonner sans arrêt",
       "accroche": "Que fait un conducteur si tu klaxonnes sans arrêt derrière lui dans GTA 6 ? Attends la fin.",
-      "lignes": [{ "texte": "Klaxon", "style": "gros" }, { "texte": "sans arrêt", "style": "accent" }]
+      "lignes": [
+        {
+          "texte": "Klaxon",
+          "style": "gros"
+        },
+        {
+          "texte": "sans arrêt",
+          "style": "accent"
+        }
+      ]
     },
     {
-      "id": "E04",
-      "titre": "Foncer dans une vitrine",
-      "accroche": "Que se passe-t-il si tu fonces dans une vitrine en voiture dans GTA 6 ? Regarde bien.",
-      "lignes": [{ "texte": "En voiture", "style": "normal" }, { "texte": "dans une vitrine", "style": "accent" }]
+      "id": "E11",
+      "titre": "Mamie braqueuse en déambulateur",
+      "accroche": "Dans GTA 6, cette mamie en déambulateur braque un passant. Regarde ce qu'elle fait quand elle me voit.",
+      "lignes": [
+        {
+          "texte": "Une mamie en déambulateur",
+          "style": "normal"
+        },
+        {
+          "texte": "braque les passants",
+          "style": "accent"
+        }
+      ],
+      "hashtags": [
+        "#mamie"
+      ]
     },
     {
       "id": "E05",
       "titre": "Rouler dans l'eau",
       "accroche": "Que se passe-t-il si tu roules dans l'eau avec ta voiture dans GTA 6 ? Regarde bien la fin.",
-      "lignes": [{ "texte": "La voiture", "style": "normal" }, { "texte": "dans l'eau", "style": "accent" }]
+      "lignes": [
+        {
+          "texte": "La voiture",
+          "style": "normal"
+        },
+        {
+          "texte": "dans l'eau",
+          "style": "accent"
+        }
+      ]
     },
     {
       "id": "E06",
       "titre": "Percuter doucement la police",
       "accroche": "Est-ce que la police te pardonne si tu la percutes tout doucement dans GTA 6 ? Réponse à la fin.",
-      "lignes": [{ "texte": "Je percute", "style": "normal" }, { "texte": "la police", "style": "accent" }]
+      "lignes": [
+        {
+          "texte": "Je percute",
+          "style": "normal"
+        },
+        {
+          "texte": "la police",
+          "style": "accent"
+        }
+      ]
     },
     {
       "id": "E07",
       "titre": "Voler une voiture avec le conducteur",
       "accroche": "Dans GTA 6, que fait le conducteur si tu voles sa voiture alors qu'il est encore assis dedans ?",
-      "lignes": [{ "texte": "Le conducteur", "style": "normal" }, { "texte": "est encore dedans", "style": "accent" }]
+      "lignes": [
+        {
+          "texte": "Le conducteur",
+          "style": "normal"
+        },
+        {
+          "texte": "est encore dedans",
+          "style": "accent"
+        }
+      ]
     },
     {
       "id": "E08",
       "titre": "Se cacher de la police",
       "accroche": "Combien de temps faut-il pour semer la police en se cachant dans GTA 6 ? Réponse à la fin.",
-      "lignes": [{ "texte": "Semer", "style": "normal" }, { "texte": "la police", "style": "accent" }]
+      "lignes": [
+        {
+          "texte": "Semer",
+          "style": "normal"
+        },
+        {
+          "texte": "la police",
+          "style": "accent"
+        }
+      ]
     },
     {
       "id": "E09",
       "titre": "Rouler à contresens",
       "accroche": "Que font les autres conducteurs si tu roules à contresens dans GTA 6 ? Regarde bien.",
-      "lignes": [{ "texte": "À contresens", "style": "normal" }, { "texte": "dans GTA 6", "style": "accent" }]
+      "lignes": [
+        {
+          "texte": "À contresens",
+          "style": "normal"
+        },
+        {
+          "texte": "dans GTA 6",
+          "style": "accent"
+        }
+      ]
     },
     {
       "id": "E10",
       "titre": "Sauter d'un toit",
       "accroche": "Les dégâts sont-ils réalistes si tu sautes d'un toit dans GTA 6 ? Regarde la chute jusqu'au bout.",
-      "lignes": [{ "texte": "Je saute", "style": "normal" }, { "texte": "d'un toit", "style": "accent" }]
+      "lignes": [
+        {
+          "texte": "Je saute",
+          "style": "normal"
+        },
+        {
+          "texte": "d'un toit",
+          "style": "accent"
+        }
+      ]
+    },
+    {
+      "id": "E04",
+      "titre": "Foncer dans une vitrine",
+      "accroche": "Que se passe-t-il si tu fonces dans une vitrine en voiture dans GTA 6 ? Regarde bien.",
+      "lignes": [
+        {
+          "texte": "En voiture",
+          "style": "normal"
+        },
+        {
+          "texte": "dans une vitrine",
+          "style": "accent"
+        }
+      ],
+      "note": "Pas réussie le 24/11 : à retenter (déplacée en fin de liste)."
     }
   ]
 }
