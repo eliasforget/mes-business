@@ -1,0 +1,11 @@
+{
+  "name": "usine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Fabrique sur le PC les vidéos poussées par les agents (git pull, voix, fonds, rendu) et les range dans « À publier »",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test tests/lib.test.ts",
+    "usine": "node --experimental-strip-types --no-warnings=ExperimentalWarning usine.ts"
+  }
+}

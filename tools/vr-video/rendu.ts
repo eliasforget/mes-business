@@ -24,6 +24,7 @@ import {
   construirePlan, construirePlanJeu, fenetreGameplay, motsDepuisElevenLabs, motsSynthetiques, normaliser, verifierScript,
   type AlignementElevenLabs, type ClipDisponible, type Mot, type PlanVideo, type ScriptVideo,
 } from './src/plan.ts';
+import { estTheme, theme as themeDe } from './src/themes.ts';
 
 const ICI = import.meta.dirname;
 const EXTENSIONS_VIDEO = new Set(['.mp4', '.mov', '.webm', '.m4v']);
@@ -185,8 +186,15 @@ async function main(): Promise<number> {
     }
   }
 
-  const musique = choisirMusique(dossier, nom, env.MUSIQUE, path.join(ICI, 'musique'));
-  const marque = { nom: env.MARQUE_NOM, accent: env.MARQUE_ACCENT };
+  // ── Habillage : « theme » du script (défaut Vice Radar). MARQUE_* du .env ne s'applique qu'à Vice Radar. ──
+  if (script.theme !== undefined && !estTheme(script.theme)) log.warn('Thème inconnu « %s » : habillage Vice Radar.', script.theme);
+  const nomTheme = estTheme(script.theme) ? script.theme : 'vice-radar';
+  const habillage = themeDe(nomTheme);
+  const marque = script.marque ?? (nomTheme === 'vice-radar' ? { nom: env.MARQUE_NOM, accent: env.MARQUE_ACCENT } : habillage.marque);
+  // Musique : musique\<thème>\ s'il existe (ambiance propre à la chaîne), sinon musique\.
+  const dossierMusiqueTheme = path.join(ICI, 'musique', nomTheme);
+  const musique = choisirMusique(dossier, nom, env.MUSIQUE, existsSync(dossierMusiqueTheme) && !env.MUSIQUE ? dossierMusiqueTheme : path.join(ICI, 'musique'));
+  log.info('Habillage : %s', habillage.chaine);
   /** Fichiers à copier dans le dossier public du rendu : chemin public → fichier réel. */
   const publics = new Map<string, string>();
   if (voix) publics.set(`audio/voix${path.extname(voix)}`, voix);
@@ -223,6 +231,7 @@ async function main(): Promise<number> {
       marque,
       appelAction: script.fin ?? null,
       barreProgression: envBool('BARRE_PROGRESSION', true),
+      theme: nomTheme,
     };
     log.info('« %s » (gameplay) : %ss gardées sur %ss de capture (à partir de %ss), cadrage %s, voix %s (%ss), musique %s',
       script.titre ?? nom, fenetre.duree.toFixed(1), dureeClip.toFixed(1), fenetre.depuis.toFixed(1), cadrage,
@@ -258,6 +267,7 @@ async function main(): Promise<number> {
       appelAction: script.fin ?? null,
       barreProgression: envBool('BARRE_PROGRESSION', true),
       boucle: envBool('BOUCLE', true),
+      theme: nomTheme,
     };
 
     // ── Résumé du plan ──

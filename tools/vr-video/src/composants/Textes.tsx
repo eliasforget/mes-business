@@ -26,21 +26,32 @@ export function formaterNombre(valeur: number, decimales = 0): string {
   return valeur.toLocaleString('fr-FR', { minimumFractionDigits: decimales, maximumFractionDigits: decimales }).replace(/ /g, ' ');
 }
 
+/** Largeur utile ≈ 920 px ; un caractère Anton fait ≈ 0,5 fois la taille de police. */
+export function tailleChiffre(chiffre: TChiffre): { nombre: number; annexe: number } {
+  const largeur = 920;
+  const n = formaterNombre(chiffre.valeur, chiffre.decimales ?? 0).length;
+  const nombre = Math.round(Math.min(330, largeur / (n * 0.5)));
+  const annexe = Math.round(Math.min(130, largeur / (Math.max((chiffre.prefixe ?? '').length, (chiffre.suffixe ?? '').length, 1) * 0.5)));
+  return { nombre, annexe };
+}
+
 const ChiffreAnime: React.FC<{ chiffre: TChiffre; frame: number; immediat: boolean }> = ({ chiffre, frame, immediat }) => {
   const { fps } = useVideoConfig();
   // Le compteur monte en 0,8 s ; en tout début de vidéo il part déjà à 70 % pour que la 1re image soit parlante.
   const p = interpolate(frame, [0, 0.8 * fps], [immediat ? 0.7 : 0, 1], { extrapolateRight: 'clamp', easing: Easing.out(Easing.cubic) });
   const pop = spring({ frame, fps, config: { damping: 11, stiffness: 160 }, from: immediat ? 0.9 : 0.4, to: 1 });
+  // Taille calculée sur la valeur finale : un grand nombre (8 848,86 ; 384 400) reste dans l'image.
+  const tailles = tailleChiffre(chiffre);
   return (
-    <div style={{ display: 'flex', alignItems: 'baseline', transform: `scale(${pop})`, transformOrigin: 'left bottom', marginBottom: 10 }}>
-      {chiffre.prefixe && <span style={{ fontFamily: TITRE, fontSize: 130, color: COULEURS.blanc, marginRight: 12 }}>{chiffre.prefixe}</span>}
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', transform: `scale(${pop})`, transformOrigin: 'left bottom', marginBottom: 10 }}>
+      {chiffre.prefixe && <span style={{ fontFamily: TITRE, fontSize: tailles.annexe, color: COULEURS.blanc, marginRight: 12 }}>{chiffre.prefixe}</span>}
       <span style={{
-        fontFamily: TITRE, fontSize: 330, lineHeight: 0.95, backgroundImage: DEGRADE_TITRE, WebkitBackgroundClip: 'text',
-        backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 0 40px rgba(255,61,127,0.45))',
+        fontFamily: TITRE, fontSize: tailles.nombre, whiteSpace: 'nowrap', lineHeight: 0.95, backgroundImage: DEGRADE_TITRE, WebkitBackgroundClip: 'text',
+        backgroundClip: 'text', color: 'transparent', filter: `drop-shadow(0 0 40px ${COULEURS.rose}73)`,
       }}>
         {formaterNombre(chiffre.valeur * p, chiffre.decimales ?? 0)}
       </span>
-      {chiffre.suffixe && <span style={{ fontFamily: TITRE, fontSize: 130, color: COULEURS.blanc, marginLeft: 16 }}>{chiffre.suffixe}</span>}
+      {chiffre.suffixe && <span style={{ fontFamily: TITRE, fontSize: tailles.annexe, color: COULEURS.blanc, marginLeft: 16, whiteSpace: 'nowrap' }}>{chiffre.suffixe}</span>}
     </div>
   );
 };
@@ -49,7 +60,7 @@ const STYLES: Record<string, React.CSSProperties> = {
   normal: { fontFamily: TITRE, fontSize: 150, lineHeight: 0.98, color: COULEURS.blanc, textTransform: 'uppercase', textShadow: CONTOUR },
   gros: {
     fontFamily: TITRE, fontSize: 290, lineHeight: 0.95, textTransform: 'uppercase', backgroundImage: DEGRADE_TITRE,
-    WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: 'drop-shadow(0 0 40px rgba(255,61,127,0.45))',
+    WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', filter: `drop-shadow(0 0 40px ${COULEURS.rose}73)`,
   },
   accent: { fontFamily: TEXTE, fontWeight: 900, fontSize: 66, lineHeight: 1.15, color: COULEURS.menthe, textShadow: CONTOUR },
   petit: { fontFamily: TEXTE, fontWeight: 800, fontSize: 60, lineHeight: 1.18, color: COULEURS.blanc, textShadow: CONTOUR },

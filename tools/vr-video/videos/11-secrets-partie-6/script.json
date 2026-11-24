@@ -1,0 +1,94 @@
+{
+  "titre": "GTA 6 : 4 secrets de plus (partie 6)",
+  "fin": "Lequel tu vas voir en premier ?",
+  "scenes": [
+    {
+      "tag": "SECRET N°21",
+      "lignes": [
+        {
+          "texte": "Ce livre",
+          "style": "normal"
+        },
+        {
+          "texte": "GTA 4",
+          "style": "gros"
+        },
+        {
+          "texte": "caché chez Jason.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Ce livre caché chez Jason parle de GTA 4. Près de la porte de derrière de sa maison, à Key Lento, « Lethal by Design » raconte les mémoires d'un mafieux de Liberty City en 2008. Lis-le dès le début du jeu.",
+      "motsCles": [
+        "old book",
+        "table lamp"
+      ]
+    },
+    {
+      "tag": "SECRET N°22",
+      "lignes": [
+        {
+          "texte": "Le prof de yoga",
+          "style": "petit"
+        },
+        {
+          "texte": "DE GTA 5",
+          "style": "gros"
+        },
+        {
+          "texte": "dans un magazine.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Toujours chez Jason, un magazine Body Copy parle de Fabien LaRouche, le prof de yoga de GTA 5.",
+      "motsCles": [
+        "magazine",
+        "yoga"
+      ]
+    },
+    {
+      "tag": "SECRET N°23",
+      "lignes": [
+        {
+          "texte": "Un roman",
+          "style": "normal"
+        },
+        {
+          "texte": "RED DEAD",
+          "style": "gros"
+        },
+        {
+          "texte": "dans une taverne.",
+          "style": "accent"
+        }
+      ],
+      "voix": "À la taverne Jacob's, un roman western raconte l'histoire d'un cowboy de New Austin, la région de Red Dead.",
+      "motsCles": [
+        "western saloon",
+        "cowboy"
+      ]
+    },
+    {
+      "tag": "SECRET N°24",
+      "lignes": [
+        {
+          "texte": "Le mont Kalaga",
+          "style": "petit"
+        },
+        {
+          "texte": "CERCLE DE PIERRES",
+          "style": "gros"
+        },
+        {
+          "texte": "et cratère.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Et au sommet du mont Kalaga ? Un cercle de pierres dressées et un cratère de météorite. Lequel tu vas voir en premier ?",
+      "motsCles": [
+        "stone circle",
+        "mountain summit"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "theme": "faits-animes",
+  "titre": "La lumière du Soleil a 8 minutes de retard",
+  "fin": "Quel chiffre je rends visible ensuite ? Dis-le en commentaire",
+  "scenes": [
+    {
+      "tag": "LUMIÈRE",
+      "lignes": [
+        {
+          "texte": "La lumière du Soleil",
+          "style": "normal"
+        },
+        {
+          "texte": "a 8 minutes",
+          "style": "gros"
+        },
+        {
+          "texte": "de retard.",
+          "style": "accent"
+        }
+      ],
+      "voix": "La lumière du Soleil qui touche ton visage a huit minutes de retard.",
+      "motsCles": [
+        "soleil",
+        "lumiere"
+      ]
+    },
+    {
+      "tag": "SOLEIL → TERRE",
+      "chiffre": {
+        "valeur": 500,
+        "suffixe": "SECONDES"
+      },
+      "lignes": [
+        {
+          "texte": "soit 8 min 20 s en moyenne",
+          "style": "petit"
+        }
+      ],
+      "voix": "Il lui faut en moyenne huit minutes et vingt secondes pour parcourir les cent cinquante millions de kilomètres qui nous séparent du Soleil.",
+      "motsCles": [
+        "soleil",
+        "espace"
+      ]
+    },
+    {
+      "tag": "LUNE → TERRE",
+      "chiffre": {
+        "valeur": 1.3,
+        "decimales": 1,
+        "suffixe": "S"
+      },
+      "lignes": [
+        {
+          "texte": "depuis la Lune, selon la NASA",
+          "style": "petit"
+        }
+      ],
+      "voix": "Depuis la Lune, c'est beaucoup plus court : environ une seconde et trois dixièmes, selon la NASA.",
+      "motsCles": [
+        "lune",
+        "espace"
+      ]
+    },
+    {
+      "tag": "AUTOUR DE LA TERRE",
+      "chiffre": {
+        "valeur": 7.5,
+        "decimales": 1,
+        "suffixe": "TOURS"
+      },
+      "lignes": [
+        {
+          "texte": "en une seule seconde",
+          "style": "accent"
+        }
+      ],
+      "voix": "Et en une seule seconde, la lumière ferait sept tours et demi de la Terre.",
+      "motsCles": [
+        "terre",
+        "espace"
+      ]
+    },
+    {
+      "tag": "LE CALCUL",
+      "lignes": [
+        {
+          "texte": "300 000",
+          "style": "normal"
+        },
+        {
+          "texte": "km par seconde",
+          "style": "gros"
+        },
+        {
+          "texte": "contre 40 000 km de tour.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Environ trois cent mille kilomètres par seconde, pour un tour de la Terre d'à peu près quarante mille kilomètres. Rien n'est plus rapide.",
+      "motsCles": [
+        "lumiere",
+        "vitesse"
+      ]
+    }
+  ]
+}

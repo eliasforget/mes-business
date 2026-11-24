@@ -1,0 +1,106 @@
+{
+  "theme": "faits-animes",
+  "titre": "Plonge l'Everest dans l'océan : il disparaît",
+  "fin": "Quelle comparaison je fais ensuite ? Dis-le en commentaire",
+  "scenes": [
+    {
+      "tag": "COMPARAISON",
+      "lignes": [
+        {
+          "texte": "Plonge l'Everest",
+          "style": "normal"
+        },
+        {
+          "texte": "dans l'océan",
+          "style": "gros"
+        },
+        {
+          "texte": "il disparaît.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Plonge l'Everest tout au fond de l'océan, et il disparaît complètement.",
+      "motsCles": [
+        "ocean",
+        "montagne"
+      ]
+    },
+    {
+      "tag": "LE SOMMET",
+      "chiffre": {
+        "valeur": 8848.86,
+        "decimales": 2,
+        "suffixe": "M"
+      },
+      "lignes": [
+        {
+          "texte": "l'Everest, hauteur officielle",
+          "style": "petit"
+        }
+      ],
+      "voix": "L'Everest mesure huit mille huit cent quarante-neuf mètres. C'est la hauteur annoncée ensemble par la Chine et le Népal, en décembre deux mille vingt.",
+      "motsCles": [
+        "montagne",
+        "neige"
+      ]
+    },
+    {
+      "tag": "L'ABÎME",
+      "chiffre": {
+        "valeur": 10935,
+        "suffixe": "M"
+      },
+      "lignes": [
+        {
+          "texte": "Challenger Deep, fosse des Mariannes",
+          "style": "petit"
+        }
+      ],
+      "voix": "Dans la fosse des Mariannes, le Challenger Deep descend à dix mille neuf cent trente-cinq mètres de profondeur, selon la NOAA.",
+      "motsCles": [
+        "ocean",
+        "profondeur"
+      ]
+    },
+    {
+      "tag": "LE RÉSULTAT",
+      "chiffre": {
+        "prefixe": "+ de ",
+        "valeur": 2000,
+        "suffixe": "M"
+      },
+      "lignes": [
+        {
+          "texte": "d'eau au-dessus du sommet",
+          "style": "accent"
+        }
+      ],
+      "voix": "Même posé tout au fond, le sommet de l'Everest aurait encore plus de deux mille mètres d'eau au-dessus de lui.",
+      "motsCles": [
+        "ocean",
+        "bleu"
+      ]
+    },
+    {
+      "tag": "À SAVOIR",
+      "lignes": [
+        {
+          "texte": "Les mesures",
+          "style": "normal"
+        },
+        {
+          "texte": "varient",
+          "style": "gros"
+        },
+        {
+          "texte": "mais le résultat tient.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Une mesure plus ancienne de la NASA donne même dix mille neuf cent quatre-vingt-quatorze mètres. Les chiffres bougent un peu, mais l'Everest disparaît quand même.",
+      "motsCles": [
+        "ocean"
+      ]
+    }
+  ]
+}

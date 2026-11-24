@@ -1,0 +1,82 @@
+{
+  "titre": "GTA 6 : 4 rencontres bizarres cachées (partie 5)",
+  "fin": "Laquelle tu vas voir en premier ?",
+  "scenes": [
+    {
+      "tag": "SECRET N°17",
+      "lignes": [
+        {
+          "texte": "Cette vache",
+          "style": "normal"
+        },
+        {
+          "texte": "TE PARLE.",
+          "style": "gros"
+        }
+      ],
+      "voix": "Cette vache de GTA 6 te parle. Tootsie s'est enfuie de la laiterie Howe : calme-la et elle te chuchote « Save me ». À toi de décider si tu la libères.",
+      "motsCles": [
+        "cow field",
+        "dairy farm"
+      ]
+    },
+    {
+      "tag": "SECRET N°18",
+      "lignes": [
+        {
+          "texte": "Un QR code",
+          "style": "normal"
+        },
+        {
+          "texte": "dans des toilettes.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Dans des toilettes, une affiche cache un QR code. Scanne-le avec WAiNK : un certain Docteur Merle t'embarque dans un complot autour des égouts. À la clé, un bonus d'endurance.",
+      "motsCles": [
+        "public restroom",
+        "sewer tunnel"
+      ]
+    },
+    {
+      "tag": "SECRET N°19",
+      "lignes": [
+        {
+          "texte": "Une île",
+          "style": "normal"
+        },
+        {
+          "texte": "SOS",
+          "style": "gros"
+        },
+        {
+          "texte": "et un téléphone.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Sur un îlot perdu, des déchets forment un SOS, et un téléphone abandonné garde la vidéo de deux naufragés.",
+      "motsCles": [
+        "small island",
+        "beach trash"
+      ]
+    },
+    {
+      "tag": "SECRET N°20",
+      "lignes": [
+        {
+          "texte": "Mini Arthur",
+          "style": "gros"
+        },
+        {
+          "texte": "sur un chihuahua.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Et dans un mini-golf du comté de Leonard, cherche le mini Arthur Morgan à dos de chihuahua. Laquelle tu vas voir en premier ?",
+      "motsCles": [
+        "mini golf",
+        "chihuahua"
+      ]
+    }
+  ]
+}

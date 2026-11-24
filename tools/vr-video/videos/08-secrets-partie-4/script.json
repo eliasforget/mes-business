@@ -1,0 +1,94 @@
+{
+  "titre": "GTA 6 : 4 secrets de plus (partie 4)",
+  "fin": "Lequel tu testes en premier ?",
+  "scenes": [
+    {
+      "tag": "SECRET N°13",
+      "lignes": [
+        {
+          "texte": "Le chapeau",
+          "style": "petit"
+        },
+        {
+          "texte": "d'Arthur Morgan",
+          "style": "gros"
+        },
+        {
+          "texte": "est dans GTA 6.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Le chapeau d'Arthur Morgan, le héros de Red Dead 2, est caché dans GTA 6. À Port Gellhorn, un vide-grenier le vend, posé sur un canapé. Il reste ensuite dans ta garde-robe.",
+      "motsCles": [
+        "cowboy hat",
+        "yard sale"
+      ]
+    },
+    {
+      "tag": "SECRET N°14",
+      "lignes": [
+        {
+          "texte": "Et cette affiche",
+          "style": "petit"
+        },
+        {
+          "texte": "RADIO SECRÈTE",
+          "style": "gros"
+        },
+        {
+          "texte": "à scanner.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Et cette affiche débloque une radio secrète. Dans la boîte The Vault, à Downtown Vice City, scanne le poster rouge avec l'appli WAiNK : la station de DJ Pretzel s'ajoute à ta radio.",
+      "motsCles": [
+        "nightclub neon",
+        "red poster"
+      ]
+    },
+    {
+      "tag": "SECRET N°15",
+      "lignes": [
+        {
+          "texte": "Les casquettes",
+          "style": "petit"
+        },
+        {
+          "texte": "MARIO & LUIGI",
+          "style": "gros"
+        },
+        {
+          "texte": "cachées.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Dans des ruines près de Moreau, frappe le bloc invisible : Jason gagne une casquette rouge façon Mario, Lucia une verte façon Luigi.",
+      "motsCles": [
+        "abandoned ruins",
+        "forest ruins"
+      ]
+    },
+    {
+      "tag": "SECRET N°16",
+      "lignes": [
+        {
+          "texte": "Un hôtel",
+          "style": "normal"
+        },
+        {
+          "texte": "SILENT HILL",
+          "style": "gros"
+        },
+        {
+          "texte": "à Vice City.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Et l'hôtel Marbelle, au sud de Crosstown ? Monte sur le toit : Vice City disparaît dans le brouillard. Lequel tu testes en premier ?",
+      "motsCles": [
+        "abandoned hotel",
+        "city fog"
+      ]
+    }
+  ]
+}

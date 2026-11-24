@@ -1,0 +1,105 @@
+{
+  "theme": "faits-animes",
+  "titre": "Sur Vénus, un tour sur soi-même dure plus qu'une année",
+  "fin": "Quelle planète je compare ensuite ? Dis-le en commentaire",
+  "scenes": [
+    {
+      "tag": "ESPACE",
+      "lignes": [
+        {
+          "texte": "Sur Vénus",
+          "style": "normal"
+        },
+        {
+          "texte": "un jour",
+          "style": "gros"
+        },
+        {
+          "texte": "dure plus qu'une année.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Sur Vénus, il faut plus de temps pour tourner sur soi-même que pour faire le tour du Soleil. Oui, tu as bien lu, et c'est mesuré par la NASA.",
+      "motsCles": [
+        "espace",
+        "planete"
+      ]
+    },
+    {
+      "tag": "UN TOUR SUR ELLE-MÊME",
+      "chiffre": {
+        "valeur": 243,
+        "suffixe": "JOURS"
+      },
+      "lignes": [
+        {
+          "texte": "terrestres, selon la NASA",
+          "style": "petit"
+        }
+      ],
+      "voix": "D'après la NASA, Vénus met deux cent quarante-trois jours terrestres pour faire un tour complet sur elle-même.",
+      "motsCles": [
+        "planete",
+        "espace"
+      ]
+    },
+    {
+      "tag": "UN TOUR DU SOLEIL",
+      "chiffre": {
+        "valeur": 225,
+        "suffixe": "JOURS"
+      },
+      "lignes": [
+        {
+          "texte": "terrestres, selon la NASA",
+          "style": "petit"
+        }
+      ],
+      "voix": "Mais elle boucle son tour du Soleil en seulement deux cent vingt-cinq jours terrestres.",
+      "motsCles": [
+        "soleil",
+        "orbite"
+      ]
+    },
+    {
+      "tag": "L'ÉCART",
+      "chiffre": {
+        "prefixe": "+ ",
+        "valeur": 18,
+        "suffixe": "JOURS"
+      },
+      "lignes": [
+        {
+          "texte": "de rotation que d'année",
+          "style": "accent"
+        }
+      ],
+      "voix": "Résultat : sa rotation dure dix-huit jours de plus que son année. Sur cette planète, le calendrier n'a aucun sens.",
+      "motsCles": [
+        "espace"
+      ]
+    },
+    {
+      "tag": "BONUS",
+      "lignes": [
+        {
+          "texte": "Elle tourne",
+          "style": "normal"
+        },
+        {
+          "texte": "à l'envers",
+          "style": "gros"
+        },
+        {
+          "texte": "par rapport à la Terre.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Et ce n'est pas tout : Vénus tourne dans le sens inverse de la Terre et de la plupart des autres planètes, selon la NASA. Une vraie planète à l'envers.",
+      "motsCles": [
+        "planete",
+        "espace"
+      ]
+    }
+  ]
+}

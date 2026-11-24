@@ -63,6 +63,10 @@ export interface ScriptVideo {
   fin?: string;
   /** Présent : vidéo de gameplay (voir Gameplay) au lieu du motion design sur clips de fond. */
   gameplay?: Gameplay;
+  /** Habillage de la chaîne (voir src/themes.ts) : « vice-radar » par défaut, ou « faits-animes ». */
+  theme?: string;
+  /** Logo propre à cette vidéo (sinon celui du thème). */
+  marque?: { nom: string; accent: string };
 }
 
 export interface ScenePlanifiee extends Scene {
@@ -326,6 +330,8 @@ export function verifierScript(script: unknown): string[] {
     if (sc?.chiffre && typeof sc.chiffre.valeur !== 'number') erreurs.push(`${n}.chiffre.valeur : nombre obligatoire.`);
     if (sc?.duree !== undefined && !(typeof sc.duree === 'number' && sc.duree > 0)) erreurs.push(`${n}.duree : nombre de secondes > 0.`);
   });
+  if (s.theme !== undefined && (typeof s.theme !== 'string' || !s.theme.trim())) erreurs.push('« theme » : nom de thème (vice-radar, faits-animes).');
+  if (s.marque !== undefined && (typeof s.marque?.nom !== 'string' || typeof s.marque?.accent !== 'string')) erreurs.push('« marque » : { "nom": "...", "accent": "..." }.');
   const g = s.gameplay;
   if (g !== undefined) {
     if (!g || typeof g !== 'object') return [...erreurs, '« gameplay » doit être un objet ({ "fichier": "gameplay.mp4" }).'];

@@ -4,6 +4,7 @@ import './polices';
 import { Fonds } from './composants/Fonds';
 import { AppelAction, BarreProgression, BlocTitre, Logo, SousTitres } from './composants/Textes';
 import type { PlanVideo } from './plan';
+import { COULEURS } from './theme';
 
 // « type » plutôt qu'« interface » : Remotion exige des props compatibles avec Record<string, unknown>.
 export type ProprietesViceRadar = {
@@ -18,6 +19,8 @@ export type ProprietesViceRadar = {
   barreProgression: boolean;
   /** Fin en boucle : les dernières images reprennent l'accroche, le replay s'enchaîne sans coupure visible. */
   boucle: boolean;
+  /** Habillage (lu au chargement par theme.ts via getInputProps). */
+  theme?: string;
 };
 
 export const ViceRadar: React.FC<ProprietesViceRadar> = ({ plan, audio, musique, volumeMusique, marque, appelAction, barreProgression, boucle }) => {
@@ -27,7 +30,7 @@ export const ViceRadar: React.FC<ProprietesViceRadar> = ({ plan, audio, musique,
   const dureeBoucle = 8;
 
   return (
-    <AbsoluteFill style={{ backgroundColor: '#070a1f' }}>
+    <AbsoluteFill style={{ backgroundColor: COULEURS.nuit }}>
       <Fonds segments={plan.fonds} />
 
       {plan.scenes.map((scene, i) => {

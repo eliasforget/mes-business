@@ -50,3 +50,6 @@ $RECYCLE.BIN/
 .idea/
 *.swp
 *~
+
+# ── Usine (état local et verrou du PC) ───────────────────
+tools/usine/usine.lock

@@ -1,0 +1,86 @@
+{
+  "titre": "Premier patch de GTA 6 : ce qui change",
+  "fin": "Et toi, quel bug t'a le plus saoulé ?",
+  "scenes": [
+    {
+      "tag": "MISE À JOUR",
+      "lignes": [
+        {
+          "texte": "GTA 6",
+          "style": "normal"
+        },
+        {
+          "texte": "7 BUGS",
+          "style": "gros"
+        },
+        {
+          "texte": "corrigés.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Rockstar vient de corriger sept bugs de GTA 6. La mise à jour est sortie lundi 23 novembre : environ 600 mégas sur PS5, 1,6 giga sur Xbox Series.",
+      "motsCles": [
+        "game console",
+        "download progress"
+      ]
+    },
+    {
+      "tag": "CORRIGÉ",
+      "lignes": [
+        {
+          "texte": "Les étoiles",
+          "style": "petit"
+        },
+        {
+          "texte": "ENFIN",
+          "style": "gros"
+        },
+        {
+          "texte": "perdables.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Fini les étoiles impossibles à perdre, la météo bloquée et la sauvegarde auto en panne. Les appels qui débloquent des missions arrivent enfin.",
+      "motsCles": [
+        "police lights",
+        "storm clouds"
+      ]
+    },
+    {
+      "tag": "CORRIGÉ",
+      "lignes": [
+        {
+          "texte": "Moins de",
+          "style": "petit"
+        },
+        {
+          "texte": "PLANTAGES",
+          "style": "gros"
+        }
+      ],
+      "voix": "Moins de plantages, la barre de soulevé de terre marche à la salle, et ton partenaire te rend enfin les sacs à revendre au receleur.",
+      "motsCles": [
+        "gym deadlift",
+        "money bag"
+      ]
+    },
+    {
+      "tag": "BONUS",
+      "lignes": [
+        {
+          "texte": "+23 titres",
+          "style": "gros"
+        },
+        {
+          "texte": "dans l'album du jeu.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Et en bonus, Rockstar ajoute 23 titres à l'album officiel du jeu. Et toi, quel bug t'a le plus saoulé ?",
+      "motsCles": [
+        "vinyl record",
+        "neon city night"
+      ]
+    }
+  ]
+}

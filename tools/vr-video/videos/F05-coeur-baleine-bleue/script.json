@@ -1,0 +1,105 @@
+{
+  "theme": "faits-animes",
+  "titre": "Le cœur d'une baleine bleue bat 2 fois par minute",
+  "fin": "Quel animal je compare ensuite ? Dis-le en commentaire",
+  "scenes": [
+    {
+      "tag": "CŒUR",
+      "lignes": [
+        {
+          "texte": "Une baleine bleue",
+          "style": "normal"
+        },
+        {
+          "texte": "2 battements",
+          "style": "gros"
+        },
+        {
+          "texte": "par minute.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Le cœur d'une baleine bleue peut descendre à deux battements par minute. Deux seulement, c'est presque rien, comparé au tien.",
+      "motsCles": [
+        "baleine",
+        "ocean"
+      ]
+    },
+    {
+      "tag": "LE TIEN",
+      "chiffre": {
+        "valeur": 70,
+        "suffixe": "BPM"
+      },
+      "lignes": [
+        {
+          "texte": "ton cœur au repos : 60 à 100",
+          "style": "petit"
+        }
+      ],
+      "voix": "Le tien bat entre soixante et cent fois par minute au repos, environ soixante-dix en moyenne.",
+      "motsCles": [
+        "coeur",
+        "corps"
+      ]
+    },
+    {
+      "tag": "TON SANG",
+      "chiffre": {
+        "valeur": 4,
+        "suffixe": "LITRES / MIN"
+      },
+      "lignes": [
+        {
+          "texte": "de sang qui circulent",
+          "style": "petit"
+        }
+      ],
+      "voix": "À ce rythme, ton cœur fait circuler environ quatre litres de sang chaque minute, sans jamais s'arrêter.",
+      "motsCles": [
+        "coeur",
+        "sang"
+      ]
+    },
+    {
+      "tag": "LA BALEINE",
+      "chiffre": {
+        "valeur": 2,
+        "suffixe": "BPM"
+      },
+      "lignes": [
+        {
+          "texte": "en plongée, 25 à 37 en surface",
+          "style": "accent"
+        }
+      ],
+      "voix": "Chez la baleine bleue, les chercheurs de Stanford ont mesuré seulement deux battements par minute en plongée, et vingt-cinq à trente-sept en surface.",
+      "motsCles": [
+        "baleine",
+        "ocean"
+      ]
+    },
+    {
+      "tag": "LA COMPARAISON",
+      "lignes": [
+        {
+          "texte": "30 fois",
+          "style": "normal"
+        },
+        {
+          "texte": "plus vite",
+          "style": "gros"
+        },
+        {
+          "texte": "que son minimum.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Au repos, ton cœur bat donc au moins trente fois plus vite que le plus lent de la baleine. Deux cœurs, deux rythmes, et un même travail : faire circuler le sang.",
+      "motsCles": [
+        "ocean",
+        "bleu"
+      ]
+    }
+  ]
+}

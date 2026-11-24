@@ -23,6 +23,7 @@ export type ProprietesViceRadarJeu = {
   marque: { nom: string; accent: string };
   appelAction: string | null;
   barreProgression: boolean;
+  theme?: string;
 };
 
 const CONTOUR = '0 6px 24px rgba(0,0,0,0.6)';

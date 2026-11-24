@@ -1,0 +1,101 @@
+{
+  "theme": "faits-animes",
+  "titre": "Combien de temps pour aller sur la Lune en voiture ?",
+  "fin": "Quel trajet je calcule ensuite ? Dis-le en commentaire",
+  "scenes": [
+    {
+      "tag": "COMBIEN DE TEMPS",
+      "lignes": [
+        {
+          "texte": "Aller sur la Lune",
+          "style": "normal"
+        },
+        {
+          "texte": "en voiture",
+          "style": "gros"
+        },
+        {
+          "texte": "ça prend combien ?",
+          "style": "accent"
+        }
+      ],
+      "voix": "Combien de temps faudrait-il pour aller sur la Lune en voiture, ou en avion ? Accroche-toi, le résultat est fou.",
+      "motsCles": [
+        "lune",
+        "route"
+      ]
+    },
+    {
+      "tag": "LA DISTANCE",
+      "chiffre": {
+        "valeur": 384400,
+        "suffixe": "KM"
+      },
+      "lignes": [
+        {
+          "texte": "distance moyenne Terre-Lune",
+          "style": "petit"
+        }
+      ],
+      "voix": "La Lune est à trois cent quatre-vingt-quatre mille quatre cents kilomètres en moyenne.",
+      "motsCles": [
+        "lune",
+        "espace"
+      ]
+    },
+    {
+      "tag": "EN VOITURE",
+      "chiffre": {
+        "valeur": 160,
+        "suffixe": "JOURS"
+      },
+      "lignes": [
+        {
+          "texte": "à 100 km/h sans jamais s'arrêter",
+          "style": "petit"
+        }
+      ],
+      "voix": "À cent kilomètres par heure, sans jamais t'arrêter, il te faudrait environ cent soixante jours, en roulant tout droit.",
+      "motsCles": [
+        "route",
+        "voiture"
+      ]
+    },
+    {
+      "tag": "EN AVION",
+      "chiffre": {
+        "valeur": 18,
+        "suffixe": "JOURS"
+      },
+      "lignes": [
+        {
+          "texte": "en avion de ligne à 900 km/h",
+          "style": "petit"
+        }
+      ],
+      "voix": "En avion de ligne, à neuf cents kilomètres par heure, environ dix-huit jours. Aucun pilote ne le fera jamais, mais le calcul est simple.",
+      "motsCles": [
+        "avion",
+        "ciel"
+      ]
+    },
+    {
+      "tag": "APOLLO 11",
+      "chiffre": {
+        "valeur": 3,
+        "suffixe": "JOURS"
+      },
+      "lignes": [
+        {
+          "texte": "pour atteindre l'orbite lunaire",
+          "style": "accent"
+        }
+      ],
+      "voix": "Apollo 11, en juillet mille neuf cent soixante-neuf, a atteint l'orbite de la Lune en environ trois jours, et s'est posé un peu plus d'un jour après.",
+      "motsCles": [
+        "fusee",
+        "lune"
+      ]
+    }
+  ]
+}

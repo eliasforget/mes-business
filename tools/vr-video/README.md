@@ -85,6 +85,19 @@ Sans fichier de minutage, les sous-titres sont calés approximativement sur la d
 | `fonds` | noms de clips imposés pour cette scène |
 | `duree` | secondes, seulement sans voix |
 
+## Habillages (plusieurs chaînes)
+
+`"theme"` dans le script.json choisit l'habillage (couleurs, logo) défini dans `src/themes.ts` :
+
+| theme | Chaîne | Couleurs | Logo |
+|---|---|---|---|
+| `vice-radar` (défaut) | Vice Radar | nuit, menthe, orange, rose | VICE **RADAR** |
+| `faits-animes` | Faits animés | bleu nuit, cyan, ambre | FAITS **ANIMÉS** |
+
+`"marque": { "nom": "…", "accent": "…" }` remplace le logo pour une vidéo. Musique propre à une chaîne : mets les morceaux
+dans `musique\<theme>\` (sinon `musique\`). Les vidéos Faits animés sont dans `videos\F01-…`.
+Les gros chiffres (`"chiffre"`) se réduisent tout seuls pour rester dans l'image.
+
 ## Vidéos de gameplay
 
 Un script avec une section `gameplay` donne une vidéo construite autour d'une capture de jeu (dossiers créés par [vr-clips](../vr-clips)) :
