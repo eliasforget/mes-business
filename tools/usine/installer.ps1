@@ -1,13 +1,13 @@
 ﻿<#
-  Enregistre l'usine dans le Planificateur de tâches Windows : elle tourne toutes les 30 minutes
+  Enregistre l'usine dans le Planificateur de tâches Windows : elle vérifie GitHub toutes les 5 minutes
   (et à l'ouverture de session), sans fenêtre, tant que le PC est allumé.
 
     .\installer.ps1                 → installe (ou met à jour) la tâche, puis lance un premier passage
-    .\installer.ps1 -Minutes 60     → toutes les heures
+    .\installer.ps1 -Minutes 30     → toutes les 30 minutes
     .\installer.ps1 -Desinstaller   → supprime la tâche
 #>
 param(
-  [ValidateRange(15, 1440)][int]$Minutes = 30,
+  [ValidateRange(5, 1440)][int]$Minutes = 5,
   [switch]$Desinstaller
 )
 $ErrorActionPreference = 'Stop'

@@ -1,12 +1,12 @@
 # usine
 
 Fabrique toute seule, sur ton PC, les vidéos que les agents du tableau de bord poussent sur GitHub.
-Toutes les 30 minutes : `git pull`, puis pour chaque nouvelle vidéo **voix ElevenLabs → clips Pixabay → rendu**,
+Toutes les 5 minutes : `git pull`, puis pour chaque nouvelle vidéo **voix ElevenLabs → clips Pixabay → rendu**,
 et la range avec ses textes de publication dans `Vidéos\A publier\<chaîne>\<vidéo>\`. Toi, tu publies.
 
 ```
 Agents (cloud) ──push──▶ GitHub (videos\<nom>\script.json + publication.txt)
-                              │ git pull toutes les 30 min
+                              │ git pull toutes les 5 min
                               ▼
                  usine (ton PC) : vr-voix → vr-fonds → vr-video
                               │
