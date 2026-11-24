@@ -80,8 +80,16 @@ async function connexion(compte: string): Promise<number> {
       }
       try {
         const jetons = await echangerCode(fetch, { cle, secret, code: u.searchParams.get('code') ?? '', redirection, verificateur });
-        ecrireCoffre({ ...lireCoffre(), [compte]: jetons });
-        log.info('Compte « %s » connecté (portées : %s).', compte, jetons.scope || '?');
+        const coffre = lireCoffre();
+        // Le navigateur reste connecté au dernier compte TikTok utilisé : on refuse d'enregistrer deux fois le même compte.
+        const doublon = Object.entries(coffre).find(([nom, j]) => nom !== compte && j.open_id && j.open_id === jetons.open_id);
+        if (doublon) {
+          log.error('C\'est le même compte TikTok que « %s ». Ouvre une fenêtre privée (Ctrl+Maj+N), colle l\'adresse affichée plus haut, connecte-toi avec l\'autre compte et accepte.', doublon[0]);
+          return fin(409, `C'est le même compte TikTok que « ${doublon[0]} » : rien n'est enregistré. Regarde la fenêtre PowerShell.`);
+        }
+        ecrireCoffre({ ...coffre, [compte]: jetons });
+        const vu = await lireProfil(fetch, jetons.access_token).then((p) => p.display_name ?? '', () => '');
+        log.info('Compte « %s » connecté%s (portées : %s).', compte, vu ? ` : c'est « ${vu} » sur TikTok` : '', jetons.scope || '?');
         if (!jetons.scope.includes('user.info.stats')) log.warn('Sans la portée user.info.stats, le nombre d\'abonnés ne sera pas disponible (les vues par vidéo, si).');
         fin(200, `Compte « ${compte} » connecté. Tu peux fermer cet onglet.`);
       } catch (err) {
@@ -97,7 +105,7 @@ async function connexion(compte: string): Promise<number> {
     serveur6.listen(Number(env.TIKTOK_PORT), '::1');
     serveur.listen(Number(env.TIKTOK_PORT), '127.0.0.1', () => {
       log.info('Ouverture de TikTok dans ton navigateur : connecte-toi avec le compte « %s » et accepte.', compte);
-      log.info('Si rien ne s\'ouvre, copie cette adresse dans ton navigateur :\n%s', url);
+      log.info('Si TikTok te connecte avec le mauvais compte, ou si rien ne s\'ouvre, colle cette adresse dans une fenêtre privée (Ctrl+Maj+N) :\n%s', url);
       ouvrirNavigateur(url);
     });
     setTimeout(() => {
@@ -117,7 +125,17 @@ async function mettreAJour(dryRun: boolean, sortieForcee?: string): Promise<numb
   }
   const resultat: Record<string, unknown> = {};
   let erreurs = 0;
+  const vus = new Map<string, string>();
   for (const nom of comptes) {
+    const id = coffre[nom]!.open_id;
+    const autre = id ? vus.get(id) : undefined;
+    if (autre) {
+      erreurs++;
+      resultat[nom] = { erreur: `même compte TikTok que « ${autre} » : reconnecte-le dans une fenêtre privée` };
+      log.error('%s : c\'est le même compte TikTok que « %s ». Relance .\\tiktok.cmd connexion --compte %s et connecte-toi avec le bon compte (fenêtre privée).', nom, autre, nom);
+      continue;
+    }
+    if (id) vus.set(id, nom);
     try {
       let j = coffre[nom]!;
       if (aRafraichir(j)) {
@@ -139,7 +157,7 @@ async function mettreAJour(dryRun: boolean, sortieForcee?: string): Promise<numb
       const r = { ...resumer(profil, videos), ...(avertissement ? { avertissement } : {}) };
       resultat[nom] = r;
       if (avertissement) log.warn('%s : %s abonnés, %s likes au total. Les vues par vidéo ne sont pas disponibles : %s', nom, r.abonnes ?? '?', r.likes ?? '?', avertissement);
-      else log.info('%s : %s abonnés, %d vues sur 30 jours (%d vidéos), meilleure : %s vues.', nom, r.abonnes ?? '?', r.vues30j, r.videos30j, r.meilleures[0]?.vues ?? 0);
+      else log.info('%s (« %s ») : %s abonnés, %d vues sur 30 jours (%d vidéos), meilleure : %s vues.', nom, r.nom || '?', r.abonnes ?? '?', r.vues30j, r.videos30j, r.meilleures[0]?.vues ?? 0);
     } catch (err) {
       erreurs++;
       resultat[nom] = { erreur: (err as Error).message };

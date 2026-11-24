@@ -66,7 +66,7 @@ export function pkce(): { verificateur: string; defi: string } {
 
 export function urlAutorisation(cle: string, redirection: string, etat: string, defi: string): string {
   const u = new URL(URL_AUTORISATION);
-  u.search = new URLSearchParams({ client_key: cle, response_type: 'code', scope: PORTEES, redirect_uri: redirection, state: etat, code_challenge: defi, code_challenge_method: 'S256' }).toString();
+  u.search = new URLSearchParams({ client_key: cle, response_type: 'code', scope: PORTEES, redirect_uri: redirection, state: etat, code_challenge: defi, code_challenge_method: 'S256', disable_auto_auth: '1' }).toString();
   return u.toString();
 }
 
