@@ -1,0 +1,90 @@
+{
+  "titre": "GTA 6 : 4 secrets de plus (partie 3)",
+  "scenes": [
+    {
+      "tag": "SECRET N°9",
+      "lignes": [
+        {
+          "texte": "Cette statue",
+          "style": "normal"
+        },
+        {
+          "texte": "BIPE",
+          "style": "gros"
+        },
+        {
+          "texte": "en morse.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Cette statue de GTA 6 bipe en morse. À Manifest Canyon, approche le monument aux quatre chevaux : ta manette vibre, la statue bipe. Personne n'a décodé le message.",
+      "motsCles": [
+        "desert canyon",
+        "horse statue"
+      ]
+    },
+    {
+      "tag": "SECRET N°10",
+      "lignes": [
+        {
+          "texte": "Un perroquet",
+          "style": "normal"
+        },
+        {
+          "texte": "balance",
+          "style": "gros"
+        },
+        {
+          "texte": "une cachette.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Dans un magasin d'alcool des Keys, un perroquet répète « generator ». Fouille le générateur : de l'argent est caché derrière. Clin d'œil au perroquet de San Andreas.",
+      "motsCles": [
+        "parrot",
+        "liquor store"
+      ]
+    },
+    {
+      "tag": "SECRET N°11",
+      "lignes": [
+        {
+          "texte": "La voiture de",
+          "style": "petit"
+        },
+        {
+          "texte": "Fast & Furious",
+          "style": "gros"
+        },
+        {
+          "texte": "dans un garage.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Sur Vespucci Island, le garage d'une villa cache la voiture verte du premier Fast and Furious. Coupe l'alarme au mur, sinon la police débarque, et elle est à toi.",
+      "motsCles": [
+        "green sports car",
+        "garage door"
+      ]
+    },
+    {
+      "tag": "SECRET N°12",
+      "lignes": [
+        {
+          "texte": "Michael",
+          "style": "gros"
+        },
+        {
+          "texte": "a laissé des traces.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Et le yacht amarré près de chez Jason ? Son GPS affiche la carte de Los Santos. Même la sonnerie de Michael est dans ton téléphone. Lequel tu cherches en premier ?",
+      "motsCles": [
+        "luxury yacht",
+        "marina sunset"
+      ]
+    }
+  ],
+  "fin": "Lequel tu cherches en premier ?"
+}
