@@ -1,3 +1,4 @@
 # Vidéos que l'usine ne fabrique jamais (une par ligne). Déjà publiées avant l'usine :
 04-easter-eggs
 06-secrets-partie-2
+07-secrets-partie-3
