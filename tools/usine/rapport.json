@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-24T20:41:22.074Z",
+  "majLe": "2026-11-24T20:46:36.173Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -25,6 +25,11 @@
   ],
   "erreurs": [],
   "enAttenteDeCapture": [],
-  "tournage": {},
+  "tournage": {
+    "E01": {
+      "dossier": "12-e01-plante-au-milieu-de-la-route",
+      "capture": "E01 · Planté au milieu de la route.mp4"
+    }
+  },
   "compilations": []
 }
