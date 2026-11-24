@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-24T20:51:22.942Z",
+  "majLe": "2026-11-24T20:56:22.478Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -25,6 +25,19 @@
   ],
   "erreurs": [],
   "enAttenteDeCapture": [],
+  "enAttenteDeQuota": [
+    "11-secrets-partie-6",
+    "12-e01-plante-au-milieu-de-la-route",
+    "F02-venus-jour-annee",
+    "F03-voyage-lune",
+    "F04-vitesse-lumiere",
+    "F05-coeur-baleine-bleue"
+  ],
+  "quota": {
+    "faitesAujourdhui": 4,
+    "maxParJour": 4,
+    "maxParPassage": 3
+  },
   "tournage": {
     "E01": {
       "dossier": "12-e01-plante-au-milieu-de-la-route",
