@@ -273,6 +273,16 @@ function compilationsDeLaSemaine(etat: Etat, videos: Video[], dryRun: boolean): 
   }
 }
 
+// ─────────────── Étape 3 ter : statistiques TikTok (toutes les 6 h, si un compte est connecté) ───────────────
+function statsTikTok(etat: Etat & { statsLe?: string }): void {
+  const outil = path.join(OUTILS, 'tiktok-stats');
+  if (!existsSync(path.join(outil, 'jetons.local.json')) || !existsSync(path.join(outil, '.env'))) return;
+  if (etat.statsLe && Date.now() - Date.parse(etat.statsLe) < 6 * 3600_000) return;
+  log.info('Mise à jour des statistiques TikTok…');
+  if (lancerOutil('tiktok-stats', 'stats.ts', ['--sortie', path.join(dossierAPublier, 'tiktok-stats.txt')])) etat.statsLe = new Date().toISOString();
+  else log.warn('Statistiques TikTok en échec (voir logs\\tiktok-stats) : réessayées au prochain passage.');
+}
+
 // ─────────────── Étape 4 : rapport poussé sur GitHub (lu par les agents) ───────────────
 function ecrireRapport(etat: Etat, videos: Video[], attente: string[]): void {
   const parNom = new Map(videos.map((v) => [v.nom, v]));
@@ -382,6 +392,7 @@ async function main(): Promise<number> {
       ecrireJson(FICHIER_ETAT, etat); // sauvegarde après chaque vidéo : un arrêt du PC ne perd rien
     }
     compilationsDeLaSemaine(etat, videos, false);
+    statsTikTok(etat);
     ecrireJson(FICHIER_ETAT, etat);
     ecrireRapport(etat, videos, attente);
     if (avecGit && envBool('POUSSER_RAPPORT', true)) pousserRapport(faites);
