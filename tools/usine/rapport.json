@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-24T14:52:13.707Z",
+  "majLe": "2026-11-24T15:01:37.608Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -16,8 +16,14 @@
       "nom": "10-premier-patch",
       "chaine": "Vice Radar",
       "le": "2026-11-24T14:52:13.702Z"
+    },
+    {
+      "nom": "F01-everest-vs-fosse",
+      "chaine": "Faits animés",
+      "le": "2026-11-24T15:01:37.605Z"
     }
   ],
   "erreurs": [],
-  "enAttenteDeCapture": []
+  "enAttenteDeCapture": [],
+  "tournage": {}
 }
