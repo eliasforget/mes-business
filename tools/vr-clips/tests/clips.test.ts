@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import {
-  associationsForcees, associer, cleCapture, horodatage, listeIds, nomDossier, prochainNumero, question, scriptVideo, slug,
+  associationsForcees, associer, idDansNom, cleCapture, horodatage, listeIds, nomDossier, prochainNumero, question, scriptVideo, slug,
   textesPublication, verifierTournage, type Capture, type Experience, type Tournage,
 } from '../lib.ts';
 
@@ -80,4 +80,23 @@ test('textes de publication : titre YouTube ≤ 100 caractères, hashtags sans d
   assert.ok(titre.length <= 100, `titre de ${titre.length} caractères`);
   assert.ok(titre.endsWith('#GTA6 #Shorts'));
   assert.equal(t.match(/#GTA6 #GTAVI #gaming #jeuxvideo #police/g)?.length, 2);
+});
+
+test('idDansNom lit « E01 · Titre » dans le nom du fichier', () => {
+  assert.equal(idDansNom('E01 · Planté au milieu de la route.mp4'), 'E01');
+  assert.equal(idDansNom('e7 mamie.mp4'), 'E07');
+  assert.equal(idDansNom('Grand Theft Auto VI_20261124183015.mp4'), undefined);
+  assert.equal(idDansNom('E11-mamie.MP4'), 'E11');
+});
+
+test('les captures nommées passent avant l\'ordre, les autres suivent l\'ordre', () => {
+  const a = associer([exp('E01'), exp('E02'), exp('E03')], [cap('E03 · c.mp4', 1), cap('sans-nom.mp4', 2), cap('E01 · a.mp4', 3)]);
+  assert.deepEqual(a.paires.map((p) => `${p.experience.id}<${p.capture.nom}`), ['E01<E01 · a.mp4', 'E02<sans-nom.mp4', 'E03<E03 · c.mp4']);
+  assert.equal(a.nomsInconnus.length, 0);
+});
+
+test('un identifiant inconnu ou déjà tourné est laissé de côté', () => {
+  const a = associer([exp('E02')], [cap('E09 · x.mp4', 1), cap('E02 · y.mp4', 2), cap('E02 · doublon.mp4', 3)]);
+  assert.deepEqual(a.paires.map((p) => p.capture.nom), ['E02 · y.mp4']);
+  assert.deepEqual(a.nomsInconnus.map((c) => c.nom), ['E09 · x.mp4', 'E02 · doublon.mp4']);
 });

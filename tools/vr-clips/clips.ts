@@ -18,7 +18,7 @@ import { format, parseArgs } from 'node:util';
 import { createLogger, loadEnv, REPO_ROOT } from '../../shared/index.ts';
 import {
   associationsForcees, associer, cleCapture, horodatage, listeIds, nomDossier, prochainNumero, scriptVideo,
-  textesPublication, verifierTournage, type Capture, type Tournage,
+  textesPublication, verifierTournage, type Capture, type Tournage, idDansNom,
 } from './lib.ts';
 
 const ICI = import.meta.dirname;
@@ -143,11 +143,12 @@ async function main(): Promise<number> {
       const quand = new Date(p.capture.horodatage).toISOString().slice(0, 16).replace('T', ' ');
       console.log(`  ${p.experience.id.padEnd(5)} ${p.experience.titre.padEnd(40)} ← ${p.capture.nom} (${quand}, ${mo(p.capture.taille)})`);
     }
+    for (const c of asso.nomsInconnus) log.warn('Capture « %s » : son identifiant (%s) n\'est pas dans la liste ou est déjà tourné. Laissée de côté : corrige le nom ou la liste.', c.nom, idDansNom(c.nom));
     for (const c of asso.capturesEnTrop) log.warn('Capture sans expérience (ignorée cette fois) : %s. Ajoute une expérience à la liste, ou --associer.', c.nom);
     if (asso.paires.length && asso.experiencesSansCapture.length) {
       log.info('Pas encore de capture pour : %s', asso.experiencesSansCapture.map((e) => e.id).join(', '));
     }
-    log.info('Vérifie l\'ordre : la 1re capture va à la 1re expérience pas encore tournée. Si une expérience a été sautée, relance avec --sauter <id>.');
+    log.info('Captures nommées « E01 · … » : associées par leur nom. Les autres : la 1re va à la 1re expérience pas encore tournée (sinon --sauter <id>).');
   }
 
   if (dryRun) {

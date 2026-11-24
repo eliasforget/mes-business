@@ -8,7 +8,7 @@ Transforme tes captures PS5 en vidéos Vice Radar. Tu joues avec la liste de tou
 
 1. `tournage.json` liste les expériences de la semaine (E01, E02…) : titre, phrase d'accroche et texte à l'écran.
 2. Tu les tournes **dans l'ordre**, avec une capture par expérience (deux appuis sur la touche Créer).
-3. `vr-clips` associe la 1re nouvelle capture à la 1re expérience pas encore tournée, puis la suivante, etc. (ordre de la date dans le nom du fichier, sinon de la date du fichier).
+3. `vr-clips` associe chaque capture par **son nom** : nomme-la comme dans la liste, ex. `E01 · Planté au milieu de la route.mp4` (seul « E01 » compte). Une capture sans identifiant dans son nom va à la 1re expérience pas encore tournée, dans l'ordre d'enregistrement (date dans le nom du fichier PS5, sinon date du fichier).
 4. Pour chaque paire, il crée `tools\vr-video\videos\NN-eXX-titre\` avec `gameplay.mp4` (une copie), `script.json` et `publication.txt`.
 5. `--produire` enchaîne la voix (vr-voix) et le rendu (vr-video) de chaque vidéo.
 

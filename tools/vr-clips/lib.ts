@@ -56,6 +56,8 @@ export interface Association {
   paires: Paire[];
   capturesEnTrop: Capture[];
   experiencesSansCapture: Experience[];
+  /** Captures dont le nom porte un identifiant absent de la liste (ou déjà tourné) : laissées de côté. */
+  nomsInconnus: Capture[];
   erreurs: string[];
 }
 
@@ -125,9 +127,21 @@ export function associationsForcees(valeurs: string[]): { forces: Map<string, st
 }
 
 /**
- * Associe une capture à chaque expérience. Les associations forcées d'abord (morceau du nom de fichier),
- * puis le reste dans l'ordre : 1re capture → 1re expérience pas encore tournée, etc. Les expériences
- * « sautées » ne reçoivent rien.
+ * Identifiant d'expérience écrit dans le nom d'une capture : « E01 · Planté au milieu de la route.mp4 » → « E01 ».
+ * Insensible à la casse ; « e7 » → « E07 ». Rien si le nom n'en contient pas.
+ */
+export function idDansNom(nom: string): string | undefined {
+  const m = /(?:^|[^a-z0-9])e(\d{1,3})(?![0-9])/i.exec(nom.replace(/\.[^.]+$/, ''));
+  return m ? `E${m[1]!.padStart(2, '0')}` : undefined;
+}
+
+/**
+ * Associe une capture à chaque expérience, dans cet ordre de priorité :
+ * 1. les associations forcées (--associer E04=morceau-du-nom) ;
+ * 2. le nom du fichier : une capture nommée « E01 · … » va à E01 (une expérience déjà tournée ou inconnue
+ *    est signalée, la capture est laissée de côté) ;
+ * 3. le reste dans l'ordre : 1re capture → 1re expérience pas encore tournée, etc.
+ * Les expériences « sautées » ne reçoivent rien.
  */
 export function associer(experiences: Experience[], captures: Capture[], opts: { sauter?: string[]; forces?: Map<string, string> } = {}): Association {
   const sauter = new Set((opts.sauter ?? []).map((s) => s.toUpperCase()));
@@ -154,14 +168,33 @@ export function associer(experiences: Experience[], captures: Capture[], opts: {
     paires.push({ experience: exp, capture: trouvees[0]! });
   }
 
+  // 2. Par le nom du fichier
+  const parNom = new Set<string>();
+  const nomsInconnus: Capture[] = [];
+  for (const c of libres) {
+    if (prises.has(c)) continue;
+    const id = idDansNom(c.nom);
+    if (!id) continue;
+    const exp = parId.get(id);
+    if (!exp || forces.has(id) || parNom.has(id)) {
+      nomsInconnus.push(c);
+      prises.add(c);
+      continue;
+    }
+    prises.add(c);
+    parNom.add(id);
+    paires.push({ experience: exp, capture: c });
+  }
+
+  // 3. Dans l'ordre, pour les captures sans identifiant dans le nom
   const restantes = libres.filter((c) => !prises.has(c));
-  const aFaire = experiences.filter((e) => !sauter.has(e.id.toUpperCase()) && !forces.has(e.id.toUpperCase()));
+  const aFaire = experiences.filter((e) => !sauter.has(e.id.toUpperCase()) && !forces.has(e.id.toUpperCase()) && !parNom.has(e.id.toUpperCase()));
   const n = Math.min(restantes.length, aFaire.length);
   for (let i = 0; i < n; i++) paires.push({ experience: aFaire[i]!, capture: restantes[i]! });
 
   const ordre = new Map(experiences.map((e, i) => [e.id, i]));
   paires.sort((a, b) => ordre.get(a.experience.id)! - ordre.get(b.experience.id)!);
-  return { paires, capturesEnTrop: restantes.slice(n), experiencesSansCapture: aFaire.slice(n), erreurs };
+  return { paires, capturesEnTrop: restantes.slice(n), experiencesSansCapture: aFaire.slice(n), nomsInconnus, erreurs };
 }
 
 // ── Dossiers et scripts ───────────────────────────────────────────────────
