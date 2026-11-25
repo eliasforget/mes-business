@@ -326,7 +326,7 @@ export function verifierScript(script: unknown): string[] {
     const n = `scenes[${i}]`;
     if (!sc || typeof sc.voix !== 'string' || !sc.voix.trim()) erreurs.push(`${n}.voix : texte obligatoire (ce que dit la voix pendant la scène).`);
     if (sc?.lignes && (!Array.isArray(sc.lignes) || sc.lignes.some((l) => typeof l?.texte !== 'string'))) erreurs.push(`${n}.lignes : liste de { "texte": "...", "style": "normal|gros|accent|petit" }.`);
-    if (sc?.lignes?.some((l) => l.style && !['normal', 'gros', 'accent', 'petit'].includes(l.style))) erreurs.push(`${n}.lignes : style inconnu (normal, gros, accent ou petit).`);
+    if (Array.isArray(sc?.lignes) && sc.lignes.some((l) => l?.style && !['normal', 'gros', 'accent', 'petit'].includes(l.style))) erreurs.push(`${n}.lignes : style inconnu (normal, gros, accent ou petit).`);
     if (sc?.chiffre && typeof sc.chiffre.valeur !== 'number') erreurs.push(`${n}.chiffre.valeur : nombre obligatoire.`);
     if (sc?.duree !== undefined && !(typeof sc.duree === 'number' && sc.duree > 0)) erreurs.push(`${n}.duree : nombre de secondes > 0.`);
   });

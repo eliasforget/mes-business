@@ -94,6 +94,13 @@ test('vérification du script : exemple valide, erreurs lisibles sinon', () => {
   assert.equal(e.length, 3);
 });
 
+test('vérification du script : « lignes » mal formé ou élément null donne des erreurs lisibles, jamais une exception', () => {
+  const e = verifierScript({ scenes: [{ voix: 'a', lignes: 'pas une liste' }, { voix: 'b', lignes: [null, { texte: 'x', style: 'enorme' }] }, null] });
+  assert.ok(e.some((x) => x.startsWith('scenes[0].lignes')), e.join('\n'));
+  assert.ok(e.some((x) => x.startsWith('scenes[1].lignes')), e.join('\n'));
+  assert.ok(e.some((x) => x.startsWith('scenes[2].voix')), e.join('\n'));
+});
+
 test('gameplay : par défaut les dernières secondes du clip, sinon début/durée demandés, jamais au-delà du clip', () => {
   assert.deepEqual(fenetreGameplay(60, {}, 35), { depuis: 60 - 0.05 - 35, duree: 35 });
   // Clip plus court que la durée voulue : on garde tout.
