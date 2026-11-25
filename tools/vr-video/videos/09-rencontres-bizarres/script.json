@@ -28,11 +28,15 @@
           "style": "normal"
         },
         {
-          "texte": "dans des toilettes.",
+          "texte": "dans des toilettes ?",
           "style": "accent"
+        },
+        {
+          "texte": "une seule source",
+          "style": "petit"
         }
       ],
-      "voix": "Dans des toilettes, une affiche cache un QR code. Scanne-le avec WAiNK : un certain Docteur Merle t'embarque dans un complot autour des égouts. À la clé, un bonus d'endurance.",
+      "voix": "Dans des toilettes, un QR code lancerait une chaîne de quêtes avec WAiNK. Un seul site en parle : prends ça pour une rumeur, pas pour un fait. Tu l'as vu ? Dis-le moi.",
       "motsCles": [
         "public restroom",
         "sewer tunnel"
