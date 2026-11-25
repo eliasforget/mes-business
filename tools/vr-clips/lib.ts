@@ -29,6 +29,8 @@ export interface Experience {
   fin?: string;
   hashtags?: string[];
   gameplay?: ReglagesGameplay;
+  /** Consigne de tournage pour le joueur (que faire, où placer la caméra, quand appuyer sur Créer). Affichée par --liste. */
+  commentFilmer?: string;
 }
 
 export interface Tournage {
@@ -76,6 +78,7 @@ export function verifierTournage(t: unknown): string[] {
     else vus.add(e.id.toUpperCase());
     if (typeof e?.titre !== 'string' || !e.titre.trim()) erreurs.push(`${n}.titre : texte obligatoire.`);
     if (typeof e?.accroche !== 'string' || !e.accroche.trim()) erreurs.push(`${n}.accroche : phrase de la voix obligatoire.`);
+    if (e?.commentFilmer !== undefined && (typeof e.commentFilmer !== 'string' || !e.commentFilmer.trim())) erreurs.push(`${n}.commentFilmer : texte non vide (ou retire le champ).`);
     if (!Array.isArray(e?.lignes) || !e.lignes.length || e.lignes.some((l) => typeof l?.texte !== 'string')) erreurs.push(`${n}.lignes : liste de { "texte": "...", "style": "normal|gros|accent|petit" }.`);
   });
   return erreurs;

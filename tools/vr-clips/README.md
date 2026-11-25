@@ -67,6 +67,8 @@ Puis `..\vr-video\rendu.cmd videos\NN-eXX-titre --apercu 0,5,20` pour vérifier 
 
 ## Nouvelle liste de tournage
 
+Chaque expérience peut avoir un champ `commentFilmer` (que faire, où placer la caméra, quand appuyer sur Créer) : `.\clips.cmd --liste` l'affiche sous chaque expérience pas encore tournée.
+
 Remplace les expériences de `tournage.json` (de nouveaux identifiants, par exemple E11 à E20, pour ne pas les confondre avec celles déjà faites). Une bonne accroche pose une question sans donner la réponse : on ne connaît pas le résultat avant de jouer, et c'est ce qui fait regarder jusqu'au bout.
 
 ## Exemple

@@ -120,6 +120,7 @@ async function main(): Promise<number> {
       const r = registre.experiences[e.id];
       const etat = !r ? 'à tourner' : r.rendu ? `vidéo rendue (${r.dossier})` : `importée, pas encore rendue (${r.dossier})`;
       console.log(`  ${e.id.padEnd(5)} ${e.titre.padEnd(45)} ${etat}`);
+      if (!r && e.commentFilmer) console.log(`        Comment filmer : ${e.commentFilmer}`);
     }
     return 0;
   }

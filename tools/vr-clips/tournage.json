@@ -163,6 +163,150 @@
       ]
     },
     {
+      "id": "E16",
+      "titre": "Conduire sous la pluie",
+      "accroche": "La pluie change-t-elle vraiment la conduite dans GTA 6 ? Même virage, deux météos. Regarde bien.",
+      "lignes": [
+        {
+          "texte": "La pluie change",
+          "style": "normal"
+        },
+        {
+          "texte": "la conduite ?",
+          "style": "accent"
+        }
+      ],
+      "commentFilmer": "Choisis un virage facile à reconnaître, prends-le à la même vitesse (≈ 60 km/h au compteur) par temps sec puis sous la pluie, caméra derrière la voiture, 2 prises par météo. Si la pluie n'arrive pas dans la session, fais la comparaison jour/nuit et préviens-moi : je change le texte. Début du jeu uniquement, aucune mission ni cinématique à l'écran, radio des voitures coupée, aucune triche. Capture avec Créer (1 min) juste APRÈS le moment clé : la vidéo garde les 35 dernières secondes. Max 2 essais, sinon passe à la suivante (--sauter)."
+    },
+    {
+      "id": "E15",
+      "titre": "Rouler sur la plage",
+      "accroche": "Une voiture sur le sable de la plage dans GTA 6 : ça passe ou ça casse ? Regarde la fin.",
+      "lignes": [
+        {
+          "texte": "Une voiture",
+          "style": "normal"
+        },
+        {
+          "texte": "sur la plage",
+          "style": "accent"
+        }
+      ],
+      "commentFilmer": "Pars du trottoir ou de la route côté plage, entre sur le sable en ligne droite sur 15 à 20 s puis va jusqu'au bord de l'eau et arrête-toi à l'arrivée. Caméra derrière la voiture. Ne rentre pas profondément dans l'eau (c'est E05) : concentre-toi sur la tenue de route sur le sable. Début du jeu uniquement, aucune mission ni cinématique à l'écran, radio des voitures coupée, aucune triche. Capture avec Créer (1 min) juste APRÈS le moment clé : la vidéo garde les 35 dernières secondes. Max 2 essais, sinon passe à la suivante (--sauter)."
+    },
+    {
+      "id": "E13",
+      "titre": "Nager vers le large",
+      "accroche": "Jusqu'où peut-on nager vers le large dans GTA 6 ? Regarde jusqu'au bout.",
+      "lignes": [
+        {
+          "texte": "Nager",
+          "style": "gros"
+        },
+        {
+          "texte": "vers le large",
+          "style": "accent"
+        }
+      ],
+      "commentFilmer": "Saute à l'eau depuis la plage et nage tout droit vers le large, sans t'arrêter, 40 à 60 s. Garde la jauge d'endurance visible à l'écran, fais un plan large en regardant en arrière vers la côte à mi-chemin. Filme jusqu'à ce que quelque chose se passe (jauge vide, limite, rien) : on montre ce qui arrive vraiment. Début du jeu uniquement, aucune mission ni cinématique à l'écran, radio des voitures coupée, aucune triche. Capture avec Créer (1 min) juste APRÈS le moment clé : la vidéo garde les 35 dernières secondes. Max 2 essais, sinon passe à la suivante (--sauter)."
+    },
+    {
+      "id": "E21",
+      "titre": "Rouler sur le trottoir",
+      "accroche": "Que font les piétons et la police si tu roules sur le trottoir dans GTA 6 ? Regarde bien.",
+      "lignes": [
+        {
+          "texte": "Je roule",
+          "style": "normal"
+        },
+        {
+          "texte": "sur le trottoir",
+          "style": "accent"
+        }
+      ],
+      "commentFilmer": "Prends une voiture et roule 20 à 30 s sur un trottoir fréquenté, vitesse modérée, en gardant les 5 premières secondes d'approche. Caméra derrière la voiture. Filme la réaction des piétons et de la police. Note ce qui se passe réellement : le texte ne dira que ça. Début du jeu uniquement, aucune mission ni cinématique à l'écran, radio des voitures coupée, aucune triche. Capture avec Créer (1 min) juste APRÈS le moment clé : la vidéo garde les 35 dernières secondes. Max 2 essais, sinon passe à la suivante (--sauter)."
+    },
+    {
+      "id": "E19",
+      "titre": "Pousser une voiture",
+      "accroche": "Que fait le conducteur si tu pousses sa voiture sur 100 mètres dans GTA 6 ? Regarde sa réaction.",
+      "lignes": [
+        {
+          "texte": "Je pousse",
+          "style": "normal"
+        },
+        {
+          "texte": "une voiture",
+          "style": "accent"
+        }
+      ],
+      "commentFilmer": "Pousse doucement par l'arrière une voiture conduite par un PNJ (pas la tienne) sur environ 100 m, comme un pare-chocs de remorquage. Caméra derrière ta voiture, puis passe en vue large à la réaction du conducteur. Appuie sur Créer juste après sa réaction. Début du jeu uniquement, aucune mission ni cinématique à l'écran, radio des voitures coupée, aucune triche. Capture avec Créer (1 min) juste APRÈS le moment clé : la vidéo garde les 35 dernières secondes. Max 2 essais, sinon passe à la suivante (--sauter)."
+    },
+    {
+      "id": "E12",
+      "titre": "Une minute sans rien casser",
+      "accroche": "Peut-on conduire une minute en respectant tout le code de la route dans GTA 6 ? Regarde jusqu'au bout.",
+      "lignes": [
+        {
+          "texte": "Une minute",
+          "style": "normal"
+        },
+        {
+          "texte": "sans rien casser",
+          "style": "accent"
+        }
+      ],
+      "commentFilmer": "Conduis 1 min en ville en respectant tout : feux rouges, limites de vitesse, aucune collision. Caméra derrière la voiture, et un plan du compteur au début. Note ce que font les autres conducteurs et la police quand tu es sage, et tout événement bizarre. Début du jeu uniquement, aucune mission ni cinématique à l'écran, radio des voitures coupée, aucune triche. Capture avec Créer (1 min) juste APRÈS le moment clé : la vidéo garde les 35 dernières secondes. Max 2 essais, sinon passe à la suivante (--sauter)."
+    },
+    {
+      "id": "E17",
+      "titre": "Abandonner sa voiture",
+      "accroche": "Ta voiture est-elle encore là si tu l'abandonnes une minute dans GTA 6 ? Regarde ce qui se passe quand je reviens.",
+      "lignes": [
+        {
+          "texte": "Je laisse",
+          "style": "normal"
+        },
+        {
+          "texte": "ma voiture 1 minute",
+          "style": "accent"
+        }
+      ],
+      "commentFilmer": "Gare ta voiture dans une rue passante, coupe le moteur et filme-la en plan large en t'éloignant à pied pendant environ 1 min. Reviens et filme : est-elle là, son état, quelqu'un l'a-t-il touchée ? Capture Créer juste après ton retour. Début du jeu uniquement, aucune mission ni cinématique à l'écran, radio des voitures coupée, aucune triche. Capture avec Créer (1 min) juste APRÈS le moment clé : la vidéo garde les 35 dernières secondes. Max 2 essais, sinon passe à la suivante (--sauter)."
+    },
+    {
+      "id": "E18",
+      "titre": "Une moto en ville",
+      "accroche": "La moto est-elle le moyen le plus risqué de rouler dans GTA 6 ? Regarde la circulation.",
+      "lignes": [
+        {
+          "texte": "Une moto",
+          "style": "normal"
+        },
+        {
+          "texte": "en pleine ville",
+          "style": "accent"
+        }
+      ],
+      "commentFilmer": "Prends une moto et fais 1 min de conduite en circulation dense, en dépassant les voitures. Caméra derrière la moto. Garde les dépassements et les chutes éventuelles : ne force pas la chute, filme ce qui arrive. Début du jeu uniquement, aucune mission ni cinématique à l'écran, radio des voitures coupée, aucune triche. Capture avec Créer (1 min) juste APRÈS le moment clé : la vidéo garde les 35 dernières secondes. Max 2 essais, sinon passe à la suivante (--sauter)."
+    },
+    {
+      "id": "E14",
+      "titre": "Sortir une arme en pleine rue",
+      "accroche": "Comment réagit la ville si tu sors une arme en pleine rue dans GTA 6 ? Regarde les passants.",
+      "lignes": [
+        {
+          "texte": "Une arme",
+          "style": "normal"
+        },
+        {
+          "texte": "en pleine rue",
+          "style": "accent"
+        }
+      ],
+      "commentFilmer": "Au milieu d'une foule, sors une arme sans tirer et attends 10 s, puis refais-le à un autre endroit. Caméra à hauteur d'épaule. Filme la réaction des passants puis de la police. Ne tire pas et ne filme rien lié à l'histoire. Début du jeu uniquement, aucune mission ni cinématique à l'écran, radio des voitures coupée, aucune triche. Capture avec Créer (1 min) juste APRÈS le moment clé : la vidéo garde les 35 dernières secondes. Max 2 essais, sinon passe à la suivante (--sauter)."
+    },
+    {
       "id": "E04",
       "titre": "Foncer dans une vitrine",
       "accroche": "Que se passe-t-il si tu fonces dans une vitrine en voiture dans GTA 6 ? Regarde bien.",

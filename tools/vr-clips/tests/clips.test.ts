@@ -17,6 +17,12 @@ test('la liste de tournage fournie est valide', () => {
   assert.deepEqual(verifierTournage(tournage), []);
 });
 
+test('commentFilmer : texte précis ou absent', () => {
+  for (const e of tournage.experiences) if (e.commentFilmer !== undefined) assert.ok(e.commentFilmer.length > 80, `${e.id} : consigne trop courte`);
+  assert.deepEqual(verifierTournage({ experiences: [{ ...exp('E01'), commentFilmer: '  ' }] }).length, 1);
+  assert.deepEqual(verifierTournage({ experiences: [{ ...exp('E01'), commentFilmer: 'Filme 30 s derrière la voiture.' }] }), []);
+});
+
 test('liste de tournage : erreurs lisibles (id en double, champs manquants)', () => {
   const e = verifierTournage({ experiences: [exp('E01'), { ...exp('e01') }, { id: 'E 3', titre: '', accroche: '', lignes: [] }] });
   assert.equal(e.length, 5);
