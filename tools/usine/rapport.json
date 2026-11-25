@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-25T08:00:29.310Z",
+  "majLe": "2026-11-25T08:04:13.005Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -36,17 +36,21 @@
       "nom": "F02-venus-jour-annee",
       "chaine": "Faits animés",
       "le": "2026-11-25T08:00:26.471Z"
+    },
+    {
+      "nom": "F03-voyage-lune",
+      "chaine": "Faits animés",
+      "le": "2026-11-25T08:04:12.996Z"
     }
   ],
   "erreurs": [],
   "enAttenteDeCapture": [],
   "enAttenteDeQuota": [
-    "F03-voyage-lune",
     "F04-vitesse-lumiere",
     "F05-coeur-baleine-bleue"
   ],
   "quota": {
-    "faitesAujourdhui": 3,
+    "faitesAujourdhui": 4,
     "maxParJour": 4,
     "maxParPassage": 3
   },
