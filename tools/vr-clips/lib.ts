@@ -31,6 +31,8 @@ export interface Experience {
   gameplay?: ReglagesGameplay;
   /** Consigne de tournage pour le joueur (que faire, où placer la caméra, quand appuyer sur Créer). Affichée par --liste. */
   commentFilmer?: string;
+  /** Commentaire à épingler après publication (question qui fait réagir). Par défaut : « Quelle expérience je teste ensuite ? ». */
+  commentaire?: string;
 }
 
 export interface Tournage {
@@ -259,6 +261,11 @@ export function textesPublication(exp: Experience, tournage: Tournage): string {
     '',
     'DESCRIPTION YOUTUBE',
     `${q}\n${fin} 👇\n\nUne expérience par jour sur GTA 6 : abonne-toi pour la prochaine.\n\n${tags.join(' ')}`,
+    '',
+    'COMMENTAIRE À ÉPINGLER (à poster juste après la publication)',
+    exp.commentaire?.trim() || 'Quelle expérience je dois tester ensuite dans GTA 6 ? Je lis tous les commentaires.',
+    '',
+    'À la publication TikTok : active l\'étiquette « Contenu généré par l\'IA » (voix de synthèse).',
     '',
   ].join('\n');
 }

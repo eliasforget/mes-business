@@ -88,6 +88,13 @@ test('textes de publication : titre YouTube ≤ 100 caractères, hashtags sans d
   assert.equal(t.match(/#GTA6 #GTAVI #gaming #jeuxvideo #police/g)?.length, 2);
 });
 
+test('publication : commentaire à épingler et rappel de l\'étiquette IA', () => {
+  const d = textesPublication(exp('E01'), tournage);
+  assert.match(d, /COMMENTAIRE À ÉPINGLER[^\n]*\nQuelle expérience/);
+  assert.match(d, /Contenu généré par l'IA/);
+  assert.match(textesPublication({ ...exp('E01'), commentaire: 'Ton avis ?' }, tournage), /COMMENTAIRE À ÉPINGLER[^\n]*\nTon avis \?/);
+});
+
 test('idDansNom lit « E01 · Titre » dans le nom du fichier', () => {
   assert.equal(idDansNom('E01 · Planté au milieu de la route.mp4'), 'E01');
   assert.equal(idDansNom('e7 mamie.mp4'), 'E07');
