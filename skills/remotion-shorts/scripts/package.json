@@ -1,0 +1,32 @@
+{
+  "name": "remotion-shorts-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Moteur autonome de la skill remotion-shorts : script.json vers vidéo verticale 1080x1920 (Remotion)",
+  "type": "module",
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test tests/plan.test.ts",
+    "rendu": "node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts"
+  },
+  "dependencies": {
+    "@fontsource/anton": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@remotion/bundler": "4.0.545",
+    "@remotion/cli": "4.0.545",
+    "@remotion/media-parser": "4.0.545",
+    "@remotion/renderer": "4.0.545",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "4.0.545"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "typescript": "^5.9.0"
+  }
+}

@@ -1,6 +1,6 @@
 # Champs de script.json
 
-Relevés dans `tools/vr-video/src/plan.ts` (types `ScriptVideo`, `Scene`, `Ligne`, `Chiffre`) et dans la fonction `verifierScript` qui les contrôle. Un champ non listé ici est ignoré.
+Relevés dans `scripts/src/plan.ts` (types `ScriptVideo`, `Scene`, `Ligne`, `Chiffre`) et dans la fonction `verifierScript` qui les contrôle. Un champ non listé ici est ignoré.
 
 ## Dossier d'une vidéo
 
@@ -23,7 +23,8 @@ Le nom du dossier devient le nom du fichier de sortie (`sortie/<nom>.mp4`). Conv
 | `scenes` | liste non vide | oui | les scènes, dans l'ordre |
 | `titre` | texte | non | affiché dans les journaux du moteur |
 | `fin` | texte | non | appel à l'action affiché sur la fin (ex. « Abonne-toi pour la suite ») |
-| `theme` | texte | non | habillage : `vice-radar` (défaut) ou `faits-animes` ; un nom inconnu retombe sur `vice-radar` avec un avertissement |
+| `theme` | texte | non | habillage : `defaut` (seul fourni) ; un nom inconnu retombe sur `defaut` avec un avertissement |
+| `couleurs` | objet | non | remplace des couleurs du thème, format `#rrggbb`. Noms : `nuit` (fond), `marine` (fond secondaire), `bleu`, `blanc` (texte), `menthe` (accent 1 : sous-titres, étiquettes), `orange` (accent 2, début du dégradé des gros titres), `rose` (accent 3, fin du dégradé) |
 | `marque` | `{ "nom": "…", "accent": "…" }` | non | logo en haut de l'image : `nom` en blanc, `accent` en couleur. Les deux textes sont obligatoires s'il est présent |
 
 ## Scène (`scenes[i]`)
@@ -47,7 +48,7 @@ Styles de ligne : `normal` (blanc), `gros` (énorme, dégradé), `accent` (coule
 - `scenes[i].lignes` : liste d'objets avec `texte` ; `style` parmi `normal`, `gros`, `accent`, `petit`.
 - `scenes[i].chiffre.valeur` : nombre.
 - `scenes[i].duree` : nombre supérieur à 0.
-- `theme` : texte non vide ; `marque` : `nom` et `accent` textes.
+- `theme` : texte non vide ; `marque` : `nom` et `accent` textes ; `couleurs` : noms connus, valeurs `#rrggbb`.
 
 Autres contrôles du rendu (avertissements, pas des erreurs) : durée sous `DUREE_MIN_CIBLE` (30 s par défaut), absence de voix, absence de musique, thème inconnu.
 

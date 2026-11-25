@@ -1,0 +1,39 @@
+{
+  "titre": "3 raccourcis VS Code",
+  "fin": "Lequel tu testes en premier ?",
+  "marque": { "nom": "CODE", "accent": "ASTUCES" },
+  "scenes": [
+    {
+      "tag": "VS CODE",
+      "lignes": [
+        { "texte": "Ce raccourci", "style": "petit" },
+        { "texte": "10 MINUTES", "style": "gros" },
+        { "texte": "gagnées par jour", "style": "accent" }
+      ],
+      "voix": "Ce raccourci VS Code te fait gagner dix minutes par jour, et presque personne ne le connaît. Voici les trois que j'utilise sans arrêt.",
+      "motsCles": ["code", "clavier"]
+    },
+    {
+      "tag": "ASTUCE N°1",
+      "lignes": [
+        { "texte": "Ctrl + D", "style": "gros" },
+        { "texte": "sélectionne l'occurrence suivante", "style": "accent" }
+      ],
+      "voix": "Numéro un : Contrôle D. Il sélectionne l'occurrence suivante du mot sous le curseur. Tu renommes plusieurs variables d'un seul coup, sans chercher et remplacer."
+    },
+    {
+      "tag": "ASTUCE N°2",
+      "chiffre": { "valeur": 2, "suffixe": " CURSEURS" },
+      "lignes": [{ "texte": "Alt + clic", "style": "accent" }],
+      "voix": "Numéro deux : Alt et clic. Tu poses un curseur supplémentaire où tu veux, et tu écris à plusieurs endroits en même temps."
+    },
+    {
+      "tag": "ASTUCE N°3",
+      "lignes": [
+        { "texte": "Ctrl + P", "style": "gros" },
+        { "texte": "ouvre n'importe quel fichier", "style": "accent" }
+      ],
+      "voix": "Numéro trois : Contrôle P. Tape quelques lettres du nom d'un fichier et il s'ouvre aussitôt. Plus besoin de parcourir l'arborescence à la souris. Essaie les trois aujourd'hui, tu ne reviendras pas en arrière."
+    }
+  ]
+}

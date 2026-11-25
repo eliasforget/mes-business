@@ -1,11 +1,11 @@
 ---
 name: remotion-shorts
-description: Produit une vidéo verticale 1080x1920 (Short, TikTok, Reel) animée avec Remotion à partir d'un script.json — accroche présente dès l'image 0, premier changement de plan à 1,3 s, sous-titres karaoké mot par mot, titres et compteurs animés, barre de progression, fin en boucle. À utiliser quand l'utilisateur veut écrire, valider (--dry-run), prévisualiser (images PNG) ou rendre en MP4 une vidéo courte verticale à partir d'un texte, avec Node 22 et le moteur vr-video. Pas pour une vidéo horizontale ou longue, ni pour du montage image par image.
+description: Produit une vidéo verticale 1080x1920 (Short, TikTok, Reel) animée avec Remotion à partir d'un script.json — accroche présente dès l'image 0, premier changement de plan à 1,3 s, sous-titres karaoké mot par mot, titres et compteurs animés, barre de progression, fin en boucle. À utiliser quand l'utilisateur veut écrire, valider (--dry-run), prévisualiser (images PNG) ou rendre en MP4 une vidéo courte verticale à partir d'un texte, avec Node 22 et le moteur fourni dans `scripts/`. Pas pour une vidéo horizontale ou longue, ni pour du montage image par image.
 ---
 
 # remotion-shorts
 
-Tu transformes un sujet en vidéo verticale courte (30 à 45 s) : tu écris `script.json`, tu le valides, tu montres des aperçus, puis tu lances le rendu. Le moteur est `vr-video` (TypeScript + Remotion) ; les commandes exactes sont dans `references/commandes.md` et les champs du script dans `references/script-schema.md`. Ne les invente pas : lis-les.
+Tu transformes un sujet en vidéo verticale courte (30 à 45 s) : tu écris `script.json`, tu le valides, tu montres des aperçus, puis tu lances le rendu. Le moteur est fourni avec la skill, dans `scripts/` (TypeScript + Remotion, autonome : rien d'autre à copier) ; les commandes exactes sont dans `references/commandes.md` et les champs du script dans `references/script-schema.md`. Ne les invente pas : lis-les.
 
 ## Quand l'utiliser
 
@@ -20,7 +20,7 @@ Tu transformes un sujet en vidéo verticale courte (30 à 45 s) : tu écris `scr
 ## Avant de commencer
 
 1. `node -v` : version 22.6 ou plus (le moteur exécute le TypeScript directement).
-2. Le moteur est installé (`npm install` dans son dossier, voir `references/commandes.md`). Au premier rendu, Remotion télécharge un navigateur headless (environ 100 Mo).
+2. Le moteur est installé (`npm install` dans `scripts/`, voir `references/commandes.md`). Au premier rendu, Remotion télécharge un navigateur headless (environ 100 Mo).
 3. Les fichiers de l'utilisateur : voix off (`voix.mp3`), musique, clips de fond. Utilise uniquement ce qui existe dans le dossier : liste-le, n'invente aucun nom de fichier. Ne demande jamais une clé d'API dans la conversation et ne lis pas son `.env`.
 4. Sans voix, la vidéo est muette et le rythme est estimé (environ 2,8 mots par seconde) : suffisant pour valider le texte et les aperçus, pas pour publier.
 
@@ -39,7 +39,8 @@ Crée un dossier de vidéo (ex. `videos/05-raccourcis-vscode/`) avec `script.jso
 - `voix` : le texte lu, phrases courtes. Mises bout à bout, les `voix` de toutes les scènes doivent donner exactement le texte de la voix off (elles servent à caler les scènes sur le minutage).
 - `lignes` : 2 à 3 lignes courtes par scène (styles `normal`, `gros`, `accent`, `petit`) ; un seul `gros` par scène.
 - N'invente aucun chiffre, date ni nom vérifiable. En cas de doute, écris la phrase sans le chiffre ou demande la source à l'utilisateur.
-- Marque : mets toujours `"marque": { "nom": "…", "accent": "…" }` avec le nom de la chaîne de l'utilisateur. Sans ce champ, le logo par défaut est celui de l'auteur du moteur.
+- Marque : mets toujours `"marque": { "nom": "…", "accent": "…" }` avec le nom de la chaîne de l'utilisateur. Sans ce champ, le logo affiche l'espace réservé « MA CHAINE » (réglable avec `MARQUE_NOM` et `MARQUE_ACCENT` dans le `.env` du moteur).
+- Couleurs : facultatif, `"couleurs": { "menthe": "#38bdf8" }` remplace une couleur de l'habillage (format `#rrggbb`, noms dans `references/script-schema.md`).
 - Pas de contenu d'autrui : ni extraits de vidéos d'autres créateurs, ni musique sous licence que l'utilisateur ne possède pas.
 
 ### 3. Valider : `--dry-run`
@@ -73,7 +74,7 @@ Entrée : « Fais un Short de 35 s : 3 raccourcis VS Code que personne n'utilise
 
 - Format vertical uniquement (1080x1920).
 - La skill ne génère pas la voix : elle utilise `voix.mp3` fourni, avec son minutage (`voix.mots.json` ou réponse ElevenLabs `voix.alignement.json`). Sans minutage, les sous-titres sont calés approximativement sur la durée de l'audio.
-- Les couleurs viennent d'un habillage fourni avec le moteur (`vice-radar` par défaut, `faits-animes`) : tu changes le logo avec `marque`, pas la palette.
+- Un seul habillage est fourni (`defaut`) ; tu changes le logo avec `marque` et les couleurs avec `couleurs`, pas la mise en page ni les polices.
 - Une réclamation Content ID sur un Short de plus d'une minute le bloque sur YouTube : évite les musiques « libres de droits » marquées Content ID.
 - Aucune promesse de performance sur les plateformes : la rétention se lit dans les statistiques de l'utilisateur.
 

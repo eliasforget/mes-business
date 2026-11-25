@@ -1,16 +1,16 @@
 # Commandes exactes
 
-Relevées dans `tools/vr-video/rendu.ts` (usage affiché par le moteur : `rendu <dossier-de-la-video> [--dry-run] [--apercu 0,3] [--sortie fichier.mp4]`). Tout se lance depuis le dossier du moteur (`tools/vr-video`).
+Relevées dans `scripts/rendu.ts` (usage affiché par le moteur : `rendu <dossier-de-la-video> [--dry-run] [--apercu 0,3] [--sortie fichier.mp4]`). Tout se lance depuis le dossier du moteur (`scripts/`, à côté de ce `SKILL.md`). Le dossier d'une vidéo peut être n'importe où : le moteur ne lit que `script.json` et les fichiers à côté de lui.
 
 ## Installation (une fois)
 
 ```powershell
-Set-Location tools\vr-video
+Set-Location skills\remotion-shorts\scripts   # adapte le chemin à l'endroit où la skill est installée
 npm install
-npm test        # tests de la logique de minutage et du choix de passage
+npm test        # tests du minutage, de la validation du script et du --dry-run
 ```
 
-Exigence : Node 22.6 ou plus. Au premier rendu, Remotion télécharge un navigateur headless (environ 100 Mo). Licence Remotion : gratuite pour un particulier d'après le README de vr-video ; vérifie les conditions de remotion.com si l'usage est professionnel.
+Exigence : Node 22.6 ou plus. Au premier rendu, Remotion télécharge un navigateur headless (environ 100 Mo). Licence Remotion : gratuite pour un particulier d'après le README du moteur ; vérifie les conditions de remotion.com si l'usage est professionnel.
 
 ## Les trois commandes
 
