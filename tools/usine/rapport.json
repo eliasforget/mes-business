@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-25T08:51:21.909Z",
+  "majLe": "2026-11-25T08:56:22.184Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -46,6 +46,10 @@
   "erreurs": [],
   "enAttenteDeCapture": [],
   "enAttenteDeQuota": [
+    "08-secrets-partie-4",
+    "09-rencontres-bizarres",
+    "10-premier-patch",
+    "11-secrets-partie-6",
     "F04-vitesse-lumiere",
     "F05-coeur-baleine-bleue"
   ],
