@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-24T21:01:23.364Z",
+  "majLe": "2026-11-25T08:00:29.310Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -18,23 +18,35 @@
       "le": "2026-11-24T14:52:13.702Z"
     },
     {
+      "nom": "11-secrets-partie-6",
+      "chaine": "Vice Radar",
+      "le": "2026-11-25T07:53:46.303Z"
+    },
+    {
+      "nom": "12-e01-plante-au-milieu-de-la-route",
+      "chaine": "Vice Radar",
+      "le": "2026-11-25T07:56:15.967Z"
+    },
+    {
       "nom": "F01-everest-vs-fosse",
       "chaine": "Faits animés",
       "le": "2026-11-24T15:01:37.605Z"
+    },
+    {
+      "nom": "F02-venus-jour-annee",
+      "chaine": "Faits animés",
+      "le": "2026-11-25T08:00:26.471Z"
     }
   ],
   "erreurs": [],
   "enAttenteDeCapture": [],
   "enAttenteDeQuota": [
-    "11-secrets-partie-6",
-    "12-e01-plante-au-milieu-de-la-route",
-    "F02-venus-jour-annee",
     "F03-voyage-lune",
     "F04-vitesse-lumiere",
     "F05-coeur-baleine-bleue"
   ],
   "quota": {
-    "faitesAujourdhui": 4,
+    "faitesAujourdhui": 3,
     "maxParJour": 4,
     "maxParPassage": 3
   },
