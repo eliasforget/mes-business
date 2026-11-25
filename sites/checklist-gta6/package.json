@@ -1,0 +1,15 @@
+{
+  "name": "checklist-gta6",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Checklist française et vérifiée des secrets de GTA 6 (site statique, sans dépendance)",
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "valider": "node scripts/valider-secrets.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "build": "node scripts/construire.mjs",
+    "serve": "node scripts/serveur.mjs",
+    "utm": "node scripts/liens-utm.mjs"
+  }
+}

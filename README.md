@@ -12,6 +12,7 @@ Petits outils d'automatisation pour mon PC perso (Windows 11). Chaque outil est 
 | [vr-voix](tools/vr-voix) | Vice Radar : voix off ElevenLabs + minutage par mot depuis le script de vr-video (sans redépense si rien n'a changé) | TypeScript | Manuel (`.\voix.cmd`) | 🧪 |
 | [vr-fonds](tools/vr-fonds) | Vice Radar : clips Pixabay (verticaux, sinon 4K recadrés) choisis d'après les mots-clés des scènes, avec crédits | TypeScript | Manuel (`.\fonds.cmd`) | 🧪 |
 | [vr-clips](tools/vr-clips) | Vice Radar : captures PS5 → vidéos de gameplay (liste de tournage, accroche, textes de publication), puis voix et rendu en une commande | TypeScript | Manuel (`.\clips.cmd --produire`) | 🧪 |
+| [checklist-gta6](sites/checklist-gta6) | Site de fans : checklist française des secrets de GTA 6, chaque secret recoupé par 2 sources ou vu en jeu, daté et sourcé | JavaScript (statique, sans dépendance) | GitHub Actions → Cloudflare Pages au push (secrets Cloudflare à ajouter) | 🧪 |
 
 Statuts : 🧪 en test · ✅ en service · 💤 en pause · 🗄️ archivé
 

@@ -1,0 +1,75 @@
+# Teste, construit et déploie sites/checklist-gta6 sur Cloudflare Pages à chaque push sur main qui touche le site.
+# Sans les secrets Cloudflare, le workflow teste et construit seulement (aucune erreur) : le déploiement attend.
+# Mise en place : sites/checklist-gta6/docs/deploiement.md
+#   Secrets  (Settings > Secrets and variables > Actions > Secrets)  : CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID
+#   Variables (… > Variables, facultatif)  : SITE_URL, CONTACT_EMAIL, UMAMI_WEBSITE_ID, UMAMI_SCRIPT_URL, CLOUDFLARE_PAGES_PROJECT
+name: checklist-gta6
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sites/checklist-gta6/**"
+      - ".github/workflows/checklist-gta6.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: checklist-gta6
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PROJET: ${{ vars.CLOUDFLARE_PAGES_PROJECT || 'checklist-gta6' }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Tests et contrôle de secrets.json
+        working-directory: sites/checklist-gta6
+        run: |
+          npm test
+          npm run valider -- --min 5
+
+      - name: Construire le site (dist/)
+        working-directory: sites/checklist-gta6
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+          UMAMI_WEBSITE_ID: ${{ vars.UMAMI_WEBSITE_ID }}
+          UMAMI_SCRIPT_URL: ${{ vars.UMAMI_SCRIPT_URL }}
+        run: npm run build
+
+      - name: Déploiement en attente
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: |
+          echo "::notice::Secrets Cloudflare absents. Site teste et construit, pas deploye (voir sites/checklist-gta6/docs/deploiement.md)."
+
+      - name: Créer le projet Cloudflare Pages (une seule fois, sans effet ensuite)
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        continue-on-error: true
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create ${{ env.PROJET }} --production-branch=main
+
+      - name: Déployer sur Cloudflare Pages
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy sites/checklist-gta6/dist --project-name=${{ env.PROJET }} --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

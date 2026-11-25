@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checklist des secrets de GTA 6 en français</title>
+<meta name="description" content="Coche les secrets de GTA 6 que tu as trouvés. Chaque secret indique s'il a été vu en jeu ou recoupé par plusieurs sites, avec sa date de vérification.">
+<link rel="stylesheet" href="style.css">
+<!--UMAMI--><!--/UMAMI-->
+</head>
+<body>
+<header class="entete">
+  <h1>Checklist des secrets de GTA 6</h1>
+  <p class="intro">Coche ce que tu as trouvé : ta progression reste sur ton appareil, sans compte. Seuls les secrets vérifiés ou recoupés sont listés, sans spoiler de l'histoire.</p>
+  <div class="compteur" aria-live="polite">
+    <p id="compteur-texte">Chargement…</p>
+    <div class="barre"><div id="barre-remplie"></div></div>
+    <p id="compteur-detail" class="detail"></p>
+  </div>
+</header>
+
+<main>
+  <section class="filtres" aria-label="Filtres">
+    <label>Catégorie
+      <select id="filtre-categorie"><option value="">Toutes</option></select>
+    </label>
+    <label>Statut
+      <select id="filtre-statut">
+        <option value="">Tous</option>
+        <option value="verifie_en_jeu">Vu en jeu</option>
+        <option value="recoupe">Recoupé par plusieurs sites</option>
+      </select>
+    </label>
+    <label>Recherche
+      <input id="filtre-texte" type="search" placeholder="Nom, zone…">
+    </label>
+    <label class="case-inline">
+      <input id="filtre-restants" type="checkbox"> Masquer les secrets déjà cochés
+    </label>
+  </section>
+
+  <p id="message" class="message" hidden></p>
+  <ul id="liste" class="liste"></ul>
+  <p><button id="reset" type="button" class="bouton-discret">Tout décocher</button></p>
+</main>
+
+<footer class="pied">
+  <p><strong>Vice Radar</strong> – checklist non officielle des secrets de GTA 6.</p>
+  <p>Site de fan, gratuit, sans publicité ni lien commercial. Aucun secret n'est confirmé par Rockstar : chaque entrée indique son statut (vu en jeu ou recoupé par plusieurs sites indépendants) et sa date de vérification.</p>
+  <p>Site non affilié à Rockstar Games ni à Take-Two Interactive. Grand Theft Auto VI et les marques associées appartiennent à leurs propriétaires respectifs. Les captures éventuelles sont celles de l'auteur, aucune image de Rockstar ni de tiers. Rockstar ou Take-Two peuvent demander le retrait de tout contenu.</p>
+  <p>Spoilers : les secrets liés à l'histoire sont volontairement exclus.</p>
+  <p><!--MESURE-->Aucune mesure d'audience n'est active sur ce site.<!--/MESURE--></p>
+  <p>Une erreur ou un secret à proposer ? <!--CONTACT-->(adresse de contact bientôt disponible)<!--/CONTACT--></p>
+  <p>Dernière mise à jour des données : <span id="maj">–</span> · version du jeu : <span id="version">–</span></p>
+  <p>
+    <a href="mentions-legales.html">Mentions légales et confidentialité</a> ·
+    <a href="https://www.tiktok.com/@vice_radar_gta6" rel="noopener">TikTok</a> ·
+    <a href="https://www.instagram.com/vice_radar_gta6" rel="noopener">Instagram</a> ·
+    <a href="https://www.youtube.com/@vice_radar_gta_6" rel="noopener">YouTube</a>
+  </p>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>

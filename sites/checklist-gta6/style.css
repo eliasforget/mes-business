@@ -1,0 +1,60 @@
+:root {
+  --fond: #0f1220;
+  --carte: #181c30;
+  --texte: #f1f2f8;
+  --discret: #a3a8c3;
+  --accent: #ff4fa3;
+  --accent2: #29d3c2;
+  --bord: #2a3050;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fond);
+  color: var(--texte);
+  line-height: 1.5;
+}
+main, .entete, .pied { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+.entete { padding-top: 24px; }
+h1 {
+  margin: 0 0 4px;
+  font-size: 1.6rem;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+h2 { font-size: 1.1rem; margin-top: 1.6rem; }
+a { color: var(--accent2); }
+.intro { color: var(--discret); margin: 0 0 16px; }
+.compteur { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 12px 16px; position: sticky; top: 8px; z-index: 2; }
+.compteur p { margin: 0 0 8px; font-weight: 600; }
+.compteur .detail { margin: 8px 0 0; font-weight: 400; font-size: .85rem; color: var(--discret); }
+.barre { height: 10px; background: var(--bord); border-radius: 999px; overflow: hidden; }
+#barre-remplie { height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .25s; }
+.filtres { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+.filtres label { display: flex; flex-direction: column; font-size: .85rem; color: var(--discret); gap: 4px; }
+.filtres .case-inline { flex-direction: row; align-items: center; grid-column: 1 / -1; color: var(--texte); }
+select, input[type=search] { background: var(--carte); color: var(--texte); border: 1px solid var(--bord); border-radius: 8px; padding: 8px; font-size: 1rem; }
+.liste { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.secret { background: var(--carte); border: 1px solid var(--bord); border-radius: 12px; padding: 12px 14px; }
+.secret.coche { opacity: .6; }
+.secret.coche .nom { text-decoration: line-through; }
+.secret-tete { display: flex; gap: 12px; align-items: center; cursor: pointer; }
+.secret-tete input { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
+.nom { font-weight: 700; font-size: 1.05rem; }
+.meta { margin: 6px 0 0 34px; font-size: .85rem; color: var(--discret); }
+.desc { margin: 6px 0 0 34px; }
+.sources { margin: 6px 0 0 34px; font-size: .8rem; color: var(--discret); }
+.capture { display: block; max-width: calc(100% - 34px); margin: 8px 0 0 34px; border-radius: 8px; }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .75rem; font-weight: 700; color: #0f1220; }
+.badge-verifie_en_jeu { background: var(--accent2); }
+.badge-recoupe { background: #ffd166; }
+.message { background: var(--carte); border: 1px dashed var(--bord); border-radius: 12px; padding: 14px; }
+.bouton-discret { background: none; color: var(--discret); border: 1px solid var(--bord); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.pied { color: var(--discret); font-size: .8rem; padding-top: 24px; padding-bottom: 40px; }
+.pied p { margin: 0 0 8px; }
+.pied a { margin-right: 6px; }
+:focus-visible { outline: 2px solid var(--accent2); outline-offset: 2px; }
+@media (max-width: 480px) { .filtres { grid-template-columns: 1fr; } }
