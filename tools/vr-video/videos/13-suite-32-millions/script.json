@@ -1,0 +1,84 @@
+{
+  "titre": "GTA 6 : 32,5 millions avant même la sortie",
+  "fin": "Précommandé ou tu as attendu ?",
+  "scenes": [
+    {
+      "tag": "RECORD",
+      "chiffre": {
+        "valeur": 32.5,
+        "decimales": 1,
+        "suffixe": " MILLIONS"
+      },
+      "lignes": [
+        {
+          "texte": "d'exemplaires vendus",
+          "style": "petit"
+        },
+        {
+          "texte": "AVANT LA SORTIE",
+          "style": "gros"
+        }
+      ],
+      "voix": "32,5 millions de personnes ont acheté GTA 6 avant même d'y jouer. C'est l'annonce de Take-Two, vendredi 20 novembre : un record sur toutes les plateformes.",
+      "motsCles": [
+        "game console",
+        "crowd"
+      ]
+    },
+    {
+      "tag": "JOUR 1",
+      "chiffre": {
+        "valeur": 3.79,
+        "decimales": 2,
+        "suffixe": " MD$"
+      },
+      "lignes": [
+        {
+          "texte": "de ventes le jour J",
+          "style": "petit"
+        }
+      ],
+      "voix": "Le jour de la sortie, les ventes ont atteint 3,79 milliards de dollars. Le plus gros lancement de l'histoire du divertissement, selon Take-Two. Attention : ce sont ses estimations, arrêtées au 19 novembre.",
+      "motsCles": [
+        "money",
+        "city night"
+      ]
+    },
+    {
+      "tag": "LA NOTE",
+      "chiffre": {
+        "valeur": 99,
+        "suffixe": "/100"
+      },
+      "lignes": [
+        {
+          "texte": "sur Metacritic",
+          "style": "petit"
+        }
+      ],
+      "voix": "Et la presse suit : Take-Two parle d'un score presque parfait de 99 sur 100 sur Metacritic. Un niveau que presque aucun jeu n'atteint.",
+      "motsCles": [
+        "trophy",
+        "applause"
+      ]
+    },
+    {
+      "tag": "ET TOI ?",
+      "lignes": [
+        {
+          "texte": "Précommandé",
+          "style": "gros"
+        },
+        {
+          "texte": "ou tu as attendu ?",
+          "style": "accent"
+        }
+      ],
+      "voix": "Et toi, tu l'avais précommandé, ou tu as attendu de voir les premiers avis ?",
+      "motsCles": [
+        "shopping",
+        "question mark"
+      ]
+    }
+  ]
+}

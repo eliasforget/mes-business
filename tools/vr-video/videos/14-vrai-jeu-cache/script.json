@@ -1,0 +1,86 @@
+{
+  "titre": "Rockstar a caché un vrai jeu vidéo dans GTA 6",
+  "fin": "Lequel tu testes en premier ?",
+  "scenes": [
+    {
+      "tag": "JEU CACHÉ",
+      "lignes": [
+        {
+          "texte": "Un VRAI jeu vidéo",
+          "style": "gros"
+        },
+        {
+          "texte": "caché dans GTA 6.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Rockstar a caché un vrai jeu vidéo dans GTA 6. Dans la planque de Jason, la console du salon lance Tenebrae Lux, un jeu dans le jeu. Tu peux y jouer dès le premier chapitre, sans rien débloquer.",
+      "motsCles": [
+        "video game",
+        "retro console"
+      ]
+    },
+    {
+      "tag": "MOTEL STARLET",
+      "lignes": [
+        {
+          "texte": "Un autocollant",
+          "style": "petit"
+        },
+        {
+          "texte": "LOVE FIST",
+          "style": "gros"
+        },
+        {
+          "texte": "et un hippo violet.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Au motel Starlet, à Vice City, ouvre l'œil : un autocollant Love Fist et une poubelle en forme d'hippopotame violet. Deux détails de décor, rien à gagner, mais ils sont bien là.",
+      "motsCles": [
+        "motel",
+        "neon sign"
+      ]
+    },
+    {
+      "tag": "PODCAST",
+      "lignes": [
+        {
+          "texte": "Un podcast",
+          "style": "petit"
+        },
+        {
+          "texte": "TRUE CRIME",
+          "style": "gros"
+        },
+        {
+          "texte": "sur Eddie Low.",
+          "style": "accent"
+        }
+      ],
+      "voix": "Et dans les podcasts du jeu, un épisode true crime parle d'Eddie Low, le tueur de Liberty City déjà croisé dans GTA 4. Rockstar recycle ses vieilles légendes.",
+      "motsCles": [
+        "podcast",
+        "microphone"
+      ]
+    },
+    {
+      "tag": "À TOI",
+      "lignes": [
+        {
+          "texte": "Lequel tu testes",
+          "style": "petit"
+        },
+        {
+          "texte": "EN PREMIER ?",
+          "style": "gros"
+        }
+      ],
+      "voix": "Lequel tu testes en premier ?",
+      "motsCles": [
+        "video game",
+        "question mark"
+      ]
+    }
+  ]
+}
