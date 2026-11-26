@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-26T08:04:36.557Z",
+  "majLe": "2026-11-26T08:09:36.950Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -20,7 +20,7 @@
     {
       "nom": "11-secrets-partie-6",
       "chaine": "Vice Radar",
-      "le": "2026-11-25T07:53:46.303Z"
+      "le": "2026-11-26T08:09:36.943Z"
     },
     {
       "nom": "12-e01-plante-au-milieu-de-la-route",
@@ -46,14 +46,13 @@
   "erreurs": [],
   "enAttenteDeCapture": [],
   "enAttenteDeQuota": [
-    "11-secrets-partie-6",
     "13-suite-32-millions",
     "14-vrai-jeu-cache",
     "F04-vitesse-lumiere",
     "F05-coeur-baleine-bleue"
   ],
   "quota": {
-    "faitesAujourdhui": 3,
+    "faitesAujourdhui": 4,
     "maxParJour": 4,
     "maxParPassage": 3
   },
