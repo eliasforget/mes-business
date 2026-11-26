@@ -1,6 +1,8 @@
-# automatisations
+# mes-business
 
-Petits outils d'automatisation pour mon PC perso (Windows 11). Chaque outil est autonome, fait une seule chose, se configure par `.env` et propose un `--dry-run` dès qu'il supprime, déplace ou envoie quelque chose.
+Outils de mes business en ligne : usine vidéos (Vice Radar, Faits animés), sites et skills pour agents. Dépôt anciennement nommé `automatisations` (renommé le 26/11/2026 ; GitHub redirige l'ancien nom). Les outils d'automatisation du PC perso sont dans le dépôt séparé `outils-pc`.
+
+Sur le PC, le clone local reste dans `~\dev\automatisations` (l'usine et sa tâche planifiée utilisent ce chemin). Chaque outil est autonome, fait une seule chose, se configure par `.env` et propose un `--dry-run` dès qu'il supprime, déplace ou envoie quelque chose.
 
 ## Catalogue des outils
 
@@ -42,7 +44,7 @@ Prérequis : Node.js ≥ 22.6, Python 3.13 (pour les outils Python), Git.
 $dev = Join-Path $HOME 'dev'
 New-Item -ItemType Directory -Force -Path $dev | Out-Null
 Set-Location $dev
-git clone https://github.com/eliasforget/automatisations.git
+git clone https://github.com/eliasforget/mes-business.git automatisations   # garder ce nom de dossier
 Set-Location automatisations
 
 npm install                       # typescript + @types/node (dev uniquement)
