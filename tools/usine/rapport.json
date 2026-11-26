@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-26T12:51:21.673Z",
+  "majLe": "2026-11-26T12:56:22.410Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -46,6 +46,8 @@
   "erreurs": [],
   "enAttenteDeCapture": [],
   "enAttenteDeQuota": [
+    "09-rencontres-bizarres",
+    "11-secrets-partie-6",
     "13-suite-32-millions",
     "14-vrai-jeu-cache",
     "F04-vitesse-lumiere",
