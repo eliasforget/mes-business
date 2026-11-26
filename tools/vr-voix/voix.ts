@@ -46,6 +46,16 @@ export function texteDuScript(script: unknown): string {
   return morceaux.join(' ').replace(/\s+/g, ' ');
 }
 
+/** Phrases calées des vidéos gameplay (« commentaires » du script) : une voix par phrase. */
+export function textesCommentaires(script: unknown): string[] {
+  const c = (script as { commentaires?: { texte?: unknown }[] })?.commentaires;
+  if (!Array.isArray(c)) return [];
+  return c.map((x, i) => {
+    if (typeof x?.texte !== 'string' || !x.texte.trim()) throw new Error(`script.json : commentaires[${i}].texte est vide.`);
+    return x.texte.trim().replace(/\s+/g, ' ');
+  });
+}
+
 /** Empreinte de tout ce qui change l'audio : si elle est identique, inutile de repayer une génération. */
 export function empreinte(texte: string, cfg: Omit<Config, 'cle'>): string {
   return createHash('sha256').update(JSON.stringify({ texte, voix: cfg.voixId, modele: cfg.modele, reglages: cfg.reglages })).digest('hex').slice(0, 16);
@@ -81,6 +91,21 @@ export interface Resultat {
   statut: 'genere' | 'inchange' | 'dry-run';
   texte: string;
   cout: number;
+  /** Voix des commentaires (vidéos gameplay) générées à ce passage. */
+  commentaires?: number;
+}
+
+interface Piste { texte: string; base: string; cle: string }
+
+/** Une piste est à refaire si son mp3, son alignement ou son empreinte manquent ou ont changé. */
+function aRefaire(dossier: string, p: Piste): boolean {
+  const meta = path.join(dossier, `${p.base}.meta.json`);
+  if (!existsSync(path.join(dossier, `${p.base}.mp3`)) || !existsSync(path.join(dossier, `${p.base}.alignement.json`)) || !existsSync(meta)) return true;
+  try {
+    return (JSON.parse(readFileSync(meta, 'utf8')) as { empreinte?: string }).empreinte !== p.cle;
+  } catch {
+    return true;
+  }
 }
 
 export async function genererVoix(dossier: string, cfg: Config, opts: { dryRun?: boolean; forcer?: boolean; fetchImpl?: Fetch; log?: (m: string) => void; dureeMinCible?: number } = {}): Promise<Resultat> {
@@ -110,22 +135,43 @@ export async function genererVoix(dossier: string, cfg: Config, opts: { dryRun?:
     ? `ATTENTION : ~${Math.round(duree)} s estimées, sous les ${opts.dureeMinCible} s visées. Ajoute ~${manque} mots dans les « voix » du script avant de générer (sinon tu paies une voix trop courte).`
     : `Durée estimée : ~${Math.round(duree)} s.`);
 
+  // Vidéo gameplay commentée : une voix par phrase (voix-c1.mp3…), chacune avec son empreinte.
+  const pistes: Piste[] = textesCommentaires(script).map((t, i) => ({ texte: t, base: `voix-c${i + 1}`, cle: empreinte(t, cfg) }));
+  const pistesAFaire = pistes.filter((p) => opts.forcer || aRefaire(dossier, p));
+  const coutPistes = pistesAFaire.reduce((n, p) => n + coutEstime(p.texte, cfg.modele), 0);
+  if (pistes.length) log(`${pistes.length} commentaire(s) calé(s) : ${pistesAFaire.length} à générer (~${coutPistes} crédits).`);
+
+  let principaleAFaire = true;
   if (!opts.forcer && existsSync(fichierAudio) && existsSync(fichierAlignement) && existsSync(fichierMeta)) {
     const meta = JSON.parse(readFileSync(fichierMeta, 'utf8')) as { empreinte?: string };
-    if (meta.empreinte === cle) {
-      log('Voix déjà générée pour ce texte et ces réglages : rien à faire (--forcer pour régénérer).');
-      return { statut: 'inchange', texte, cout: 0 };
-    }
+    if (meta.empreinte === cle) principaleAFaire = false;
+  }
+  if (!principaleAFaire && !pistesAFaire.length) {
+    log('Voix déjà générée pour ce texte et ces réglages : rien à faire (--forcer pour régénérer).');
+    return { statut: 'inchange', texte, cout: 0 };
   }
   if (opts.dryRun) {
     log('[dry-run] Aucun appel de synthèse, aucun crédit dépensé.');
-    return { statut: 'dry-run', texte, cout };
+    return { statut: 'dry-run', texte, cout: (principaleAFaire ? cout : 0) + coutPistes, commentaires: pistesAFaire.length };
   }
 
   const client = new ClientElevenLabs(cfg.cle, opts.fetchImpl);
   const abo = await client.abonnement();
   const restant = abo.character_limit - abo.character_count;
-  if (cout > restant) throw new Error(`Crédits insuffisants : ${restant} restants, ~${cout} nécessaires.`);
+  const total = (principaleAFaire ? cout : 0) + coutPistes;
+  if (total > restant) throw new Error(`Crédits insuffisants : ${restant} restants, ~${total} nécessaires.`);
+
+  for (const p of pistesAFaire) {
+    const r = await client.synthese(cfg.voixId, p.texte, cfg.modele, cfg.reglages);
+    ecrireAtomique(path.join(dossier, `${p.base}.mp3`), r.audio);
+    ecrireAtomique(path.join(dossier, `${p.base}.alignement.json`), JSON.stringify({ alignment: r.alignement }));
+    ecrireAtomique(path.join(dossier, `${p.base}.meta.json`), JSON.stringify({ empreinte: p.cle, texte: p.texte, genere_le: new Date().toISOString() }, null, 2));
+  }
+  if (pistesAFaire.length) log(`${pistesAFaire.length} voix de commentaire enregistrée(s).`);
+  if (!principaleAFaire) {
+    log(`Accroche inchangée. Crédits restants : ~${restant - total}.`);
+    return { statut: 'genere', texte, cout: total, commentaires: pistesAFaire.length };
+  }
 
   const { audio, alignement } = await client.synthese(cfg.voixId, texte, cfg.modele, cfg.reglages);
   if (existsSync(fichierAudio)) renameSync(fichierAudio, path.join(dossier, 'voix.precedente.mp3')); // jamais d'écrasement silencieux
@@ -135,9 +181,9 @@ export async function genererVoix(dossier: string, cfg: Config, opts: { dryRun?:
     empreinte: cle, voix: cfg.voixId, modele: cfg.modele, reglages: cfg.reglages, caracteres: texte.length,
     genere_le: new Date().toISOString(), offre: abo.tier,
   }, null, 2));
-  log(`Voix enregistrée : ${fichierAudio} (${Math.round(audio.length / 1024)} Ko). Crédits restants : ~${restant - cout}.`);
+  log(`Voix enregistrée : ${fichierAudio} (${Math.round(audio.length / 1024)} Ko). Crédits restants : ~${restant - total}.`);
   if (abo.tier === 'free') log('Offre gratuite ElevenLabs : pas d\'usage commercial et mention « ElevenLabs » obligatoire (ex. « Voix : ElevenLabs » en description). Passe en Starter avant de monétiser.');
-  return { statut: 'genere', texte, cout };
+  return { statut: 'genere', texte, cout: total, commentaires: pistesAFaire.length };
 }
 
 function nombre(env: Record<string, string>, nom: string, min: number, max: number): number {

@@ -12,7 +12,7 @@
     {
       "id": "E01",
       "titre": "Planté au milieu de la route",
-      "accroche": "Que se passe-t-il si tu restes planté au milieu de la route dans GTA 6 ? Regarde bien la fin.",
+      "accroche": "Que se passe-t-il si tu restes planté au milieu de la route dans GTA 6 ?",
       "lignes": [
         {
           "texte": "Planté au milieu",
@@ -27,7 +27,7 @@
     {
       "id": "E02",
       "titre": "Suivre un piéton de très près",
-      "accroche": "Combien de temps un piéton te laisse le suivre de très près dans GTA 6 ? Regarde jusqu'au bout.",
+      "accroche": "Combien de temps un piéton te laisse le suivre de très près dans GTA 6 ?",
       "lignes": [
         {
           "texte": "Je suis",
@@ -42,7 +42,7 @@
     {
       "id": "E03",
       "titre": "Klaxonner sans arrêt",
-      "accroche": "Que fait un conducteur si tu klaxonnes sans arrêt derrière lui dans GTA 6 ? Attends la fin.",
+      "accroche": "Que fait un conducteur si tu klaxonnes sans arrêt derrière lui dans GTA 6 ?",
       "lignes": [
         {
           "texte": "Klaxon",
@@ -75,7 +75,7 @@
     {
       "id": "E05",
       "titre": "Rouler dans l'eau",
-      "accroche": "Que se passe-t-il si tu roules dans l'eau avec ta voiture dans GTA 6 ? Regarde bien la fin.",
+      "accroche": "Que se passe-t-il si tu roules dans l'eau avec ta voiture dans GTA 6 ?",
       "lignes": [
         {
           "texte": "La voiture",
@@ -90,7 +90,7 @@
     {
       "id": "E06",
       "titre": "Percuter doucement la police",
-      "accroche": "Est-ce que la police te pardonne si tu la percutes tout doucement dans GTA 6 ? Réponse à la fin.",
+      "accroche": "Est-ce que la police te pardonne si tu la percutes tout doucement dans GTA 6 ?",
       "lignes": [
         {
           "texte": "Je percute",
@@ -120,7 +120,7 @@
     {
       "id": "E08",
       "titre": "Se cacher de la police",
-      "accroche": "Combien de temps faut-il pour semer la police en se cachant dans GTA 6 ? Réponse à la fin.",
+      "accroche": "Combien de temps faut-il pour semer la police en se cachant dans GTA 6 ?",
       "lignes": [
         {
           "texte": "Semer",
@@ -135,7 +135,7 @@
     {
       "id": "E09",
       "titre": "Rouler à contresens",
-      "accroche": "Que font les autres conducteurs si tu roules à contresens dans GTA 6 ? Regarde bien.",
+      "accroche": "Que font les autres conducteurs si tu roules à contresens dans GTA 6 ?",
       "lignes": [
         {
           "texte": "À contresens",
@@ -150,7 +150,7 @@
     {
       "id": "E10",
       "titre": "Sauter d'un toit",
-      "accroche": "Les dégâts sont-ils réalistes si tu sautes d'un toit dans GTA 6 ? Regarde la chute jusqu'au bout.",
+      "accroche": "Les dégâts sont-ils réalistes si tu sautes d'un toit dans GTA 6 ?",
       "lignes": [
         {
           "texte": "Je saute",
@@ -165,7 +165,7 @@
     {
       "id": "E16",
       "titre": "Conduire sous la pluie",
-      "accroche": "La pluie change-t-elle vraiment la conduite dans GTA 6 ? Même virage, deux météos. Regarde bien.",
+      "accroche": "La pluie change-t-elle vraiment la conduite dans GTA 6 ? Même virage, deux météos.",
       "lignes": [
         {
           "texte": "La pluie change",
@@ -181,7 +181,7 @@
     {
       "id": "E15",
       "titre": "Rouler sur la plage",
-      "accroche": "Une voiture sur le sable de la plage dans GTA 6 : ça passe ou ça casse ? Regarde la fin.",
+      "accroche": "Une voiture sur le sable de la plage dans GTA 6 : ça passe ou ça casse ?",
       "lignes": [
         {
           "texte": "Une voiture",
@@ -197,7 +197,7 @@
     {
       "id": "E13",
       "titre": "Nager vers le large",
-      "accroche": "Jusqu'où peut-on nager vers le large dans GTA 6 ? Regarde jusqu'au bout.",
+      "accroche": "Jusqu'où peut-on nager vers le large dans GTA 6 ?",
       "lignes": [
         {
           "texte": "Nager",
@@ -213,7 +213,7 @@
     {
       "id": "E21",
       "titre": "Rouler sur le trottoir",
-      "accroche": "Que font les piétons et la police si tu roules sur le trottoir dans GTA 6 ? Regarde bien.",
+      "accroche": "Que font les piétons et la police si tu roules sur le trottoir dans GTA 6 ?",
       "lignes": [
         {
           "texte": "Je roule",
@@ -245,7 +245,7 @@
     {
       "id": "E12",
       "titre": "Une minute sans rien casser",
-      "accroche": "Peut-on conduire une minute en respectant tout le code de la route dans GTA 6 ? Regarde jusqu'au bout.",
+      "accroche": "Peut-on conduire une minute en respectant tout le code de la route dans GTA 6 ?",
       "lignes": [
         {
           "texte": "Une minute",
@@ -309,7 +309,7 @@
     {
       "id": "E04",
       "titre": "Foncer dans une vitrine",
-      "accroche": "Que se passe-t-il si tu fonces dans une vitrine en voiture dans GTA 6 ? Regarde bien.",
+      "accroche": "Que se passe-t-il si tu fonces dans une vitrine en voiture dans GTA 6 ?",
       "lignes": [
         {
           "texte": "En voiture",

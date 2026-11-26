@@ -34,16 +34,34 @@ export const ETAT_VIDE: Etat = { videos: {}, jour: '', faitesAujourdhui: 0 };
 
 export type Decision =
   | { action: 'fabriquer'; raison: string }
-  | { action: 'passer'; raison: 'deja_faite' | 'ignoree' | 'auto_off' | 'attend_capture' | 'trop_d_erreurs' | 'deja_rendue_avant_usine' };
+  | { action: 'passer'; raison: 'deja_faite' | 'ignoree' | 'auto_off' | 'attend_capture' | 'attend_commentaire' | 'trop_d_erreurs' | 'deja_rendue_avant_usine' };
 
 export interface InfosVideo {
   nom: string;
-  script: { theme?: unknown; auto?: unknown; gameplay?: { fichier?: string } | undefined };
+  script: { theme?: unknown; auto?: unknown; gameplay?: { fichier?: string } | undefined; commentaire?: unknown; commentaires?: unknown };
   empreinte: string;
   /** La capture de jeu demandée par le script est présente (vidéos gameplay). */
   captureOk: boolean;
   /** Un MP4 plus récent que le script existe déjà dans tools\vr-video\sortie (rendu fait à la main). */
   dejaRendue: boolean;
+  /** Date (ms) de la planche envoyée à l'Agent web, si la vidéo attend ses commentaires. */
+  plancheLe?: number;
+}
+
+/** Heures d'attente des commentaires de l'Agent web avant de rendre quand même (accroche seule). */
+export const ATTENTE_COMMENTAIRE_H = 48;
+
+const nbCommentaires = (script: InfosVideo['script']): number => (Array.isArray(script.commentaires) ? script.commentaires.length : 0);
+
+/**
+ * Vidéo gameplay qui a besoin d'une planche (pour que l'Agent web écrive les commentaires calés) : capture
+ * présente, pas encore de commentaires, et ni « fait » ni « sans ». Si elle attend déjà (« a_ecrire »), on
+ * refait la planche seulement si elle manque.
+ */
+export function aBesoinDePlanche(v: InfosVideo): boolean {
+  if (!v.script.gameplay || !v.captureOk || nbCommentaires(v.script) > 0) return false;
+  if (v.script.commentaire === 'fait' || v.script.commentaire === 'sans') return false;
+  return v.script.commentaire !== 'a_ecrire' || v.plancheLe === undefined;
 }
 
 export const MAX_ESSAIS = 3;
@@ -53,9 +71,15 @@ export function empreinte(script: string, publication = ''): string {
   return createHash('sha256').update(script.replace(/\r\n/g, '\n')).update('\0').update(publication.replace(/\r\n/g, '\n')).digest('hex').slice(0, 16);
 }
 
-export function decider(v: InfosVideo, etat: Etat, ignorees: Set<string>): Decision {
+export function decider(v: InfosVideo, etat: Etat, ignorees: Set<string>, maintenant = Date.now(), attenteH = ATTENTE_COMMENTAIRE_H): Decision {
   if (ignorees.has(v.nom)) return { action: 'passer', raison: 'ignoree' };
   if (v.script.auto === false) return { action: 'passer', raison: 'auto_off' };
+  // Vidéo gameplay en attente des commentaires de l'Agent web : on patiente, puis on rend quand même.
+  let raisonAttente = '';
+  if (v.script.gameplay && v.script.commentaire === 'a_ecrire' && nbCommentaires(v.script) === 0) {
+    if (v.plancheLe === undefined || maintenant - v.plancheLe < attenteH * 3_600_000) return { action: 'passer', raison: 'attend_commentaire' };
+    raisonAttente = `sans commentaires (attendus plus de ${attenteH} h)`;
+  }
   const e = etat.videos[v.nom];
   if (e && e.empreinte === v.empreinte) {
     if (e.statut === 'erreur' && (e.essais ?? 1) < MAX_ESSAIS) return { action: 'fabriquer', raison: `nouvel essai (${(e.essais ?? 1) + 1}/${MAX_ESSAIS})` };
@@ -64,7 +88,7 @@ export function decider(v: InfosVideo, etat: Etat, ignorees: Set<string>): Decis
   }
   if (!e && v.dejaRendue) return { action: 'passer', raison: 'deja_rendue_avant_usine' };
   if (v.script.gameplay && !v.captureOk) return { action: 'passer', raison: 'attend_capture' };
-  return { action: 'fabriquer', raison: e ? 'script modifié' : 'nouvelle vidéo' };
+  return { action: 'fabriquer', raison: raisonAttente || (e ? 'script modifié' : 'nouvelle vidéo') };
 }
 
 /** Remet le compteur à zéro quand le jour change. */

@@ -12,12 +12,12 @@
  */
 import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import path from 'node:path';
 import { format, parseArgs } from 'node:util';
 import { createLogger, loadEnv } from '../../shared/index.ts';
-import { aRafraichir, echangerCode, ErreurTikTok, lireProfil, lireVideos, pkce, rafraichir, resumer, urlAutorisation, type Jetons } from './tiktok.ts';
+import { ajouterPoint, aRafraichir, COLONNES_HISTORIQUE, echangerCode, ErreurTikTok, jourParis, lireHistorique, lireProfil, lireVideos, pkce, rafraichir, resumer, urlAutorisation, type Jetons } from './tiktok.ts';
 
 const ICI = import.meta.dirname;
 const FICHIER_JETONS = path.join(ICI, 'jetons.local.json'); // ignoré par git (*.local.json)
@@ -170,8 +170,23 @@ async function mettreAJour(dryRun: boolean, sortieForcee?: string): Promise<numb
     return erreurs ? 1 : 0;
   }
   mkdirSync(path.dirname(sortie), { recursive: true });
-  writeFileSync(sortie, JSON.stringify({ majLe: new Date().toISOString(), comptes: resultat }, null, 2) + '\n');
+  const majLe = new Date().toISOString();
+  writeFileSync(sortie, JSON.stringify({ majLe, comptes: resultat }, null, 2) + '\n');
   log.info('Stats écrites dans %s', sortie);
+  // Historique : un point par compte et par jour, à côté des stats (pour la courbe des abonnés du tableau de bord).
+  const fichierHisto = path.join(path.dirname(sortie), 'tiktok-historique.txt');
+  let histo = lireHistorique(existsSync(fichierHisto) ? readFileSync(fichierHisto, 'utf8') : '');
+  const jour = jourParis();
+  let points = 0;
+  for (const [nom, r] of Object.entries(resultat)) {
+    const x = r as Partial<ReturnType<typeof resumer>> & { erreur?: string };
+    if (!x || x.erreur) continue;
+    histo = ajouterPoint(histo, nom, [jour, x.abonnes ?? null, x.likes ?? null, x.vues30j ?? 0, x.nbVideos ?? null]);
+    points++;
+  }
+  writeFileSync(`${fichierHisto}.tmp`, JSON.stringify({ majLe, colonnes: COLONNES_HISTORIQUE, comptes: histo }) + '\n');
+  renameSync(`${fichierHisto}.tmp`, fichierHisto);
+  log.info('Historique : %d compte(s) notés pour le %s dans %s', points, jour, fichierHisto);
   return erreurs ? 1 : 0;
 }
 

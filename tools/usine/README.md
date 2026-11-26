@@ -74,6 +74,10 @@ Start-ScheduledTask -TaskName 'Usine videos (automatisations)'   # réveiller la
 .\installer.ps1 -Desinstaller      # tout arrêter
 ```
 
+## Vidéos de jeu commentées
+
+Pour chaque capture PS5 sans commentaires, l'usine fait une planche (`vr-video\planche.cmd`, `MAX_PLANCHES` par passage) et pousse `script.json`, `planche.jpg` et `publication.txt` sur GitHub. L'Agent web (passage de 13 h, ou bouton du tableau de bord) écrit les phrases calées sur le jeu et pousse le script : l'usine fabrique la vidéo au passage suivant. Sans commentaires au bout de 48 h, elle la fabrique quand même avec l'accroche seule. `"commentaire": "sans"` dans un script.json : pas de planche ni d'attente.
+
 ## Comment elle décide
 
 - Nouvelle vidéo ou `script.json` / `publication.txt` modifié par un agent → fabriquée (la voix n'est repayée que si le texte change).

@@ -6,6 +6,7 @@ import { FPS, HAUTEUR, LARGEUR } from './theme';
 import { ViceRadar, type ProprietesViceRadar } from './ViceRadar';
 import { ViceRadarJeu, type ProprietesViceRadarJeu } from './ViceRadarJeu';
 import { Compilation, dureeCompilation, type ProprietesCompilation } from './Compilation';
+import { Planche, taillePlanche, type ProprietesPlanche } from './Planche';
 
 // Valeurs par défaut pour « npm run studio » : l'exemple, sans audio ni clips (fond synthwave animé).
 const script = exemple as ScriptVideo;
@@ -43,8 +44,21 @@ const parDefautJeu: ProprietesViceRadarJeu = {
 // Compilation 16:9 : sans vidéos dans le studio, seulement le fond.
 const parDefautCompil: ProprietesCompilation = { videos: [], marque: { nom: 'VICE', accent: 'RADAR' } };
 
+// Planche contact d'une capture (pour l'Agent web) : rendue en image fixe par planche.ts.
+const parDefautPlanche: ProprietesPlanche = { src: null, depuis: 0, duree: 35, pas: 1, titre: 'Planche' };
+
 export const RemotionRoot: React.FC = () => (
   <>
+    <Composition
+      id="Planche"
+      component={Planche}
+      width={taillePlanche(35, 1).largeur}
+      height={taillePlanche(35, 1).hauteur}
+      fps={FPS}
+      durationInFrames={1}
+      defaultProps={parDefautPlanche}
+      calculateMetadata={({ props }) => ({ width: taillePlanche(props.duree, props.pas).largeur, height: taillePlanche(props.duree, props.pas).hauteur })}
+    />
     <Composition
       id="Compilation"
       component={Compilation}

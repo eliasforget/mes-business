@@ -21,7 +21,7 @@ import path from 'node:path';
 import { format, parseArgs } from 'node:util';
 import { createLogger, envBool, loadEnv } from '../../shared/index.ts';
 import {
-  construirePlan, construirePlanJeu, fenetreGameplay, motsDepuisElevenLabs, motsSynthetiques, normaliser, verifierScript,
+  construirePlan, construirePlanJeu, fenetreGameplay, intervallesVoix, motsDepuisElevenLabs, motsSynthetiques, normaliser, placerCommentaires, verifierScript,
   type AlignementElevenLabs, type ClipDisponible, type Mot, type PlanVideo, type ScriptVideo,
 } from './src/plan.ts';
 import { estTheme, theme as themeDe } from './src/themes.ts';
@@ -36,7 +36,7 @@ const env = loadEnv({
   defaults: {
     BIBLIOTHEQUE_FONDS: '', MUSIQUE: '', VOLUME_MUSIQUE: '0.12', DUREE_MIN_CIBLE: '30', RYTHME_FONDS: '2.2', CRF: '18', CONCURRENCE: '',
     NAVIGATEUR: '', MARQUE_NOM: 'VICE', MARQUE_ACCENT: 'RADAR', DOSSIER_SORTIE: '',
-    GARDER_S: '35', PASSAGE_AUTO: 'true', VOLUME_JEU: '1', VOLUME_JEU_SOUS_VOIX: '0.25', VOLUME_MUSIQUE_JEU: '0', CADRAGE: 'flou',
+    GARDER_S: '35', PASSAGE_AUTO: 'true', VOLUME_JEU: '1', VOLUME_JEU_SOUS_VOIX: '0.25', VOLUME_MUSIQUE_JEU: '0', VOLUME_MUSIQUE_COMMENTAIRES: '0.06', CADRAGE: 'flou',
   },
 });
 const journal = createLogger('vr-video');
@@ -227,8 +227,26 @@ async function main(): Promise<number> {
       }
     }
     const fenetre = fenetreGameplay(dureeClip, reglage, garder);
-    plan = construirePlanJeu(script, mots, fenetre);
     const finVoix = mots[mots.length - 1]?.fin ?? 0;
+    // Commentaires calés sur le jeu : un fichier de voix chacun (voix-c1.mp3…), placé à sa seconde.
+    const segments: { a: number; mots: Mot[]; src: string; zoom: boolean }[] = [];
+    (script.commentaires ?? []).forEach((c, i) => {
+      const fichier = premierExistant(dossier, [`voix-c${i + 1}.mp3`, `voix-c${i + 1}.wav`, `voix-c${i + 1}.m4a`]);
+      if (!fichier) return log.warn('  Commentaire %d sans voix (voix-c%d.mp3 manquant) : ignoré. Lance vr-voix.', i + 1, i + 1);
+      const al = premierExistant(dossier, [`voix-c${i + 1}.alignement.json`]);
+      const brut = al ? lireJson<{ alignment?: AlignementElevenLabs } & Partial<AlignementElevenLabs>>(al) : null;
+      const motsC = brut ? motsDepuisElevenLabs((brut.alignment ?? brut) as AlignementElevenLabs) : motsSynthetiques([{ voix: c.texte }], 2.8, 0);
+      const src = `audio/c${i + 1}${path.extname(fichier)}`;
+      publics.set(src, fichier);
+      segments.push({ a: c.a, mots: motsC, src, zoom: !!c.zoom });
+    });
+    const placee = placerCommentaires(mots, segments);
+    plan = construirePlanJeu(script, placee.mots, fenetre);
+    if (segments.length) {
+      log.info('  %d commentaire(s) calé(s) : %s', segments.length, placee.departs.map((d) => `${d.toFixed(1)}s`).join(', '));
+      const finCommentaires = placee.mots[placee.mots.length - 1]?.fin ?? 0;
+      if (finCommentaires > fenetre.duree - 0.5) log.warn('  Le dernier commentaire finit à %ss, après la fin du jeu (%ss) : avance-le ou raccourcis-le.', finCommentaires.toFixed(1), fenetre.duree.toFixed(1));
+    }
     const cadrage = g.cadrage ?? (env.CADRAGE === 'remplir' ? 'remplir' : 'flou');
     const publicJeu = `jeu/gameplay${path.extname(fichierJeu)}`;
     publics.set(publicJeu, fichierJeu);
@@ -238,7 +256,7 @@ async function main(): Promise<number> {
       gameplay: { src: publicJeu, depuis: fenetre.depuis, cadrage },
       audio,
       musique: cheminMusique,
-      volumeMusique: nombre('VOLUME_MUSIQUE_JEU', 0, 1),
+      volumeMusique: segments.length ? nombre('VOLUME_MUSIQUE_COMMENTAIRES', 0, 1) : nombre('VOLUME_MUSIQUE_JEU', 0, 1),
       volumeJeu: g.volume ?? nombre('VOLUME_JEU', 0, 1),
       volumeJeuSousVoix: nombre('VOLUME_JEU_SOUS_VOIX', 0, 1),
       finVoix,
@@ -246,6 +264,10 @@ async function main(): Promise<number> {
       appelAction: script.fin ?? null,
       barreProgression: envBool('BARRE_PROGRESSION', true),
       theme: nomTheme,
+      commentaires: segments.map((x, i) => ({ src: x.src, depuis: placee.departs[i]! })),
+      intervallesVoix: intervallesVoix(placee.mots),
+      zooms: segments.flatMap((x, i) => (x.zoom ? [placee.departs[i]!] : [])),
+      chrono: g.chrono ?? null,
     };
     log.info('« %s » (gameplay) : %ss gardées sur %ss de capture (à partir de %ss), cadrage %s, voix %s (%ss), musique %s',
       script.titre ?? nom, fenetre.duree.toFixed(1), dureeClip.toFixed(1), fenetre.depuis.toFixed(1), cadrage,

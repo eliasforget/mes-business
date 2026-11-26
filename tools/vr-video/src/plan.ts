@@ -54,6 +54,19 @@ export interface Gameplay {
   volume?: number;
   /** « flou » : image entière du jeu sur fond flouté (défaut). « remplir » : recadrée plein écran. */
   cadrage?: 'flou' | 'remplir';
+  /** Chrono affiché sur le jeu, avec ce texte (ex. « sans se faire écraser » → « 0:23 sans se faire écraser »). */
+  chrono?: string;
+}
+
+/**
+ * Phrase de la voix calée sur un moment du jeu (vidéos gameplay) : écrite par l'Agent web en regardant la
+ * planche (une image par seconde du passage gardé). « a » = seconde de la vidéo où la phrase commence.
+ */
+export interface Commentaire {
+  a: number;
+  texte: string;
+  /** Zoom sur le jeu pendant la phrase (le moment fort). */
+  zoom?: boolean;
 }
 
 export interface ScriptVideo {
@@ -67,6 +80,10 @@ export interface ScriptVideo {
   theme?: string;
   /** Logo propre à cette vidéo (sinon celui du thème). */
   marque?: { nom: string; accent: string };
+  /** Vidéos gameplay : la voix commente tout du long (voir Commentaire). */
+  commentaires?: Commentaire[];
+  /** « a_ecrire » : la planche attend les commentaires de l'Agent web (l'usine ne rend pas encore) ; « fait » ; « sans » : pas de commentaires. */
+  commentaire?: 'a_ecrire' | 'fait' | 'sans';
 }
 
 export interface ScenePlanifiee extends Scene {
@@ -214,8 +231,9 @@ export function grouperSousTitres(mots: Mot[], maxMots = 3, maxCaracteres = 18, 
     if (/[.!?…,;:]$/.test(m.mot)) pousser();
   }
   pousser();
-  // Chaque groupe reste affiché jusqu'au suivant (pas de trou noir entre deux sous-titres).
-  for (let i = 0; i < groupes.length - 1; i++) groupes[i]!.fin = Math.max(groupes[i]!.fin, groupes[i + 1]!.debut);
+  // Chaque groupe reste affiché jusqu'au suivant (pas de trou noir entre deux sous-titres), sauf pendant un
+  // long silence (vidéo gameplay commentée) : il s'efface alors 1,2 s après le dernier mot.
+  for (let i = 0; i < groupes.length - 1; i++) groupes[i]!.fin = Math.max(groupes[i]!.fin, Math.min(groupes[i + 1]!.debut, groupes[i]!.fin + 1.2));
   return groupes;
 }
 
@@ -316,6 +334,42 @@ export function construirePlanJeu(script: ScriptVideo, mots: Mot[], fenetre: Fen
   return { ...plan, scenes, duree, fonds: [] };
 }
 
+/** Moment où commence chaque phrase de la voix, et la liste de tous les mots calés sur la vidéo. */
+export interface VoixPlacee {
+  mots: Mot[];
+  /** Début réel de chaque commentaire (décalé si la phrase d'avant n'était pas finie). */
+  departs: number[];
+}
+
+/**
+ * Place les commentaires sur la vidéo : chaque phrase commence à son « a », ou juste après la phrase
+ * précédente si elle n'est pas finie (jamais deux voix en même temps). Les mots de chaque commentaire sont
+ * minutés depuis 0 (son propre fichier audio).
+ */
+export function placerCommentaires(motsAccroche: Mot[], commentaires: { a: number; mots: Mot[] }[], ecart = 0.25): VoixPlacee {
+  const mots: Mot[] = [...motsAccroche];
+  const departs: number[] = [];
+  let finPrecedente = motsAccroche.length ? motsAccroche[motsAccroche.length - 1]!.fin : 0;
+  for (const c of commentaires) {
+    const depart = Math.max(c.a, finPrecedente + (finPrecedente > 0 ? ecart : 0));
+    departs.push(depart);
+    for (const m of c.mots) mots.push({ mot: m.mot, debut: m.debut + depart, fin: m.fin + depart });
+    if (c.mots.length) finPrecedente = depart + c.mots[c.mots.length - 1]!.fin;
+  }
+  return { mots, departs };
+}
+
+/** Moments où la voix parle (pour baisser le son du jeu) : les mots séparés de moins de `pause` s sont regroupés. */
+export function intervallesVoix(mots: Mot[], pause = 0.6): { debut: number; fin: number }[] {
+  const res: { debut: number; fin: number }[] = [];
+  for (const m of mots) {
+    const der = res[res.length - 1];
+    if (der && m.debut - der.fin <= pause) der.fin = Math.max(der.fin, m.fin);
+    else res.push({ debut: m.debut, fin: m.fin });
+  }
+  return res;
+}
+
 /** Vérifie un script et renvoie la liste des problèmes (vide si tout va bien). */
 export function verifierScript(script: unknown): string[] {
   const erreurs: string[] = [];
@@ -340,6 +394,22 @@ export function verifierScript(script: unknown): string[] {
     if (g.duree !== undefined && !(typeof g.duree === 'number' && g.duree > 0)) erreurs.push('gameplay.duree : nombre de secondes > 0.');
     if (g.volume !== undefined && !(typeof g.volume === 'number' && g.volume >= 0 && g.volume <= 1)) erreurs.push('gameplay.volume : nombre entre 0 et 1.');
     if (g.cadrage !== undefined && !['flou', 'remplir'].includes(g.cadrage)) erreurs.push('gameplay.cadrage : « flou » ou « remplir ».');
+    if (g.chrono !== undefined && (typeof g.chrono !== 'string' || g.chrono.length > 40)) erreurs.push('gameplay.chrono : texte court (40 caractères max), ex. « sans se faire écraser ».');
   }
+  const c = s.commentaires;
+  if (c !== undefined) {
+    if (!Array.isArray(c)) erreurs.push('« commentaires » : liste de { "a": secondes, "texte": "..." }.');
+    else {
+      if (!g) erreurs.push('« commentaires » : seulement pour une vidéo de gameplay.');
+      c.forEach((x, i) => {
+        if (!x || typeof x.a !== 'number' || !(x.a >= 0)) erreurs.push(`commentaires[${i}].a : seconde de la vidéo (nombre ≥ 0).`);
+        if (!x || typeof x.texte !== 'string' || !x.texte.trim()) erreurs.push(`commentaires[${i}].texte : phrase obligatoire.`);
+        else if (decouperMots(x.texte).length > 25) erreurs.push(`commentaires[${i}].texte : trop long (25 mots max, une phrase courte par moment).`);
+        if (x?.zoom !== undefined && typeof x.zoom !== 'boolean') erreurs.push(`commentaires[${i}].zoom : true ou false.`);
+        if (i > 0 && typeof x?.a === 'number' && typeof c[i - 1]?.a === 'number' && x.a < c[i - 1]!.a) erreurs.push(`commentaires[${i}].a : les commentaires doivent être dans l'ordre du temps.`);
+      });
+    }
+  }
+  if (s.commentaire !== undefined && !['a_ecrire', 'fait', 'sans'].includes(s.commentaire)) erreurs.push('« commentaire » : a_ecrire, fait ou sans.');
   return erreurs;
 }

@@ -7,7 +7,7 @@
   "scripts": {
     "studio": "remotion studio src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test tests/plan.test.ts tests/passage.test.ts",
+    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test tests/plan.test.ts tests/passage.test.ts tests/commentaires.test.ts",
     "rendu": "node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts"
   },
   "dependencies": {

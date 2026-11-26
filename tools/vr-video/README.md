@@ -135,6 +135,22 @@ La vidéo dure le passage de jeu gardé : les `GARDER_S` dernières secondes de 
 }
 ```
 
+## Vidéos de gameplay commentées (voix tout du long)
+
+Une capture où seule l'accroche est dite ne retient personne. Le circuit :
+
+1. `.\planche.cmd videos\<nom>` (lancé par l'usine) fige le passage gardé dans `script.json` (`gameplay.debut`, `gameplay.duree`), écrit `planche.jpg` (une image par seconde, légendée avec sa seconde dans la vidéo finale) et met `"commentaire": "a_ecrire"`.
+2. L'Agent web regarde la planche et écrit dans le script les phrases calées sur le jeu :
+   ```json
+   "commentaires": [
+     { "a": 6, "texte": "Le bus le frôle… et ne freine même pas.", "zoom": true },
+     { "a": 19.5, "texte": "Et là, la police s'arrête juste à côté de lui…" }
+   ],
+   "gameplay": { "fichier": "gameplay.mp4", "debut": 0, "duree": 35, "chrono": "planté sur la route" },
+   "commentaire": "fait"
+   ```
+3. vr-voix génère une voix par phrase (`voix-c1.mp3`, `voix-c2.mp3`…, seules les phrases modifiées sont refaites) ; le rendu place chaque phrase à sa seconde (jamais deux voix en même temps), avec ses sous-titres, baisse le son du jeu pendant la voix, zoome sur les phrases `"zoom": true`, affiche le chrono et met une musique légère (`VOLUME_MUSIQUE_COMMENTAIRES`, 0,06 par défaut).
+
 ## Clips de fond
 
 Mets des MP4 verticaux dans `bibliotheque\` (ou le dossier `BIBLIOTHEQUE_FONDS`), nommés avec des mots-clés : `miami-nuit-neons-01.mp4`, `voiture-sport-route-02.mp4`, `marais-floride-03.mp4`. Utilise des vidéos libres de droits pour un usage commercial (Pixabay ou Pexels par exemple), **pas des extraits d'autres créateurs**. `vr-fonds` remplit ce dossier automatiquement depuis Pixabay.

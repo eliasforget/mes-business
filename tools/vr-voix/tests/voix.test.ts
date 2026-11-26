@@ -144,3 +144,31 @@ test('vidéo de gameplay : pas d\'alerte de durée sur une accroche courte', asy
     rmSync(d, { recursive: true, force: true });
   }
 });
+
+test('vidéo gameplay commentée : une voix par phrase, seules les phrases modifiées sont refaites', async () => {
+  const script = {
+    scenes: [{ voix: 'Combien de temps tu tiens planté sur la route ?' }],
+    gameplay: { fichier: 'gameplay.mp4' },
+    commentaires: [{ a: 5, texte: 'Première voiture : elle t’évite.' }, { a: 12, texte: 'La police arrive…' }],
+  };
+  const d = dossierTemp(script);
+  const { f, appels } = fauxFetch();
+  const r1 = await genererVoix(d, CFG, { fetchImpl: f });
+  assert.equal(r1.commentaires, 2);
+  for (const n of [1, 2]) {
+    assert.ok(existsSync(path.join(d, `voix-c${n}.mp3`)));
+    assert.ok(existsSync(path.join(d, `voix-c${n}.alignement.json`)));
+  }
+  const syntheses = () => appels.filter((a) => a.url.includes('with-timestamps')).length;
+  assert.equal(syntheses(), 3, 'accroche + 2 commentaires');
+
+  assert.equal((await genererVoix(d, CFG, { fetchImpl: f })).statut, 'inchange');
+  assert.equal(syntheses(), 3);
+
+  script.commentaires[1]!.texte = 'La police arrive… et passe sans s’arrêter.';
+  writeFileSync(path.join(d, 'script.json'), JSON.stringify(script));
+  const r3 = await genererVoix(d, CFG, { fetchImpl: f });
+  assert.equal(r3.commentaires, 1);
+  assert.equal(syntheses(), 4, 'seul le commentaire modifié est refait (pas l’accroche)');
+  rmSync(d, { recursive: true, force: true });
+});

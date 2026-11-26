@@ -181,3 +181,35 @@ export function resumer(profil: Profil, videos: VideoTikTok[], maintenant = Date
     dernieres: videos.slice(0, 12).map((v) => ({ titre: (v.title || v.video_description || '').slice(0, 120), vues: v.view_count ?? 0, likes: v.like_count ?? 0, commentaires: v.comment_count ?? 0, partages: v.share_count ?? 0, le: v.create_time ? new Date(v.create_time * 1000).toISOString() : '' })),
   };
 }
+
+/** Historique quotidien d'un compte : [jour (AAAA-MM-JJ, heure de Paris), abonnés, likes, vues sur 30 jours, nombre de vidéos]. */
+export type Point = [jour: string, abonnes: number | null, likes: number | null, vues30j: number, nbVideos: number | null];
+export type Historique = Record<string, Point[]>;
+export const COLONNES_HISTORIQUE = ['jour', 'abonnes', 'likes', 'vues30j', 'nbVideos'];
+
+export function jourParis(d = new Date()): string {
+  return new Intl.DateTimeFormat('fr-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+}
+
+/** Lit tiktok-historique.txt ; un fichier absent, vide ou abîmé donne un historique vide (on repart de zéro sans planter). */
+export function lireHistorique(texte: string): Historique {
+  try {
+    const v = JSON.parse(texte) as { comptes?: unknown };
+    if (!v || typeof v.comptes !== 'object' || v.comptes === null) return {};
+    const out: Historique = {};
+    for (const [k, l] of Object.entries(v.comptes as Record<string, unknown>)) {
+      if (Array.isArray(l)) out[k] = l.filter((p): p is Point => Array.isArray(p) && typeof p[0] === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(p[0]));
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/** Ajoute (ou remplace) le point du jour d'un compte, garde les `max` derniers jours, du plus ancien au plus récent. */
+export function ajouterPoint(h: Historique, compte: string, point: Point, max = 180): Historique {
+  const liste = (h[compte] ?? []).filter((p) => p[0] !== point[0]);
+  liste.push(point);
+  liste.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  return { ...h, [compte]: liste.slice(-max) };
+}

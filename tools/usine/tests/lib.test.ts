@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, horodatage, MAX_ESSAIS, nomSur, textesCompilation, titreChapitre, trier, type Etat, type InfosVideo } from '../lib.ts';
+import { aBesoinDePlanche, ATTENTE_COMMENTAIRE_H, chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, horodatage, MAX_ESSAIS, nomSur, textesCompilation, titreChapitre, trier, type Etat, type InfosVideo } from '../lib.ts';
 
 const video = (x: Partial<InfosVideo> = {}): InfosVideo => ({ nom: '08-x', script: {}, empreinte: 'e1', captureOk: true, dejaRendue: false, ...x });
 const etat = (videos: Etat['videos'] = {}): Etat => ({ ...ETAT_VIDE, videos });
@@ -58,4 +58,25 @@ test('textes de la compilation : chapitres YouTube à partir de 0:00', () => {
   const t = textesCompilation('Faits animés', [{ titre: 'A', debut: 0 }, { titre: 'B', debut: 35 }, { titre: 'C', debut: 70 }], 105);
   assert.equal(t.titre, '3 faits incroyables en 2 minutes');
   assert.match(t.description, /0:00 A\n0:35 B\n1:10 C/);
+});
+
+test('vidéo de jeu : planche demandée tant qu’il n’y a pas de commentaires', () => {
+  const jeu = (script: InfosVideo['script'], x: Partial<InfosVideo> = {}) => video({ script: { gameplay: {}, ...script }, ...x });
+  assert.equal(aBesoinDePlanche(jeu({})), true);
+  assert.equal(aBesoinDePlanche(jeu({}, { captureOk: false })), false, 'pas de capture, pas de planche');
+  assert.equal(aBesoinDePlanche(jeu({ commentaire: 'a_ecrire' }, { plancheLe: 1 })), false, 'déjà envoyée');
+  assert.equal(aBesoinDePlanche(jeu({ commentaire: 'a_ecrire' })), true, 'planche perdue : refaite');
+  assert.equal(aBesoinDePlanche(jeu({ commentaires: [{ a: 2, texte: 'x' }] })), false);
+  assert.equal(aBesoinDePlanche(jeu({ commentaire: 'sans' })), false);
+  assert.equal(aBesoinDePlanche(video()), false, 'vidéo motion design');
+});
+
+test('vidéo de jeu : on attend les commentaires, puis on rend quand même après 48 h', () => {
+  const v = video({ script: { gameplay: {}, commentaire: 'a_ecrire' }, plancheLe: 0 });
+  assert.deepEqual(decider(v, etat(), new Set(), 3_600_000), { action: 'passer', raison: 'attend_commentaire' });
+  const tard = decider(v, etat(), new Set(), (ATTENTE_COMMENTAIRE_H + 1) * 3_600_000);
+  assert.equal(tard.action, 'fabriquer');
+  assert.match((tard as { raison: string }).raison, /sans commentaires/);
+  const commente = video({ script: { gameplay: {}, commentaire: 'fait', commentaires: [{ a: 3, texte: 'x' }] }, empreinte: 'e2' });
+  assert.deepEqual(decider(commente, etat({ '08-x': { empreinte: 'e1', statut: 'prete', le: '' } }), new Set()), { action: 'fabriquer', raison: 'script modifié' });
 });

@@ -15,7 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { createLogger, envBool, loadEnv, REPO_ROOT } from '../../shared/index.ts';
-import { chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, MAX_ESSAIS, nomSur, resumeRapport, textesCompilation, titreChapitre, trier, type Etat } from './lib.ts';
+import { aBesoinDePlanche, chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, MAX_ESSAIS, nomSur, resumeRapport, textesCompilation, titreChapitre, trier, type Etat } from './lib.ts';
 
 const ICI = import.meta.dirname;
 const OUTILS = path.join(REPO_ROOT, 'tools');
@@ -29,7 +29,7 @@ const env = loadEnv({
   defaults: {
     USINE_ACTIVE: 'true',
     DOSSIER_A_PUBLIER: '',
-    MAX_PAR_PASSAGE: '3',
+    MAX_PAR_PASSAGE: '3', MAX_PLANCHES: '4',
     MAX_PAR_JOUR: '4',
     GIT_AUTO: 'true',
     POUSSER_RAPPORT: 'true',
@@ -168,11 +168,12 @@ function lireIgnorees(): Set<string> {
 interface Video {
   nom: string;
   dossier: string;
-  script: Record<string, unknown> & { titre?: string; theme?: unknown; auto?: unknown; gameplay?: { fichier?: string } };
+  script: Record<string, unknown> & { titre?: string; theme?: unknown; auto?: unknown; gameplay?: { fichier?: string }; commentaire?: unknown; commentaires?: unknown };
   empreinte: string;
   chaine: string;
   captureOk: boolean;
   dejaRendue: boolean;
+  plancheLe?: number;
 }
 
 function listerVideos(): { videos: Video[]; illisibles: string[] } {
@@ -195,12 +196,56 @@ function listerVideos(): { videos: Video[]; illisibles: string[] } {
         chaine: chaineDe(script),
         captureOk: !g || existsSync(path.join(dossier, g.fichier ?? 'gameplay.mp4')),
         dejaRendue: existsSync(mp4Manuel) && statSync(mp4Manuel).mtimeMs >= statSync(fichierScript).mtimeMs,
+        ...(existsSync(path.join(dossier, 'planche.jpg')) ? { plancheLe: statSync(path.join(dossier, 'planche.jpg')).mtimeMs } : {}),
       });
     } catch {
       illisibles.push(e.name);
     }
   }
   return { videos, illisibles };
+}
+
+// ─────────────── Étape 2 bis : planches pour les commentaires de l'Agent web ───────────────
+/**
+ * Vidéos gameplay sans commentaires : vr-video fige le passage gardé et fait une planche (une image par
+ * seconde), puis on pousse script.json + planche.jpg + publication.txt sur GitHub. L'Agent web regarde la
+ * planche, écrit les phrases calées sur le jeu et pousse le script : l'usine la fabrique au passage suivant.
+ */
+function preparerPlanches(videos: Video[], dryRun: boolean, avecGit: boolean): number {
+  const aFaire = videos.filter((v) => aBesoinDePlanche(v)).slice(0, entier('MAX_PLANCHES', 1, 20));
+  if (!aFaire.length) return 0;
+  if (dryRun) {
+    aFaire.forEach((v) => log.info(`[dry-run] planche à faire pour ${v.nom} (commentaires de l'Agent web)`));
+    return 0;
+  }
+  const faites: Video[] = [];
+  for (const v of aFaire) {
+    log.info(`Planche de ${v.nom} pour les commentaires de l'Agent web…`);
+    if (lancerOutil('vr-video', 'planche.ts', [v.dossier])) faites.push(v);
+    else log.warn(`  Planche de ${v.nom} en échec (voir logs\vr-video) : réessayée au prochain passage.`);
+  }
+  if (faites.length && avecGit) {
+    const fichiers = faites.flatMap((v) => ['script.json', 'planche.jpg', 'publication.txt'].map((f) => path.join(v.dossier, f)).filter((f) => existsSync(f)));
+    pousser(fichiers, `usine : ${faites.length} planche(s) à commenter (${faites.map((v) => v.nom).join(', ')})`);
+  }
+  return faites.length;
+}
+
+/** Ajoute, commite et pousse des fichiers (réessaie après un pull --rebase si quelqu'un a poussé entre-temps). */
+function pousser(fichiers: string[], message: string): boolean {
+  git(['add', '--', ...fichiers]);
+  const c = git(['commit', '-m', message, '--', ...fichiers]);
+  if (!c.ok) {
+    log.warn(`Commit impossible :\n${c.sortie}`);
+    return false;
+  }
+  let p = git(['push']);
+  if (!p.ok) {
+    git(['pull', '--rebase', '--autostash']);
+    p = git(['push']);
+  }
+  if (!p.ok) log.warn(`Push impossible (réessayé au prochain passage) :\n${p.sortie}`);
+  return p.ok;
 }
 
 // ─────────────── Étape 3 : fabriquer une vidéo ───────────────
@@ -292,7 +337,7 @@ interface Quota {
   enAttente: string[];
 }
 
-function ecrireRapport(etat: Etat, videos: Video[], attente: string[], quota: Quota): void {
+function ecrireRapport(etat: Etat, videos: Video[], attente: string[], quota: Quota, attenteCommentaire: string[] = []): void {
   const parNom = new Map(videos.map((v) => [v.nom, v]));
   const { prete, erreur } = resumeRapport(etat);
   const rapport = {
@@ -301,6 +346,7 @@ function ecrireRapport(etat: Etat, videos: Video[], attente: string[], quota: Qu
     pretes: prete.map((nom) => ({ nom, chaine: parNom.get(nom)?.chaine ?? '', le: etat.videos[nom]!.le })),
     erreurs: erreur.map((nom) => ({ nom, erreur: etat.videos[nom]!.erreur ?? '', essais: etat.videos[nom]!.essais ?? 1 })),
     enAttenteDeCapture: attente,
+    enAttenteDeCommentaire: attenteCommentaire,
     enAttenteDeQuota: quota.enAttente,
     quota: { faitesAujourdhui: quota.faitesAujourdhui, maxParJour: quota.maxParJour, maxParPassage: quota.maxParPassage },
     tournage: experiencesImportees(),
@@ -318,16 +364,7 @@ function ecrireRapport(etat: Etat, videos: Video[], attente: string[], quota: Qu
 
 function pousserRapport(n: number): void {
   if (!git(['status', '--porcelain', '--', FICHIER_RAPPORT]).sortie) return;
-  git(['add', '--', FICHIER_RAPPORT]);
-  const c = git(['commit', '-m', `usine : rapport (${n} vidéo(s) fabriquée(s))`, '--', FICHIER_RAPPORT]);
-  if (!c.ok) return log.warn(`Commit du rapport impossible :\n${c.sortie}`);
-  let p = git(['push']);
-  if (!p.ok) {
-    git(['pull', '--rebase', '--autostash']);
-    p = git(['push']);
-  }
-  if (p.ok) log.info('Rapport poussé sur GitHub (les agents verront les vidéos prêtes).');
-  else log.warn(`Push du rapport impossible (pas grave, réessayé au prochain passage) :\n${p.sortie}`);
+  if (pousser([FICHIER_RAPPORT], `usine : rapport (${n} vidéo(s) fabriquée(s))`)) log.info('Rapport poussé sur GitHub (les agents verront les vidéos prêtes).');
 }
 
 // ─────────────── Programme principal ───────────────
@@ -355,22 +392,26 @@ async function main(): Promise<number> {
 
     const etat = compteurDuJour(lireEtat(), aujourdhui());
     const ignorees = lireIgnorees();
+    if (preparerPlanches(listerVideos().videos, dryRun, avecGit)) log.info('Planches envoyées : l\'Agent web écrira les commentaires (passage de 13 h, ou bouton du tableau de bord).');
     const { videos, illisibles } = listerVideos();
     illisibles.forEach((n) => log.error(`${n} : script.json illisible (JSON invalide), vidéo ignorée.`));
 
     const aFaire: { v: Video; raison: string }[] = [];
     const attente: string[] = [];
+    const attenteCommentaire: string[] = [];
     for (const v of trier(videos.map((x) => x.nom)).map((n) => videos.find((x) => x.nom === n)!)) {
       if (values.video && v.nom !== values.video) continue;
       const d = values.video ? { action: 'fabriquer' as const, raison: 'demandée' } : decider(v, etat, ignorees);
       if (d.action === 'fabriquer') aFaire.push({ v, raison: d.raison });
       else if (d.raison === 'attend_capture') attente.push(v.nom);
+      else if (d.raison === 'attend_commentaire') attenteCommentaire.push(v.nom);
       else if (d.raison === 'deja_rendue_avant_usine' && !dryRun) {
         etat.videos[v.nom] = { empreinte: v.empreinte, statut: 'deja', le: new Date().toISOString() };
       } else if (d.raison === 'trop_d_erreurs') log.warn(`${v.nom} : ${MAX_ESSAIS} échecs de suite, je ne réessaie plus (corrige puis modifie le script, ou lance --video ${v.nom}).`);
     }
     if (values.video && !aFaire.length) log.error(`Vidéo « ${values.video} » introuvable dans ${VIDEOS}.`);
     if (attente.length) log.info(`En attente de ta capture PS5 : ${attente.join(', ')}`);
+    if (attenteCommentaire.length) log.info(`En attente des commentaires de l'Agent web : ${attenteCommentaire.join(', ')}`);
 
     const parPassage = entier('MAX_PAR_PASSAGE', 1, 50);
     const parJour = entier('MAX_PAR_JOUR', 1, 100);
@@ -411,7 +452,7 @@ async function main(): Promise<number> {
       maxParJour: parJour,
       maxParPassage: parPassage,
       enAttente: aFaire.slice(reste).map(({ v }) => v.nom),
-    });
+    }, attenteCommentaire);
     if (avecGit && envBool('POUSSER_RAPPORT', true)) pousserRapport(faites);
     if (faites) log.info(`${faites} vidéo(s) prête(s) dans ${dossierAPublier}`);
     return 0;

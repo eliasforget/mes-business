@@ -24,6 +24,14 @@ export type ProprietesViceRadarJeu = {
   appelAction: string | null;
   barreProgression: boolean;
   theme?: string;
+  /** Phrases de la voix calées sur le jeu : un fichier audio chacune, joué à partir de « depuis » (s). */
+  commentaires?: { src: string; depuis: number }[];
+  /** Moments où la voix parle (accroche + commentaires) : le son du jeu baisse dessous. */
+  intervallesVoix?: { debut: number; fin: number }[];
+  /** Débuts (s) des phrases marquées « zoom » : léger zoom sur le jeu pendant ~2,5 s. */
+  zooms?: number[];
+  /** Texte du chrono affiché sur le jeu (ex. « sans se faire écraser »), ou null. */
+  chrono?: string | null;
 };
 
 const CONTOUR = '0 6px 24px rgba(0,0,0,0.6)';
@@ -73,16 +81,56 @@ const TitreHaut: React.FC<{ scene: ScenePlanifiee }> = ({ scene }) => {
   );
 };
 
+/** 0 → 1 : force du zoom à l'instant t (montée 0,35 s, tenue ~2,2 s, retour 0,45 s), le plus fort des zooms. */
+export function forceZoom(t: number, zooms: number[]): number {
+  let k = 0;
+  for (const z of zooms) {
+    const d = t - z + 0.1;
+    if (d < 0 || d > 3) continue;
+    k = Math.max(k, d < 0.35 ? d / 0.35 : d < 2.55 ? 1 : 1 - (d - 2.55) / 0.45);
+  }
+  return Math.max(0, Math.min(1, k));
+}
+
+/** Volume du jeu : bas pendant que la voix parle, remonte en ~0,35 s entre deux phrases. */
+export function niveauJeu(t: number, intervalles: { debut: number; fin: number }[], haut: number, bas: number): number {
+  let d = Infinity;
+  for (const i of intervalles) {
+    if (t >= i.debut - 0.15 && t <= i.fin + 0.25) return bas;
+    d = Math.min(d, t < i.debut ? i.debut - 0.15 - t : t - i.fin - 0.25);
+  }
+  const k = Math.max(0, Math.min(1, d / 0.35));
+  return bas + (haut - bas) * k;
+}
+
+const Chrono: React.FC<{ texte: string; haut: number }> = ({ texte, haut }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const s = Math.floor(frame / fps);
+  return (
+    <div style={{
+      position: 'absolute', top: haut, right: 28, display: 'flex', alignItems: 'baseline', gap: 12, padding: '10px 20px', borderRadius: 18,
+      background: 'rgba(7,10,31,0.72)', border: `3px solid ${COULEURS.menthe}`, boxShadow: '0 10px 30px rgba(0,0,0,0.45)',
+    }}>
+      <span style={{ fontFamily: TITRE, fontSize: 64, lineHeight: 1, color: COULEURS.blanc, fontVariantNumeric: 'tabular-nums' }}>{Math.floor(s / 60)}:{String(s % 60).padStart(2, '0')}</span>
+      <span style={{ fontFamily: TEXTE, fontWeight: 800, fontSize: 30, color: COULEURS.menthe, maxWidth: 360 }}>{texte}</span>
+    </div>
+  );
+};
+
 export const ViceRadarJeu: React.FC<ProprietesViceRadarJeu> = ({
   plan, gameplay, audio, musique, volumeMusique, volumeJeu, volumeJeuSousVoix, finVoix, marque, appelAction, barreProgression,
+  commentaires = [], intervallesVoix, zooms = [], chrono = null,
 }) => {
   const { fps, durationInFrames } = useVideoConfig();
+  const frame = useCurrentFrame();
   const scene = plan.scenes[0]!;
   const remplir = gameplay?.cadrage === 'remplir';
   const depuis = gameplay ? Math.round(gameplay.depuis * fps) : 0;
-  // Le son du jeu reste bas sous la voix, puis remonte en 0,4 s.
-  const remontee = Math.round((finVoix + 0.25) * fps);
-  const volume = (f: number) => interpolate(f, [remontee, remontee + Math.round(0.4 * fps)], [volumeJeuSousVoix, volumeJeu], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  // Le son du jeu reste bas sous la voix (l'accroche, et chaque commentaire), puis remonte.
+  const intervalles = intervallesVoix ?? [{ debut: 0, fin: finVoix }];
+  const volume = (f: number) => niveauJeu(f / fps, intervalles, volumeJeu, volumeJeuSousVoix);
+  const zoom = 1 + 0.18 * forceZoom(frame / fps, zooms);
   const debutAppel = Math.max(Math.round(finVoix * fps) + fps, durationInFrames - Math.round(3.5 * fps));
 
   return (
@@ -96,7 +144,7 @@ export const ViceRadarJeu: React.FC<ProprietesViceRadarJeu> = ({
           </AbsoluteFill>
           <div style={{ position: 'absolute', top: JEU_HAUT, left: 0, width: '100%', height: JEU_HAUTEUR, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
             <OffthreadVideo src={staticFile(gameplay.src)} startFrom={depuis} volume={volume}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${zoom})` }} />
           </div>
           <div style={{ position: 'absolute', top: JEU_HAUT - 6, left: 0, width: '100%', height: 6, background: `linear-gradient(90deg, ${COULEURS.menthe}, ${COULEURS.orange}, ${COULEURS.rose})` }} />
           <div style={{ position: 'absolute', top: JEU_HAUT + JEU_HAUTEUR, left: 0, width: '100%', height: 6, background: `linear-gradient(90deg, ${COULEURS.rose}, ${COULEURS.orange}, ${COULEURS.menthe})` }} />
@@ -105,7 +153,7 @@ export const ViceRadarJeu: React.FC<ProprietesViceRadarJeu> = ({
       {gameplay && remplir && (
         <>
           <AbsoluteFill>
-            <OffthreadVideo src={staticFile(gameplay.src)} startFrom={depuis} volume={volume} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <OffthreadVideo src={staticFile(gameplay.src)} startFrom={depuis} volume={volume} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${zoom})` }} />
           </AbsoluteFill>
           {/* Assombrit le haut et le bas pour que le titre et les sous-titres restent lisibles. */}
           <AbsoluteFill style={{ background: 'linear-gradient(180deg, rgba(7,10,31,0.85) 0%, rgba(7,10,31,0.35) 30%, transparent 45%, transparent 62%, rgba(7,10,31,0.7) 85%)' }} />
@@ -113,6 +161,7 @@ export const ViceRadarJeu: React.FC<ProprietesViceRadarJeu> = ({
       )}
 
       <TitreHaut scene={scene} />
+      {chrono && gameplay && <Chrono texte={chrono} haut={remplir ? 560 : JEU_HAUT + 24} />}
       <SousTitres groupes={plan.sousTitres} haut={remplir ? 1310 : JEU_HAUT + JEU_HAUTEUR + 40} />
 
       {appelAction && (
@@ -125,6 +174,11 @@ export const ViceRadarJeu: React.FC<ProprietesViceRadarJeu> = ({
       {barreProgression && <BarreProgression dureeFrames={durationInFrames} />}
 
       {audio && <Audio src={staticFile(audio)} />}
+      {commentaires.map((c, i) => (
+        <Sequence key={`c${i}`} from={Math.round(c.depuis * fps)} layout="none">
+          <Audio src={staticFile(c.src)} />
+        </Sequence>
+      ))}
       {musique && volumeMusique > 0 && (
         <Audio
           src={staticFile(musique)}

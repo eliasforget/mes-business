@@ -40,7 +40,7 @@ Les libellés exacts du portail TikTok peuvent varier un peu : cherche « Login 
 
 ```powershell
 .\tiktok.cmd --dry-run      # lit et affiche, n'écrit rien
-.\tiktok.cmd                # écrit tiktok-stats.txt dans DOSSIER_SORTIE
+.\tiktok.cmd                # écrit tiktok-stats.txt et tiktok-historique.txt dans DOSSIER_SORTIE
 .\tiktok.cmd comptes        # comptes connectés et date d'expiration de l'autorisation
 ```
 
@@ -58,3 +58,7 @@ TikTok l'expire, `.\tiktok.cmd comptes` affiche la date).
 
 Sécurité : la clé, le secret et les jetons restent dans `.env` et `jetons.local.json` (ignorés par git) et n'apparaissent
 jamais dans les journaux. Le serveur de connexion n'écoute qu'en local, 5 minutes maximum.
+
+## Historique
+
+`tiktok-historique.txt` (à côté des stats) garde un point par compte et par jour (heure de Paris) : abonnés, likes, vues sur 30 jours, nombre de vidéos, sur 180 jours. Le point du jour est remplacé à chaque passage. C'est lui que lit la courbe des abonnés du tableau « Actu Flash — Statistiques ».

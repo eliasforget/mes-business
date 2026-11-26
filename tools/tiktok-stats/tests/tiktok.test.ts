@@ -66,3 +66,20 @@ test('lireVideos abandonne après tous les essais et garde l\'erreur', async () 
   const f: Fetch = async () => new Response(JSON.stringify({ error: { code: 'internal_error', message: 'Something is wrong.', log_id: 'abc' } }), { status: 500 });
   await assert.rejects(lireVideos(f, 'jeton', 60, 1), /500.*log_id abc/);
 });
+
+test('historique : un point par jour, le plus récent remplace celui du même jour', async () => {
+  const { ajouterPoint, lireHistorique, jourParis } = await import('../tiktok.ts');
+  let h = lireHistorique('pas du json');
+  assert.deepEqual(h, {});
+  h = ajouterPoint(h, 'actu-flash', ['2026-11-26', 786, 1594, 3042, 55]);
+  h = ajouterPoint(h, 'actu-flash', ['2026-11-25', 780, 1580, 3000, 54]);
+  h = ajouterPoint(h, 'actu-flash', ['2026-11-26', 790, 1600, 3100, 55]);
+  assert.deepEqual(h['actu-flash'], [['2026-11-25', 780, 1580, 3000, 54], ['2026-11-26', 790, 1600, 3100, 55]]);
+  const relu = lireHistorique(JSON.stringify({ comptes: { ...h, abime: [['pas-une-date', 1, 1, 1, 1]] } }));
+  assert.equal(relu['actu-flash']!.length, 2);
+  assert.equal(relu.abime!.length, 0);
+  let long = {};
+  for (let i = 1; i <= 5; i++) long = ajouterPoint(long, 'x', [`2026-11-0${i}`, i, 0, 0, 0], 3);
+  assert.deepEqual((long as Record<string, unknown[]>).x!.map((p) => (p as unknown[])[0]), ['2026-11-03', '2026-11-04', '2026-11-05']);
+  assert.equal(jourParis(new Date('2026-11-26T23:30:00Z')), '2026-11-27');
+});
