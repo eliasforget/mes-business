@@ -1,0 +1,27 @@
+{
+  "titre": "E01 — Planté au milieu de la route",
+  "experience": "E01",
+  "gameplay": {
+    "fichier": "gameplay.mp4",
+    "debut": 24.8,
+    "duree": 35
+  },
+  "scenes": [
+    {
+      "tag": "EXPÉRIENCE GTA 6",
+      "lignes": [
+        {
+          "texte": "Planté au milieu",
+          "style": "normal"
+        },
+        {
+          "texte": "de la route",
+          "style": "accent"
+        }
+      ],
+      "voix": "Que se passe-t-il si tu restes planté au milieu de la route dans GTA 6 ? Regarde bien la fin."
+    }
+  ],
+  "fin": "Je teste quoi ensuite ? Dis-le en commentaire",
+  "commentaire": "a_ecrire"
+}
