@@ -4,6 +4,8 @@ Moteur autonome (TypeScript + [Remotion](https://www.remotion.dev)) : transforme
 
 Aucun logo, couleur ni fichier d'une chaîne existante : le logo vient de `marque` dans le script (ou de `MARQUE_NOM` / `MARQUE_ACCENT` dans `.env`), les couleurs de `couleurs`.
 
+**Licence Remotion** : le dossier est sous licence MIT, mais Remotion a sa propre licence (gratuite pour un particulier et jusqu'à 3 personnes, payante au-delà, offre distincte pour les rendus automatisés) : https://www.remotion.dev/docs/license
+
 ## Installation
 
 Node 22.6 ou plus.
@@ -47,4 +49,4 @@ Voir `.env.example` : tous facultatifs, aucun secret. Le fichier `.env` n'est pa
 
 ## Tests
 
-`npm test` : minutage, sous-titres, plans de fond, validation du script (dont `couleurs`), thème, et deux lancements de `rendu.ts --dry-run` (script valide et script invalide). `npx tsc --noEmit` : typecheck.
+`npm test` : minutage, sous-titres, plans de fond, validation du script (dont `couleurs`), thème, deux lancements de `rendu.ts --dry-run` (script valide et script invalide) et contrôle du paquet publiable (`tests/paquet.test.ts` : README, licence, frontmatter, liens, exemples, rien de personnel). `npx tsc --noEmit` : typecheck.

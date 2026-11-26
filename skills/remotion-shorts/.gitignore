@@ -1,0 +1,11 @@
+node_modules/
+.rendu/
+sortie/
+.env
+*.mp3
+*.wav
+*.m4a
+*.ogg
+*.mp4
+*.mov
+*.webm

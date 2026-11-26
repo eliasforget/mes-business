@@ -1,0 +1,39 @@
+{
+  "titre": "3 VS Code shortcuts",
+  "fin": "Which one will you try first?",
+  "marque": { "nom": "CODE", "accent": "TIPS" },
+  "scenes": [
+    {
+      "tag": "VS CODE",
+      "lignes": [
+        { "texte": "Stop using", "style": "petit" },
+        { "texte": "THE MOUSE", "style": "gros" },
+        { "texte": "for these three things", "style": "accent" }
+      ],
+      "voix": "Stop reaching for the mouse in VS Code. These three shortcuts cover things you probably do dozens of times every single day.",
+      "motsCles": ["code", "keyboard"]
+    },
+    {
+      "tag": "TIP 1",
+      "lignes": [
+        { "texte": "Ctrl + D", "style": "gros" },
+        { "texte": "selects the next match", "style": "accent" }
+      ],
+      "voix": "Number one: Control D. It selects the next match of the word under your cursor, so you can rename several variables at once."
+    },
+    {
+      "tag": "TIP 2",
+      "chiffre": { "valeur": 2, "suffixe": " CURSORS" },
+      "lignes": [{ "texte": "Alt + click", "style": "accent" }],
+      "voix": "Number two: Alt and click. It drops an extra cursor wherever you want, and you type in several places at the same time."
+    },
+    {
+      "tag": "TIP 3",
+      "lignes": [
+        { "texte": "Ctrl + P", "style": "gros" },
+        { "texte": "opens any file", "style": "accent" }
+      ],
+      "voix": "Number three: Control P. Type a few letters of a file name and it opens right away, without digging through the folder tree. Try all three today."
+    }
+  ]
+}

@@ -1,62 +1,65 @@
-# Commandes exactes
+# Exact commands
 
-Relevées dans `scripts/rendu.ts` (usage affiché par le moteur : `rendu <dossier-de-la-video> [--dry-run] [--apercu 0,3] [--sortie fichier.mp4]`). Tout se lance depuis le dossier du moteur (`scripts/`, à côté de ce `SKILL.md`). Le dossier d'une vidéo peut être n'importe où : le moteur ne lit que `script.json` et les fichiers à côté de lui.
+Taken from `scripts/rendu.ts` (engine usage: `rendu <video-folder> [--dry-run] [--apercu 0,3] [--sortie file.mp4]`). Everything runs from the engine folder (`scripts/`, next to `SKILL.md`). A video folder can live anywhere: the engine only reads `script.json` and the files next to it.
 
-## Installation (une fois)
+## Install (once)
 
 ```powershell
-Set-Location skills\remotion-shorts\scripts   # adapte le chemin à l'endroit où la skill est installée
+Set-Location skills\remotion-shorts\scripts   # adjust to where the skill is installed
 npm install
-npm test        # tests du minutage, de la validation du script et du --dry-run
+npm test        # timings, script validation, --dry-run and package checks
 ```
 
-Exigence : Node 22.6 ou plus. Au premier rendu, Remotion télécharge un navigateur headless (environ 100 Mo). Licence Remotion : gratuite pour un particulier d'après le README du moteur ; vérifie les conditions de remotion.com si l'usage est professionnel.
+Requires Node 22.6 or later. On the first render, Remotion downloads a headless browser (about 100 MB).
 
-## Les trois commandes
+**Remotion license**: free for individuals and for organisations of up to 3 people (other free cases are listed in the license); beyond that a paid company license is required, with a separate plan for automated rendering. Check https://www.remotion.dev/docs/license for your case.
 
-Windows (PowerShell) : le lanceur `rendu.cmd` évite que PowerShell avale les options.
+## The three commands
+
+Windows (PowerShell): the `rendu.cmd` launcher stops PowerShell from swallowing the options.
 
 ```powershell
-.\rendu.cmd videos\05-nouvelle-video --dry-run           # 1. valide le script et affiche le plan, sans rendu
-.\rendu.cmd videos\05-nouvelle-video --apercu 0,1.5,6    # 2. images PNG à 0 s, 1,5 s et 6 s
-.\rendu.cmd videos\05-nouvelle-video                     # 3. rendu complet -> sortie\05-nouvelle-video.mp4
+.\rendu.cmd videos\05-new-video --dry-run           # 1. validate the script and print the plan, no render
+.\rendu.cmd videos\05-new-video --apercu 0,1.5,6    # 2. PNG frames at 0 s, 1.5 s and 6 s
+.\rendu.cmd videos\05-new-video                     # 3. full render -> sortie\05-new-video.mp4
 ```
 
-macOS, Linux (ou tout système avec Node) : même commande sans le lanceur.
+macOS, Linux (or any system with Node): same command without the launcher.
 
 ```bash
-node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts videos/05-nouvelle-video --dry-run
-node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts videos/05-nouvelle-video --apercu 0,1.5,6
-node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts videos/05-nouvelle-video
+node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts videos/05-new-video --dry-run
+node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts videos/05-new-video --apercu 0,1.5,6
+node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts videos/05-new-video
 ```
 
-Sous Node 22.18 ou plus, `--experimental-strip-types` n'est plus nécessaire.
+On Node 22.18 or later, `--experimental-strip-types` is no longer needed.
 
-| Commande | Ce qu'elle fait | Ce qu'elle écrit |
+| Command | What it does | What it writes |
 |---|---|---|
-| `--dry-run` | contrôle le script (`verifierScript`), calcule le plan, affiche durée, scènes et avertissements | `sortie/<nom>.plan.json` seulement ; aucun rendu, aucun navigateur ; s'exécute en moins d'une seconde |
-| `--apercu 0,1.5,6` | rend des images fixes aux instants donnés (secondes, séparés par des virgules) | `sortie/<nom>-<instant>s.png` |
-| (aucune option) | rend la vidéo H.264 1080x1920 à 30 i/s | `sortie/<nom>.mp4` (ou `--sortie chemin\fichier.mp4`) |
+| `--dry-run` | checks the script (`verifierScript`), computes the plan, prints length, scenes and warnings | only `sortie/<name>.plan.json`; no render, no browser; takes under a second |
+| `--apercu 0,1.5,6` | renders still frames at the given times (seconds, comma-separated) | `sortie/<name>-<time>s.png` |
+| (no option) | renders the H.264 1080x1920 video at 30 fps | `sortie/<name>.mp4` (or `--sortie path\file.mp4`) |
 
-Le code de sortie est 0 si tout va bien, 1 sur une erreur de script (liste affichée) ou un fichier manquant (`script.json introuvable`).
+Exit code is 0 on success, 1 on a script error (list printed) or a missing file (`script.json introuvable`).
 
-## Ce que `--dry-run` ne vérifie pas
+## What `--dry-run` does not check
 
-Il ne contrôle pas les noms des fichiers de fond, de musique ou de voix : le résumé indique seulement « voix aucune », « musique aucune » ou « Aucun clip trouvé ». Relis ces lignes.
+It does not check background, music or voice file names: the summary just says there is no voice, no music or no clip. Read those lines.
 
-## Réglages facultatifs (variables d'environnement ou `.env` du moteur)
+## Optional settings (environment variables or the engine's `.env`)
 
-Aucune n'est obligatoire. Le `.env` n'est jamais versionné et ne se lit pas dans la conversation.
+None is required. `.env` is never committed and must not be read in the conversation.
 
-| Variable | Défaut | Rôle |
+| Variable | Default | Role |
 |---|---|---|
-| `DOSSIER_SORTIE` | `sortie\` du moteur | où écrire MP4, PNG et plans |
-| `DUREE_MIN_CIBLE` | 30 | durée sous laquelle le moteur avertit (secondes) |
-| `RYTHME_FONDS` | 2.2 | secondes entre deux changements de plan de fond (le premier plan dure 1,3 s) |
-| `VOLUME_MUSIQUE` | 0.12 | volume de la musique sous la voix, de 0 à 1 |
-| `BIBLIOTHEQUE_FONDS` | `bibliotheque\` du moteur | dossier de clips verticaux ; les mots-clés viennent du nom des fichiers (`ville-nuit-neons-01.mp4`) |
-| `MUSIQUE` | `musique\` du moteur | fichier ou dossier de morceaux |
-| `BARRE_PROGRESSION`, `BOUCLE` | true | barre en haut, fin qui reprend l'accroche |
-| `CRF` | 18 | qualité H.264 (18 très bon, 23 plus léger) |
-| `CONCURRENCE` | moitié des cœurs | rendus en parallèle |
-| `NAVIGATEUR` | (téléchargé par Remotion) | chemin d'un Chrome/Chromium à utiliser |
+| `MARQUE_NOM`, `MARQUE_ACCENT` | `MA`, `CHAINE` | logo text when the script has no `marque` |
+| `DOSSIER_SORTIE` | engine's `sortie\` | where MP4, PNG and plans are written |
+| `DUREE_MIN_CIBLE` | 30 | the engine warns under this length (seconds) |
+| `RYTHME_FONDS` | 2.2 | seconds between two background cuts (the first shot lasts 1.3 s) |
+| `VOLUME_MUSIQUE` | 0.12 | music volume under the voice, 0 to 1 |
+| `BIBLIOTHEQUE_FONDS` | engine's `bibliotheque\` | folder of vertical clips; keywords come from file names (`city-night-neon-01.mp4`) |
+| `MUSIQUE` | engine's `musique\` | a track or a folder of tracks |
+| `BARRE_PROGRESSION`, `BOUCLE` | true | top progress bar, ending that loops back to the hook |
+| `CRF` | 18 | H.264 quality (18 very good, 23 lighter) |
+| `CONCURRENCE` | half the cores | parallel rendering |
+| `NAVIGATEUR` | (downloaded by Remotion) | path to a Chrome/Chromium to use |

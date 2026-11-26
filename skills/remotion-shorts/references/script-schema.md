@@ -1,91 +1,57 @@
-# Champs de script.json
+# `script.json` fields
 
-Relevés dans `scripts/src/plan.ts` (types `ScriptVideo`, `Scene`, `Ligne`, `Chiffre`) et dans la fonction `verifierScript` qui les contrôle. Un champ non listé ici est ignoré.
+Taken from `scripts/src/plan.ts` (types `ScriptVideo`, `Scene`, `Ligne`, `Chiffre`) and the `verifierScript` function that checks them. A field not listed here is ignored. Field names are French: use them exactly.
 
-## Dossier d'une vidéo
+## Video folder
 
 ```
-videos/05-nouvelle-video/
-├── script.json            obligatoire
-├── voix.mp3               facultatif (aussi .wav ou .m4a) : sans voix, vidéo muette au rythme de lecture estimé
-├── voix.mots.json         facultatif : minutage [{ "mot": "VS", "debut": 0.12, "fin": 0.48 }, ...] en secondes
-│   ou voix.alignement.json    ou réponse brute ElevenLabs « with-timestamps » (convertie automatiquement)
-├── musique.mp3            facultatif (aussi .wav, .m4a) : musique dont l'utilisateur a les droits
-└── fonds/*.mp4            facultatif : clips verticaux libres de droits, prioritaires sur la bibliothèque
+videos/05-new-video/
+├── script.json            required
+├── voix.mp3               optional voiceover (also .wav or .m4a): without it, silent video at an estimated reading pace
+├── voix.mots.json         optional timings [{ "mot": "VS", "debut": 0.12, "fin": 0.48 }, ...] in seconds (word, start, end)
+│   or voix.alignement.json    or the raw ElevenLabs "with-timestamps" response (converted automatically)
+├── musique.mp3            optional (also .wav, .m4a): music the user has rights to
+└── fonds/*.mp4            optional vertical background clips the user has rights to; they take priority over the library
 ```
 
-Le nom du dossier devient le nom du fichier de sortie (`sortie/<nom>.mp4`). Convention : `NN-slug`.
+The folder name becomes the output file name (`sortie/<name>.mp4`). Convention: `NN-slug`.
 
-## Racine
+## Root
 
-| Champ | Type | Obligatoire | Rôle |
+| Field | Type | Required | Role |
 |---|---|---|---|
-| `scenes` | liste non vide | oui | les scènes, dans l'ordre |
-| `titre` | texte | non | affiché dans les journaux du moteur |
-| `fin` | texte | non | appel à l'action affiché sur la fin (ex. « Abonne-toi pour la suite ») |
-| `theme` | texte | non | habillage : `defaut` (seul fourni) ; un nom inconnu retombe sur `defaut` avec un avertissement |
-| `couleurs` | objet | non | remplace des couleurs du thème, format `#rrggbb`. Noms : `nuit` (fond), `marine` (fond secondaire), `bleu`, `blanc` (texte), `menthe` (accent 1 : sous-titres, étiquettes), `orange` (accent 2, début du dégradé des gros titres), `rose` (accent 3, fin du dégradé) |
-| `marque` | `{ "nom": "…", "accent": "…" }` | non | logo en haut de l'image : `nom` en blanc, `accent` en couleur. Les deux textes sont obligatoires s'il est présent |
+| `scenes` | non-empty list | yes | the scenes, in order |
+| `titre` | text | no | title, shown in the engine logs |
+| `fin` | text | no | call to action shown at the end (e.g. "Follow for more") |
+| `theme` | text | no | look: `defaut` (the only one); an unknown name falls back to `defaut` with a warning |
+| `couleurs` | object | no | replaces theme colours, `#rrggbb`. Names: `nuit` (background), `marine` (second background), `bleu`, `blanc` (text), `menthe` (accent 1: captions, tags), `orange` (accent 2, start of the big-title gradient), `rose` (accent 3, end of the gradient) |
+| `marque` | `{ "nom": "…", "accent": "…" }` | no | logo at the top: `nom` in white, `accent` in colour. Both are required if present |
 
-## Scène (`scenes[i]`)
+## Scene (`scenes[i]`)
 
-| Champ | Type | Obligatoire | Rôle |
+| Field | Type | Required | Role |
 |---|---|---|---|
-| `voix` | texte non vide | **oui** | ce que dit la voix pendant la scène. Mises bout à bout, les `voix` de toutes les scènes donnent le texte lu |
-| `tag` | texte | non | petite étiquette au-dessus du titre (ex. « ASTUCE N°1 ») |
-| `lignes` | liste de `{ "texte", "style"? }` | non | le titre de la scène, une ligne par élément |
-| `chiffre` | `{ "valeur", "decimales"?, "prefixe"?, "suffixe"? }` | non | grand compteur animé au-dessus des lignes. `valeur` : nombre |
-| `motsCles` | liste de textes | non | 2 mots pour choisir des clips de la bibliothèque (comparés au nom des fichiers) |
-| `fonds` | liste de textes | non | noms de clips imposés pour cette scène |
-| `duree` | nombre > 0 | non | secondes, utilisé seulement sans minutage audio |
+| `voix` | non-empty text | **yes** | what the voice says during the scene. All `voix` values joined give the text being read |
+| `tag` | text | no | small label above the title (e.g. "TIP 1") |
+| `lignes` | list of `{ "texte", "style"? }` | no | the scene title, one line per item |
+| `chiffre` | `{ "valeur", "decimales"?, "prefixe"?, "suffixe"? }` | no | big animated counter above the lines. `valeur` is a number |
+| `motsCles` | list of texts | no | 2 keywords used to pick library clips (matched against file names) |
+| `fonds` | list of texts | no | clip names forced for this scene |
+| `duree` | number > 0 | no | seconds, only used without audio timings |
 
-Styles de ligne : `normal` (blanc), `gros` (énorme, dégradé), `accent` (couleur d'accent), `petit` (blanc, petit). Sans `style`, la ligne est `normal`.
+Line styles: `normal` (white), `gros` (huge, gradient), `accent` (accent colour), `petit` (small, white). Without `style`, the line is `normal`.
 
-## Contrôles de `verifierScript`
+## `verifierScript` checks
 
-- `scenes` : liste non vide.
-- `scenes[i].voix` : texte non vide (erreur sinon).
-- `scenes[i].lignes` : liste d'objets avec `texte` ; `style` parmi `normal`, `gros`, `accent`, `petit`.
-- `scenes[i].chiffre.valeur` : nombre.
-- `scenes[i].duree` : nombre supérieur à 0.
-- `theme` : texte non vide ; `marque` : `nom` et `accent` textes ; `couleurs` : noms connus, valeurs `#rrggbb`.
+- `scenes`: non-empty list.
+- `scenes[i].voix`: non-empty text (error otherwise).
+- `scenes[i].lignes`: list of objects with `texte`; `style` is one of `normal`, `gros`, `accent`, `petit`.
+- `scenes[i].chiffre.valeur`: number.
+- `scenes[i].duree`: number greater than 0.
+- `theme`: non-empty text; `marque`: `nom` and `accent` are texts; `couleurs`: known names, `#rrggbb` values.
 
-Autres contrôles du rendu (avertissements, pas des erreurs) : durée sous `DUREE_MIN_CIBLE` (30 s par défaut), absence de voix, absence de musique, thème inconnu.
+Other render-time warnings (not errors): length under `DUREE_MIN_CIBLE` (30 s by default), no voice, no music, unknown theme.
 
-## Exemple complet (4 scènes, 106 mots de voix : environ 40 s)
+## Full example
 
-```json
-{
-  "titre": "3 raccourcis VS Code",
-  "fin": "Lequel tu testes en premier ?",
-  "marque": { "nom": "CODE", "accent": "ASTUCES" },
-  "scenes": [
-    {
-      "tag": "VS CODE",
-      "lignes": [
-        { "texte": "Ce raccourci", "style": "petit" },
-        { "texte": "10 MINUTES", "style": "gros" },
-        { "texte": "gagnées par jour", "style": "accent" }
-      ],
-      "voix": "Ce raccourci VS Code te fait gagner dix minutes par jour, et presque personne ne le connaît. Voici les trois que j'utilise sans arrêt.",
-      "motsCles": ["code", "clavier"]
-    },
-    {
-      "tag": "ASTUCE N°1",
-      "lignes": [{ "texte": "Ctrl + D", "style": "gros" }, { "texte": "sélectionne l'occurrence suivante", "style": "accent" }],
-      "voix": "Numéro un : Contrôle D. Il sélectionne l'occurrence suivante du mot sous le curseur. Tu renommes plusieurs variables d'un seul coup, sans chercher et remplacer."
-    },
-    {
-      "tag": "ASTUCE N°2",
-      "chiffre": { "valeur": 2, "suffixe": " CURSEURS" },
-      "lignes": [{ "texte": "Alt + clic", "style": "accent" }],
-      "voix": "Numéro deux : Alt et clic. Tu poses un curseur supplémentaire où tu veux, et tu écris à plusieurs endroits en même temps."
-    },
-    {
-      "tag": "ASTUCE N°3",
-      "lignes": [{ "texte": "Ctrl + P", "style": "gros" }, { "texte": "ouvre n'importe quel fichier", "style": "accent" }],
-      "voix": "Numéro trois : Contrôle P. Tape quelques lettres du nom d'un fichier et il s'ouvre aussitôt. Plus besoin de parcourir l'arborescence à la souris. Essaie les trois aujourd'hui, tu ne reviendras pas en arrière."
-    }
-  ]
-}
-```
+See [../scripts/exemples/demo-shortcuts/script.json](../scripts/exemples/demo-shortcuts/script.json) (English) and [../scripts/exemples/demo-raccourcis/script.json](../scripts/exemples/demo-raccourcis/script.json) (French).

@@ -1,87 +1,95 @@
 ---
 name: remotion-shorts
-description: Produit une vidéo verticale 1080x1920 (Short, TikTok, Reel) animée avec Remotion à partir d'un script.json — accroche présente dès l'image 0, premier changement de plan à 1,3 s, sous-titres karaoké mot par mot, titres et compteurs animés, barre de progression, fin en boucle. À utiliser quand l'utilisateur veut écrire, valider (--dry-run), prévisualiser (images PNG) ou rendre en MP4 une vidéo courte verticale à partir d'un texte, avec Node 22 et le moteur fourni dans `scripts/`. Pas pour une vidéo horizontale ou longue, ni pour du montage image par image.
+description: Create a 1080x1920 vertical video (YouTube Short, TikTok, Reel) with Remotion from a script.json - hook visible from frame 0, first background cut at 1.3 s, word-by-word karaoke captions, animated titles and counters, progress bar, looping ending. Use when the user wants to write, validate (--dry-run), preview (PNG frames) or render to MP4 a short vertical video from a text or a topic, with Node 22 and the engine shipped in `scripts/`. Not for horizontal or long videos, nor for editing filmed footage.
 ---
 
 # remotion-shorts
 
-Tu transformes un sujet en vidéo verticale courte (30 à 45 s) : tu écris `script.json`, tu le valides, tu montres des aperçus, puis tu lances le rendu. Le moteur est fourni avec la skill, dans `scripts/` (TypeScript + Remotion, autonome : rien d'autre à copier) ; les commandes exactes sont dans `references/commandes.md` et les champs du script dans `references/script-schema.md`. Ne les invente pas : lis-les.
+You turn a topic into a short vertical video (30 to 45 s): write `script.json`, validate it, show preview frames, then render. The engine ships with the skill in `scripts/` (TypeScript + Remotion, self-contained: nothing else to copy). Exact commands are in [references/commandes.md](references/commandes.md) and every script field is in [references/script-schema.md](references/script-schema.md). Read them, do not guess.
 
-## Quand l'utiliser
+The JSON field names and style values are French words (`scenes`, `lignes`, `texte`, `voix`, `marque`, `couleurs`; styles `normal`, `gros`, `accent`, `petit`). Use them exactly as written. The engine's console messages are in French too: translate them for the user. The video text can be in any language written in the Latin alphabet.
 
-- « Fais-moi un Short / TikTok / Reel sur … », « transforme ce texte en vidéo avec sous-titres animés ».
-- « Montre-moi un aperçu », « rends la vidéo » dans un projet qui contient un dossier de vidéo avec un `script.json`.
+## Remotion license (tell the user)
 
-## Quand ne pas l'utiliser
+This skill is MIT, but it renders with Remotion, which has its own license: free for individuals and for organisations of up to 3 people (see the license for the other free cases), paid company license beyond that, with a separate plan for automated rendering. If the user works for a company, ask them to check https://www.remotion.dev/docs/license before rendering.
 
-- Vidéo horizontale, de plus de 3 minutes, ou retouche d'une vidéo filmée.
-- Utilisateur qui ne veut pas installer Node 22.6 ou plus.
+## When to use it
 
-## Avant de commencer
+- "Make me a Short / TikTok / Reel about ...", "turn this text into a video with animated captions".
+- "Show me a preview", "render the video" in a project that has a video folder with a `script.json`.
 
-1. `node -v` : version 22.6 ou plus (le moteur exécute le TypeScript directement).
-2. Le moteur est installé (`npm install` dans `scripts/`, voir `references/commandes.md`). Au premier rendu, Remotion télécharge un navigateur headless (environ 100 Mo).
-3. Les fichiers de l'utilisateur : voix off (`voix.mp3`), musique, clips de fond. Utilise uniquement ce qui existe dans le dossier : liste-le, n'invente aucun nom de fichier. Ne demande jamais une clé d'API dans la conversation et ne lis pas son `.env`.
-4. Sans voix, la vidéo est muette et le rythme est estimé (environ 2,8 mots par seconde) : suffisant pour valider le texte et les aperçus, pas pour publier.
+## When not to use it
 
-## Étapes
+- Horizontal video, video longer than 3 minutes, or editing of filmed footage.
+- The user does not want to install Node 22.6 or later.
 
-### 1. Cadrer
+## Before you start
 
-Une seule question groupée, seulement si une info manque : sujet, durée visée, langue, ton. Si le sujet est donné, propose directement un script.
+1. `node -v` must be 22.6 or later (the engine runs TypeScript directly).
+2. Install the engine (`npm install` in `scripts/`, see the commands reference). On the first render, Remotion downloads a headless browser (about 100 MB).
+3. User files: voiceover (`voix.mp3`), music, background clips. Use only what is in the folder: list it, never invent a file name. Never ask for an API key in the conversation and never read the user's `.env`.
+4. Without a voiceover the video is silent and the pace is estimated (about 2.8 words per second): good enough to check text and previews, not to publish.
 
-### 2. Écrire `script.json`
+## Steps
 
-Crée un dossier de vidéo (ex. `videos/05-raccourcis-vscode/`) avec `script.json` selon `references/script-schema.md`.
+### 1. Frame the video
 
-- 85 mots de voix donnent environ 30 s, 110 mots environ 40 s. Le moteur avertit sous 30 s (`DUREE_MIN_CIBLE`) et dit combien de mots ajouter.
-- Première scène : l'accroche. Elle doit se comprendre seule, sans « salut » ni présentation, car elle est à l'écran dès l'image 0.
-- `voix` : le texte lu, phrases courtes. Mises bout à bout, les `voix` de toutes les scènes doivent donner exactement le texte de la voix off (elles servent à caler les scènes sur le minutage).
-- `lignes` : 2 à 3 lignes courtes par scène (styles `normal`, `gros`, `accent`, `petit`) ; un seul `gros` par scène.
-- N'invente aucun chiffre, date ni nom vérifiable. En cas de doute, écris la phrase sans le chiffre ou demande la source à l'utilisateur.
-- Marque : mets toujours `"marque": { "nom": "…", "accent": "…" }` avec le nom de la chaîne de l'utilisateur. Sans ce champ, le logo affiche l'espace réservé « MA CHAINE » (réglable avec `MARQUE_NOM` et `MARQUE_ACCENT` dans le `.env` du moteur).
-- Couleurs : facultatif, `"couleurs": { "menthe": "#38bdf8" }` remplace une couleur de l'habillage (format `#rrggbb`, noms dans `references/script-schema.md`).
-- Pas de contenu d'autrui : ni extraits de vidéos d'autres créateurs, ni musique sous licence que l'utilisateur ne possède pas.
+Ask one grouped question, only if something is missing: topic, length, language, tone. If the topic is given, propose a script right away.
 
-### 3. Valider : `--dry-run`
+### 2. Write `script.json`
 
-Lance la commande `--dry-run`. Elle vérifie le script (`verifierScript` : scènes, voix non vides, styles connus, chiffres numériques, durées), calcule le plan (durée, scènes, sous-titres, plans de fond), écrit `sortie/<nom>.plan.json` et ne rend rien. Lis le résumé : durée totale, minutes des scènes, avertissements (durée trop courte, pas de voix, pas de musique, thème inconnu).
+Create a video folder (for example `videos/05-vscode-shortcuts/`) with a `script.json` that follows the script schema reference.
 
-Elle **ne vérifie pas** que les fichiers de voix, de musique ou de fonds ont de bons noms : un fichier mal nommé est simplement ignoré (« Aucun clip trouvé » ou « Pas de musique » dans le résumé). Corrige `script.json` ou les noms de fichiers, puis relance. Ne supprime jamais un champ obligatoire pour faire taire une erreur.
+- About 85 spoken words give 30 s, about 110 words give 40 s. The engine warns under 30 s (`DUREE_MIN_CIBLE`) and says how many words to add.
+- First scene: the hook. It must make sense on its own, with no "hi" or introduction, because it is on screen from frame 0.
+- `voix`: the spoken text, in short sentences. All `voix` values joined together must be exactly the voiceover text (they are used to align scenes with the word timings).
+- `lignes`: 2 or 3 short lines per scene; only one `gros` line per scene.
+- Never invent a checkable number, date or name. If in doubt, write the sentence without it or ask the user for a source.
+- Brand: always set `"marque": { "nom": "...", "accent": "..." }` with the user's channel name. Without it the logo shows the placeholder "MA CHAINE" (also settable with `MARQUE_NOM` and `MARQUE_ACCENT` in the engine's `.env`).
+- Colours are optional: `"couleurs": { "menthe": "#38bdf8" }` replaces one theme colour (`#rrggbb`, names in the script schema).
+- No third-party content: no clips from other creators, no music the user has no rights to.
 
-### 4. Aperçus
+### 3. Validate: `--dry-run`
 
-Lance `--apercu 0,1.5,6` : des images PNG à 0 s, 1,5 s et 6 s dans `sortie/`. Demande à l'utilisateur de vérifier : accroche lisible à 0 s, sous-titres hors de la zone cachée par l'interface de l'appli, titres qui ne débordent pas. Applique ses retours dans `script.json`, puis reprends l'étape 3.
+Run the `--dry-run` command. It checks the script (`verifierScript`: scenes, non-empty voice text, known styles, numeric values, durations), computes the plan (length, scenes, captions, background shots), writes `sortie/<name>.plan.json` and renders nothing. Read the summary: total length, scene timings, warnings (too short, no voice, no music, unknown theme).
 
-### 5. Rendu
+It does **not** check voice, music or background file names: a misnamed file is silently ignored (the summary says no clip or no music was found). Fix `script.json` or the file names and run it again. Never delete a required field to silence an error.
 
-Seulement après un « ok » explicite sur les aperçus : lance le rendu. Sortie : `sortie/<nom>.mp4` en 1080x1920, 30 images par seconde. Donne le chemin et la durée. Compte 1 à 3 minutes pour 30 s de vidéo sur un PC récent, davantage sur une petite machine.
+### 4. Preview frames
 
-### 6. Texte de publication (facultatif)
+Run `--apercu 0,1.5,6`: PNG frames at 0 s, 1.5 s and 6 s in `sortie/`. Ask the user to check that the hook is readable at 0 s, captions stay clear of the app's interface and titles do not overflow. Apply the feedback in `script.json`, then go back to step 3.
 
-Titre, légende courte, hashtags. Si la voix est synthétique, rappelle d'activer l'étiquette « contenu généré par l'IA » à la publication (TikTok l'exige pour les voix réalistes générées par IA).
+### 5. Render
 
-## Exemple
+Only after the user explicitly approves the previews. Output: `sortie/<name>.mp4`, 1080x1920, 30 fps. Give the path and the length. Expect 1 to 3 minutes for 30 s of video on a recent PC, more on a small machine.
 
-Entrée : « Fais un Short de 35 s : 3 raccourcis VS Code que personne n'utilise. »
+### 6. Posting text (optional)
 
-1. `videos/05-raccourcis-vscode/script.json` : 4 scènes (accroche + 3 raccourcis), environ 100 mots de voix, `marque` de l'utilisateur.
-2. `--dry-run` : « 4 scènes, durée estimée 37 s », aucune erreur.
-3. Trois images PNG, puis la demande de validation.
-4. Après « ok » : `sortie/05-raccourcis-vscode.mp4`.
+Title, short caption, hashtags. If the voice is synthetic, remind the user to turn on the platform's AI-generated content label when posting (TikTok requires it for realistic AI-generated voices).
 
-## Limites connues
+## Example
 
-- Format vertical uniquement (1080x1920).
-- La skill ne génère pas la voix : elle utilise `voix.mp3` fourni, avec son minutage (`voix.mots.json` ou réponse ElevenLabs `voix.alignement.json`). Sans minutage, les sous-titres sont calés approximativement sur la durée de l'audio.
-- Un seul habillage est fourni (`defaut`) ; tu changes le logo avec `marque` et les couleurs avec `couleurs`, pas la mise en page ni les polices.
-- Une réclamation Content ID sur un Short de plus d'une minute le bloque sur YouTube : évite les musiques « libres de droits » marquées Content ID.
-- Aucune promesse de performance sur les plateformes : la rétention se lit dans les statistiques de l'utilisateur.
+Request: "Make a 35 s Short: 3 VS Code shortcuts nobody uses."
 
-## Erreurs fréquentes
+1. `videos/05-vscode-shortcuts/script.json`: 4 scenes (hook + 3 shortcuts), about 100 spoken words, the user's `marque`.
+2. `--dry-run`: scene count and estimated length, no error.
+3. Three PNG frames, then ask for approval.
+4. After approval: `sortie/05-vscode-shortcuts.mp4`.
 
-- `script.json introuvable` : le dossier passé à la commande n'est pas celui de la vidéo.
-- `scenes[i].voix : texte obligatoire` : une scène sans texte de voix.
-- Vidéo sous 30 s : ajoute des mots dans les `voix` (le moteur donne le nombre), puis régénère la voix.
-- Sous-titres décalés : fournis `voix.mots.json` ou l'alignement ElevenLabs au lieu de laisser l'estimation.
-- Sous PowerShell, `npm run … -- --dry-run` perd les options : utilise la commande directe de `references/commandes.md`.
+A working example is in [scripts/exemples/demo-shortcuts/script.json](scripts/exemples/demo-shortcuts/script.json).
+
+## Known limits
+
+- Vertical format only (1080x1920).
+- The skill does not generate the voice: it uses the `voix.mp3` you provide, with its timings (`voix.mots.json`, or the ElevenLabs response saved as `voix.alignement.json`). Without timings, captions are only roughly aligned on the audio length.
+- One look is provided (`defaut`): you can change the logo with `marque` and the colours with `couleurs`, not the layout or the fonts.
+- A Content ID claim on a Short longer than one minute blocks it on YouTube: avoid "royalty-free" music that is registered with Content ID.
+- No promise about performance on any platform: retention is read in the user's own analytics.
+
+## Common errors
+
+- `script.json introuvable` (not found): the folder passed to the command is not the video folder.
+- `scenes[i].voix : texte obligatoire` (text required): a scene has no voice text.
+- Video under 30 s: add words to the `voix` values (the engine gives the number), then regenerate the voice.
+- Captions out of sync: provide `voix.mots.json` or the ElevenLabs alignment instead of relying on the estimate.
+- In PowerShell, `npm run ... -- --dry-run` drops the options: use the direct command from the commands reference.
