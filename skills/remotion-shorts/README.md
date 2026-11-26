@@ -10,7 +10,7 @@ It is not a "how to use Remotion" guide: it ships a small, tested engine, so the
 - Word-by-word karaoke captions (from your word timings or an ElevenLabs alignment; estimated without them)
 - Animated titles and counters, progress bar, ending that loops back to the hook
 - `--dry-run` validation with readable errors, PNG previews before any full render
-- Works offline once installed: the engine uploads nothing, downloads no media and posts nothing (the first render downloads a headless browser)
+- The engine itself uploads nothing, fetches no stock media and posts nothing (installing it downloads npm packages, and the first render downloads a headless browser)
 
 ## Install
 
