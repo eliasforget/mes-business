@@ -14,22 +14,34 @@ Requires Node 22.6 or later. On the first render, Remotion downloads a headless 
 
 **Remotion license**: free for individuals and for organisations of up to 3 people (other free cases are listed in the license); beyond that a paid company license is required, with a separate plan for automated rendering. Check https://www.remotion.dev/docs/license for your case.
 
+## Keep your files outside the skill folder
+
+With the skills CLI, reinstalling or updating a skill deletes the installed folder and copies it again. Video folders, renders, clips, music and the engine's `.env` stored inside it are lost. Keep video folders in your own project and send the output there with an environment variable (it wins over `.env` and survives an update). The variable below lasts for the current terminal session:
+
+```powershell
+$env:DOSSIER_SORTIE = "$env:USERPROFILE\videos\sortie"
+```
+
+```bash
+export DOSSIER_SORTIE="$HOME/videos/sortie"
+```
+
 ## The three commands
 
 Windows (PowerShell): the `rendu.cmd` launcher stops PowerShell from swallowing the options.
 
 ```powershell
-.\rendu.cmd videos\05-new-video --dry-run           # 1. validate the script and print the plan, no render
-.\rendu.cmd videos\05-new-video --apercu 0,1.5,6    # 2. PNG frames at 0 s, 1.5 s and 6 s
-.\rendu.cmd videos\05-new-video                     # 3. full render -> sortie\05-new-video.mp4
+.\rendu.cmd "$env:USERPROFILE\videos\05-new-video" --dry-run           # 1. validate the script and print the plan, no render
+.\rendu.cmd "$env:USERPROFILE\videos\05-new-video" --apercu 0,1.5,6    # 2. PNG frames at 0 s, 1.5 s and 6 s
+.\rendu.cmd "$env:USERPROFILE\videos\05-new-video"                     # 3. full render
 ```
 
 macOS, Linux (or any system with Node): same command without the launcher.
 
 ```bash
-node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts videos/05-new-video --dry-run
-node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts videos/05-new-video --apercu 0,1.5,6
-node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts videos/05-new-video
+node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts "$HOME/videos/05-new-video" --dry-run
+node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts "$HOME/videos/05-new-video" --apercu 0,1.5,6
+node --experimental-strip-types --no-warnings=ExperimentalWarning rendu.ts "$HOME/videos/05-new-video"
 ```
 
 On Node 22.18 or later, `--experimental-strip-types` is no longer needed.
@@ -57,8 +69,8 @@ None is required. `.env` is never committed and must not be read in the conversa
 | `DUREE_MIN_CIBLE` | 30 | the engine warns under this length (seconds) |
 | `RYTHME_FONDS` | 2.2 | seconds between two background cuts (the first shot lasts 1.3 s) |
 | `VOLUME_MUSIQUE` | 0.12 | music volume under the voice, 0 to 1 |
-| `BIBLIOTHEQUE_FONDS` | engine's `bibliotheque\` | folder of vertical clips; keywords come from file names (`city-night-neon-01.mp4`) |
-| `MUSIQUE` | engine's `musique\` | a track or a folder of tracks |
+| `BIBLIOTHEQUE_FONDS` | none | folder of vertical clips; keywords come from file names (`city-night-neon-01.mp4`) |
+| `MUSIQUE` | none | a track or a folder of tracks |
 | `BARRE_PROGRESSION`, `BOUCLE` | true | top progress bar, ending that loops back to the hook |
 | `CRF` | 18 | H.264 quality (18 very good, 23 lighter) |
 | `CONCURRENCE` | half the cores | parallel rendering |

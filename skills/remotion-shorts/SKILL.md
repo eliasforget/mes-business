@@ -38,7 +38,7 @@ Ask one grouped question, only if something is missing: topic, length, language,
 
 ### 2. Write `script.json`
 
-Create a video folder (for example `videos/05-vscode-shortcuts/`) with a `script.json` that follows the script schema reference.
+Create a video folder in the user's project (for example `videos/05-vscode-shortcuts/`) with a `script.json` that follows the script schema reference. Never put it inside the skill folder: updating or reinstalling the skill deletes that folder, with everything added to it. Pass the engine the full path of the video folder, and set the `DOSSIER_SORTIE` environment variable to a folder of the user's project so that renders and previews (`sortie/` in the steps below) are written there.
 
 - About 85 spoken words give 30 s, about 110 words give 40 s. The engine warns under 30 s (`DUREE_MIN_CIBLE`) and says how many words to add.
 - First scene: the hook. It must make sense on its own, with no "hi" or introduction, because it is on screen from frame 0.
@@ -74,7 +74,7 @@ Request: "Make a 35 s Short: 3 VS Code shortcuts nobody uses."
 1. `videos/05-vscode-shortcuts/script.json`: 4 scenes (hook + 3 shortcuts), about 100 spoken words, the user's `marque`.
 2. `--dry-run`: scene count and estimated length, no error.
 3. Three PNG frames, then ask for approval.
-4. After approval: `sortie/05-vscode-shortcuts.mp4`.
+4. After approval: `05-vscode-shortcuts.mp4` in the output folder.
 
 A working example is in [scripts/exemples/demo-shortcuts/script.json](scripts/exemples/demo-shortcuts/script.json).
 

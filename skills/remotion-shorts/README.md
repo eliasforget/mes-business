@@ -28,7 +28,9 @@ npm install
 npm test
 ```
 
-Node 22.6 or later.
+Node 22.6 or later for the engine. The skills CLI itself asks for **Node 22.20 or later** (checked in version 1.9.0); copying the folder by hand has no such requirement.
+
+**Reinstalling or updating deletes the installed folder and copies it again.** Anything you added inside it is lost: the engine's `.env`, rendered videos in `scripts/sortie/`, video folders, clips and music. Keep your video folders in your own project, and set the `DOSSIER_SORTIE` environment variable (not the line in the engine's `.env`) so that renders are written outside the skill.
 
 ## Use
 

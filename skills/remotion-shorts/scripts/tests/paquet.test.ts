@@ -57,6 +57,21 @@ test('paquet : rien de personnel, ni média son ou vidéo', () => {
   }
 });
 
+test('paquet : rien que « npx skills add » écarterait en copiant le dossier', () => {
+  // Règles lues dans le CLI skills 1.9.0 : il copie tout le dossier du SKILL.md sauf ces noms.
+  const verifier = (dossier: string): void => {
+    for (const e of readdirSync(dossier, { withFileTypes: true })) {
+      if (IGNORES.has(e.name)) continue;
+      const chemin = path.join(dossier, e.name);
+      assert.notEqual(e.name, 'metadata.json', `${path.relative(SKILL, chemin)} ne serait pas copié`);
+      assert.ok(!['__pycache__', '__pypackages__'].includes(e.name), `${path.relative(SKILL, chemin)} ne serait pas copié`);
+      assert.ok(!e.isSymbolicLink(), `${path.relative(SKILL, chemin)} : pas de lien symbolique dans le paquet`);
+      if (e.isDirectory()) verifier(chemin);
+    }
+  };
+  verifier(SKILL);
+});
+
 test('paquet : tous les exemples sont valides', () => {
   const exemples = path.join(import.meta.dirname, '..', 'exemples');
   const noms = readdirSync(exemples);
