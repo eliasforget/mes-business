@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-26T18:58:38.503Z",
+  "majLe": "2026-11-26T19:57:45.135Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -45,6 +45,9 @@
   ],
   "erreurs": [],
   "enAttenteDeCapture": [],
+  "enAttenteDeCommentaire": [
+    "12-e01-plante-au-milieu-de-la-route"
+  ],
   "enAttenteDeQuota": [
     "09-rencontres-bizarres",
     "11-secrets-partie-6",
