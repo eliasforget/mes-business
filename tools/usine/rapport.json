@@ -1,21 +1,21 @@
 {
-  "majLe": "2026-11-25T15:06:21.310Z",
+  "majLe": "2026-11-26T08:04:36.557Z",
   "pc": "Elias",
   "pretes": [
     {
       "nom": "08-secrets-partie-4",
       "chaine": "Vice Radar",
-      "le": "2026-11-24T14:46:23.931Z"
+      "le": "2026-11-26T07:59:38.999Z"
     },
     {
       "nom": "09-rencontres-bizarres",
       "chaine": "Vice Radar",
-      "le": "2026-11-24T14:49:30.692Z"
+      "le": "2026-11-26T08:02:19.248Z"
     },
     {
       "nom": "10-premier-patch",
       "chaine": "Vice Radar",
-      "le": "2026-11-24T14:52:13.702Z"
+      "le": "2026-11-26T08:04:32.685Z"
     },
     {
       "nom": "11-secrets-partie-6",
@@ -46,9 +46,6 @@
   "erreurs": [],
   "enAttenteDeCapture": [],
   "enAttenteDeQuota": [
-    "08-secrets-partie-4",
-    "09-rencontres-bizarres",
-    "10-premier-patch",
     "11-secrets-partie-6",
     "13-suite-32-millions",
     "14-vrai-jeu-cache",
@@ -56,7 +53,7 @@
     "F05-coeur-baleine-bleue"
   ],
   "quota": {
-    "faitesAujourdhui": 4,
+    "faitesAujourdhui": 3,
     "maxParJour": 4,
     "maxParPassage": 3
   },
