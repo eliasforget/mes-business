@@ -44,6 +44,7 @@ select, input[type=search] { background: var(--carte); color: var(--texte); bord
 .secret-tete { display: flex; gap: 12px; align-items: center; cursor: pointer; }
 .secret-tete input { width: 22px; height: 22px; accent-color: var(--accent); flex: none; }
 .nom { font-weight: 700; font-size: 1.05rem; }
+h2.nom { margin: 0; }
 .meta { margin: 6px 0 0 34px; font-size: .85rem; color: var(--discret); }
 .desc { margin: 6px 0 0 34px; }
 .sources { margin: 6px 0 0 34px; font-size: .8rem; color: var(--discret); }

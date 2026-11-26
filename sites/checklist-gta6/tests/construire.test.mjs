@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { balise, construire, echapper, lireEnv, lireReglages, remplacerBloc } from '../scripts/construire.mjs';
+import { balise, construire, echapper, enTeteSeo, lireEnv, lireReglages, listeStatique, remplacerBloc } from '../scripts/construire.mjs';
 import { lienUtm, tousLesLiens } from '../scripts/liens-utm.mjs';
 
 const RACINE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -89,4 +89,57 @@ test('liens UTM : une source par réseau, convention figée, entrées contrôlé
   assert.throws(() => lienUtm('http://exemple.pages.dev', 'tiktok'));
   assert.throws(() => lienUtm('https://exemple.pages.dev', 'tiktok', 'V 8!'));
   assert.ok(RACINE);
+});
+
+test('référencement : la liste publiée est écrite dans le HTML, brouillons absents', () => {
+  const sortie = sortieTmp();
+  const r = construire({ sortie, env: {} });
+  assert.equal(r.ok, true, r.erreurs.join('\n'));
+  const html = readFileSync(path.join(sortie, 'index.html'), 'utf8');
+  assert.equal((html.match(/<li class="secret">/g) ?? []).length, r.affichables);
+  for (const s of r.publicData.secrets) assert.ok(html.includes(echapper(s.nom)), `absent du HTML : ${s.nom}`);
+  const source = JSON.parse(readFileSync(path.join(RACINE, 'secrets.json'), 'utf8'));
+  const brouillons = source.secrets.filter((s) => s.statut === 'a_verifier');
+  for (const s of brouillons) assert.ok(!html.includes(echapper(s.nom)), `brouillon dans le HTML : ${s.nom}`);
+  assert.ok(!html.includes('<!--'), 'marqueur de bloc resté dans la page');
+  assert.ok(html.includes(`<p id="compteur-texte">${r.affichables} secrets à cocher</p>`), 'compteur figé sur « Chargement… » sans JavaScript');
+});
+
+test('référencement : texte d’une fiche échappé, y compris dans le JSON-LD', () => {
+  const s = { id: 'references-001', nom: '</script><img src=x onerror=alert(1)>', categorie: 'references', zone: 'A & B', description: '"x" <b>', statut: 'recoupe', date_verification: '2026-11-26', version_jeu: '1', sources: [{ site: '<s>', url: 'https://a.example/?q="><x' }] };
+  const liste = listeStatique([s]);
+  assert.ok(!liste.includes('<img'));
+  assert.ok(!liste.includes('"><x'));
+  assert.ok(liste.includes('A &amp; B'));
+  const tete = enTeteSeo({ siteUrl: '' }, [s]);
+  assert.equal((tete.match(/<\/script>/g) ?? []).length, 1, 'le JSON-LD peut être fermé par une donnée');
+  const json = JSON.parse(tete.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
+  assert.equal(json.itemListElement[0].name, s.nom);
+});
+
+test('référencement avec SITE_URL : adresse canonique, sitemap daté et robots.txt', () => {
+  const sortie = sortieTmp();
+  const r = construire({ sortie, env: { SITE_URL: 'https://exemple.pages.dev/' } });
+  assert.equal(r.ok, true, r.erreurs.join('\n'));
+  const html = readFileSync(path.join(sortie, 'index.html'), 'utf8');
+  assert.ok(html.includes('<link rel="canonical" href="https://exemple.pages.dev/">'));
+  assert.ok(html.includes('<meta property="og:url" content="https://exemple.pages.dev/">'));
+  const sitemap = readFileSync(path.join(sortie, 'sitemap.xml'), 'utf8');
+  assert.ok(sitemap.includes('<loc>https://exemple.pages.dev/</loc>'));
+  assert.ok(sitemap.includes(`<lastmod>${r.publicData.meta.mis_a_jour}</lastmod>`));
+  assert.ok(!sitemap.includes('mentions-legales'), 'page en noindex dans le sitemap');
+  assert.match(readFileSync(path.join(sortie, 'robots.txt'), 'utf8'), /Sitemap: https:\/\/exemple\.pages\.dev\/sitemap\.xml/);
+  assert.ok(r.fichiers.includes('sitemap.xml') && r.fichiers.includes('robots.txt'));
+});
+
+test('référencement sans SITE_URL : pas d’adresse inventée', () => {
+  const sortie = sortieTmp();
+  const r = construire({ sortie, env: {} });
+  const html = readFileSync(path.join(sortie, 'index.html'), 'utf8');
+  assert.ok(!html.includes('rel="canonical"'));
+  assert.ok(!html.includes('og:url'));
+  assert.ok(html.includes('<meta property="og:title"'));
+  assert.equal(existsSync(path.join(sortie, 'sitemap.xml')), false);
+  assert.ok(!r.fichiers.includes('sitemap.xml'));
+  assert.doesNotMatch(readFileSync(path.join(sortie, 'robots.txt'), 'utf8'), /Sitemap/);
 });

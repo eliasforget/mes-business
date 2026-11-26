@@ -13,7 +13,7 @@ sites/checklist-gta6/
 ├── secrets.json                      les données (brouillons a_verifier inclus, jamais publiés tels quels)
 ├── mentions-legales.html, optout.js  mentions légales et désactivation de la mesure d'audience
 ├── scripts/  valider-secrets.mjs, construire.mjs, liens-utm.mjs, serveur.mjs
-├── tests/    20 tests (node:test)
+├── tests/    24 tests (node:test)
 ├── docs/     verification.md, seuils-j30.md, deploiement.md
 └── .env.example
 ```
@@ -32,7 +32,7 @@ npm test
 
 | Variable | Rôle |
 |---|---|
-| `SITE_URL` | adresse du site en ligne (liens UTM, domaine surveillé par Umami) |
+| `SITE_URL` | adresse du site en ligne (adresse canonique, sitemap.xml, liens UTM, domaine surveillé par Umami) |
 | `CONTACT_EMAIL` | adresse affichée en pied de page et dans les mentions légales |
 | `UMAMI_WEBSITE_ID` | active la mesure d'audience Umami ; vide = aucun script, aucun traceur |
 | `UMAMI_SCRIPT_URL` | URL du script donnée par Umami (défaut : cloud.umami.is) |
@@ -41,7 +41,7 @@ npm test
 
 ```powershell
 npm run valider                 # contrôle secrets.json (code 1 si une erreur)
-npm run build                   # écrit dist\ : seuls les secrets affichables, notes internes retirées
+npm run build                   # écrit dist\ : secrets affichables seuls (aussi en HTML statique), robots.txt, sitemap.xml si SITE_URL
 npm run build -- --dry-run      # montre ce qui serait construit, sans rien écrire
 npm run serve                   # http://localhost:8080 (page lue en direct)
 npm run serve -- dist           # tester le dossier construit
@@ -53,11 +53,15 @@ Ajouter un secret : une entrée `a_verifier` dans `secrets.json`, puis la procé
 Exemple de sortie de `npm run valider` :
 
 ```
-secrets.json : 16 secret(s), 9 affichable(s) sur la page.
-  Recoupé par plusieurs sites : 9
-  À vérifier : 7
+secrets.json : 21 secret(s), 18 affichable(s) sur la page.
+  Recoupé par plusieurs sites : 18
+  À vérifier : 3
 OK : secrets.json est publiable.
 ```
+
+## Référencement
+
+Le build écrit la liste publiée directement dans `index.html` (les moteurs de recherche et les visiteurs sans JavaScript la lisent ; `app.js` la remplace au chargement), les balises de partage (Open Graph) et des données structurées JSON-LD. Avec `SITE_URL`, il ajoute l'adresse canonique et `sitemap.xml`. Rien de tout ça ne garantit un classement dans Google.
 
 ## Mise en ligne automatique
 

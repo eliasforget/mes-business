@@ -5,7 +5,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } fr
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { validerFichier } from '../regles.js';
+import { CATEGORIES, STATUTS, validerFichier } from '../regles.js';
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const RACINE = path.join(ICI, '..');
@@ -61,6 +61,57 @@ const MESURE_LEGALE_ON = `<p>La fréquentation du site est mesurée avec Umami (
 <p><button id="optout" type="button" class="bouton-discret">Désactiver la mesure sur cet appareil</button> <span id="optout-etat" role="status"></span></p>
 <script src="optout.js"></script>`;
 
+const TITRE = 'Checklist des secrets de GTA 6 en français';
+const DESCRIPTION = 'Les secrets de GTA 6 recoupés par plusieurs sites ou vus en jeu, à cocher au fil de ta partie, avec date de vérification et sources.';
+
+const dateFr = (d) => String(d).split('-').reverse().join('/');
+
+/** Liste écrite dans le HTML pour les moteurs de recherche et sans JavaScript ; app.js la remplace au chargement. */
+export function listeStatique(secrets) {
+  return secrets.map((s) => {
+    const sources = (s.sources ?? []).map((x) => `<a href="${echapper(x.url)}" rel="noopener nofollow">${echapper(x.site)}</a>`).join(', ');
+    return `<li class="secret"><h2 class="nom">${echapper(s.nom)}</h2>`
+      + `<p class="meta"><span class="badge badge-${echapper(s.statut)}">${echapper(STATUTS[s.statut])}</span> ${echapper(CATEGORIES[s.categorie])} · Zone : ${echapper(s.zone)} · Vérifié le ${echapper(dateFr(s.date_verification))} (version ${echapper(s.version_jeu)})</p>`
+      + `<p class="desc">${echapper(s.description)}</p>`
+      + (sources ? `<p class="sources">Sources : ${sources}</p>` : '')
+      + '</li>';
+  }).join('\n');
+}
+
+/** Balises de partage et données structurées. Sans SITE_URL, aucune adresse n'est écrite. */
+export function enTeteSeo(reglages, secrets) {
+  const url = reglages.siteUrl ? `${reglages.siteUrl}/` : '';
+  const balises = [
+    '<meta property="og:type" content="website">',
+    '<meta property="og:locale" content="fr_FR">',
+    `<meta property="og:title" content="${echapper(TITRE)}">`,
+    `<meta property="og:description" content="${echapper(DESCRIPTION)}">`,
+    '<meta name="twitter:card" content="summary">',
+  ];
+  if (url) balises.push(`<link rel="canonical" href="${echapper(url)}">`, `<meta property="og:url" content="${echapper(url)}">`);
+  const donnees = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: TITRE,
+    numberOfItems: secrets.length,
+    itemListElement: secrets.map((s, i) => ({ '@type': 'ListItem', position: i + 1, name: s.nom })),
+  };
+  // « < » encodé : aucune donnée ne peut refermer la balise <script>.
+  balises.push(`<script type="application/ld+json">${JSON.stringify(donnees).replace(/</g, '\\u003c')}</script>`);
+  return balises.join('\n');
+}
+
+/** robots.txt toujours ; sitemap.xml seulement quand l'adresse du site est connue. */
+export function fichiersReferencement(reglages, misAJour) {
+  const url = reglages.siteUrl ? `${reglages.siteUrl}/` : '';
+  const fichiers = { 'robots.txt': `User-agent: *\nAllow: /\n${url ? `Sitemap: ${url}sitemap.xml\n` : ''}` };
+  if (url) {
+    fichiers['sitemap.xml'] = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+      + `  <url><loc>${echapper(url)}</loc><lastmod>${echapper(misAJour)}</lastmod></url>\n</urlset>\n`;
+  }
+  return fichiers;
+}
+
 export function construire({ racine = RACINE, sortie = path.join(RACINE, 'dist'), env = process.env, ecrire = true } = {}) {
   const { reglages, erreurs: erreursEnv } = lireReglages(env);
   const data = JSON.parse(readFileSync(path.join(racine, 'secrets.json'), 'utf8').replace(/^﻿/, ''));
@@ -82,6 +133,9 @@ export function construire({ racine = RACINE, sortie = path.join(RACINE, 'dist')
     html = remplacerBloc(html, 'UMAMI', balise(reglages));
     html = remplacerBloc(html, 'CONTACT', contactHtml ?? '(adresse de contact bientôt disponible)');
     const mesure = nom === 'index.html' ? MESURE_PIED_ON : MESURE_LEGALE_ON;
+    html = remplacerBloc(html, 'SEO', enTeteSeo(reglages, publicData.secrets));
+    html = remplacerBloc(html, 'TOTAL', `${publicData.secrets.length} secrets à cocher`);
+    html = remplacerBloc(html, 'LISTE', listeStatique(publicData.secrets));
     if (reglages.umamiId) html = remplacerBloc(html, 'MESURE', mesure);
     else html = html.replace(/<!--MESURE-->([\s\S]*?)<!--\/MESURE-->/g, (_, interieur) => interieur);
     pages[nom] = html;
@@ -89,12 +143,14 @@ export function construire({ racine = RACINE, sortie = path.join(RACINE, 'dist')
 
   const fichiers = ['index.html', 'mentions-legales.html', 'secrets.json', 'app.js', 'regles.js', 'style.css', '_headers'];
   if (reglages.umamiId) fichiers.push('optout.js');
+  const referencement = fichiersReferencement(reglages, data.meta.mis_a_jour);
+  fichiers.push(...Object.keys(referencement));
   if (existsSync(path.join(racine, 'captures'))) fichiers.push('captures/');
 
   if (ecrire) {
     rmSync(sortie, { recursive: true, force: true });
     mkdirSync(sortie, { recursive: true });
-    for (const [nom, html] of Object.entries(pages)) writeFileSync(path.join(sortie, nom), html);
+    for (const [nom, contenu] of Object.entries({ ...pages, ...referencement })) writeFileSync(path.join(sortie, nom), contenu);
     writeFileSync(path.join(sortie, 'secrets.json'), JSON.stringify(publicData, null, 2) + '\n');
     for (const f of ['app.js', 'regles.js', 'style.css', '_headers']) cpSync(path.join(racine, f), path.join(sortie, f));
     if (reglages.umamiId) cpSync(path.join(racine, 'optout.js'), path.join(sortie, 'optout.js'));
