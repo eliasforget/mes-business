@@ -18,7 +18,7 @@
           "style": "accent"
         }
       ],
-      "voix": "Ce livre caché chez Jason parle de GTA 4. Près de la porte de derrière de sa maison, à Key Lento, « Lethal by Design » raconte les mémoires d'un mafieux de Liberty City en 2008. Lis-le dès le début du jeu.",
+      "voix": "Chez Jason, un livre parle de GTA 4. Et le 4e secret t'attend dans l'ascenseur d'un hôtel. Dans sa maison de Key Lento, cherche « Lethal by Design », des mémoires sur Liberty City.",
       "motsCles": [
         "old book",
         "table lamp"
@@ -50,44 +50,44 @@
       "tag": "SECRET N°23",
       "lignes": [
         {
-          "texte": "Un roman",
-          "style": "normal"
+          "texte": "La nuit,",
+          "style": "petit"
         },
         {
-          "texte": "RED DEAD",
+          "texte": "4 TORTUES",
           "style": "gros"
         },
         {
-          "texte": "dans une taverne.",
+          "texte": "dans les égouts.",
           "style": "accent"
         }
       ],
-      "voix": "À la taverne Jacob's, un roman western raconte l'histoire d'un cowboy de New Austin, la région de Red Dead.",
+      "voix": "De nuit, file aux égouts près du lac Tallaloko : quatre tortues et un rat, à côté de boîtes de pizza.",
       "motsCles": [
-        "western saloon",
-        "cowboy"
+        "sewer tunnel",
+        "pizza box"
       ]
     },
     {
       "tag": "SECRET N°24",
       "lignes": [
         {
-          "texte": "Le mont Kalaga",
+          "texte": "Dans cet ascenseur,",
           "style": "petit"
         },
         {
-          "texte": "CERCLE DE PIERRES",
+          "texte": "UN CLOWN",
           "style": "gros"
         },
         {
-          "texte": "et cratère.",
+          "texte": "t'attend.",
           "style": "accent"
         }
       ],
-      "voix": "Et au sommet du mont Kalaga ? Un cercle de pierres dressées et un cratère de météorite. Lequel tu vas voir en premier ?",
+      "voix": "Et l'ascenseur ? À l'hôtel Haymarket, à Vice Beach, il est plein de ballons, et un clown surgit. Un guide conseille d'y aller après minuit. Lequel tu vas voir en premier ?",
       "motsCles": [
-        "stone circle",
-        "mountain summit"
+        "red balloons",
+        "elevator"
       ]
     }
   ]

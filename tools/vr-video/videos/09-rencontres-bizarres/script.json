@@ -14,7 +14,7 @@
           "style": "gros"
         }
       ],
-      "voix": "Cette vache de GTA 6 te parle. Tootsie s'est enfuie de la laiterie Howe : calme-la et elle te chuchote « Save me ». À toi de décider si tu la libères.",
+      "voix": "Cette vache de GTA 6 te parle. Et ce n'est pas la rencontre la plus bizarre : attends la dernière. Un fermier a perdu Tootsie : calme-la, elle te chuchote « Save me ». À toi de la libérer ou non.",
       "motsCles": [
         "cow field",
         "dairy farm"
@@ -28,15 +28,11 @@
           "style": "normal"
         },
         {
-          "texte": "dans des toilettes ?",
+          "texte": "dans des toilettes.",
           "style": "accent"
-        },
-        {
-          "texte": "une seule source",
-          "style": "petit"
         }
       ],
-      "voix": "Dans des toilettes, un QR code lancerait une chaîne de quêtes avec WAiNK. Un seul site en parle : prends ça pour une rumeur, pas pour un fait. Tu l'as vu ? Dis-le moi.",
+      "voix": "Dans les toilettes des hommes de Corsair Key, scanne le QR code avec WAiNK et réponds « truth » : le Docteur Merle t'embarque dans une quête cachée, avec plus d'endurance à la clé.",
       "motsCles": [
         "public restroom",
         "sewer tunnel"
@@ -58,7 +54,7 @@
           "style": "accent"
         }
       ],
-      "voix": "Sur un îlot perdu, des déchets forment un SOS, et un téléphone abandonné garde la vidéo de deux naufragés.",
+      "voix": "Sur un îlot perdu, des déchets forment un SOS, et un téléphone abandonné garde la vidéo de deux personnes.",
       "motsCles": [
         "small island",
         "beach trash"
