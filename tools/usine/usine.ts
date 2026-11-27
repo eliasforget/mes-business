@@ -15,7 +15,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { createLogger, envBool, loadEnv, REPO_ROOT } from '../../shared/index.ts';
-import { aBesoinDePlanche, chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, MAX_ESSAIS, nomSur, resumeRapport, textesCompilation, titreChapitre, trier, type Etat } from './lib.ts';
+import { aBesoinDePlanche, chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, MAX_ESSAIS, nomSur, ordreDeFabrication, resumeRapport, textesCompilation, titreChapitre, trier, voixRegeneree, type Etat } from './lib.ts';
 
 const ICI = import.meta.dirname;
 const OUTILS = path.join(REPO_ROOT, 'tools');
@@ -249,12 +249,28 @@ function pousser(fichiers: string[], message: string): boolean {
 }
 
 // ─────────────── Étape 3 : fabriquer une vidéo ───────────────
-function fabriquer(v: Video): string {
+/** Signatures des fichiers de voix d'un dossier (voix.meta.json, voix-cN.meta.json) : nom, date, taille. */
+function signaturesVoix(dossier: string): string[] {
+  try {
+    return readdirSync(dossier)
+      .filter((f) => /^voix(-c\d+)?\.meta\.json$/.test(f))
+      .map((f) => {
+        const s = statSync(path.join(dossier, f));
+        return `${f}:${s.mtimeMs}:${s.size}`;
+      });
+  } catch {
+    return [];
+  }
+}
+
+function fabriquer(v: Video): { mp4: string; voixNeuve: boolean } {
   const cible = path.join(dossierAPublier, nomSur(v.chaine), nomSur(v.nom));
   mkdirSync(cible, { recursive: true });
   const mp4 = path.join(cible, `${nomSur(v.nom)}.mp4`);
 
+  const voixAvant = signaturesVoix(v.dossier);
   if (!lancerOutil('vr-voix', 'voix.ts', [v.nom])) throw new Error('voix (vr-voix) en échec : regarde logs\\vr-voix');
+  const voixNeuve = voixRegeneree(voixAvant, signaturesVoix(v.dossier));
   if (!v.script.gameplay && !lancerOutil('vr-fonds', 'fonds.ts', [v.nom])) {
     log.warn('  Clips Pixabay en échec : rendu avec les clips déjà en bibliothèque (ou le fond animé).');
   }
@@ -265,7 +281,7 @@ function fabriquer(v: Video): string {
   const pub = path.join(v.dossier, 'publication.txt');
   if (existsSync(pub)) copyFileSync(pub, path.join(cible, 'publication.txt'));
   else writeFileSync(path.join(cible, 'publication.txt'), `${v.script.titre ?? v.nom}\nChaîne : ${v.chaine}\n\n(Pas de textes de publication fournis par les agents pour cette vidéo.)\n`);
-  return mp4;
+  return { mp4, voixNeuve };
 }
 
 // ─────────────── Étape 3 bis : compilation 16:9 de la semaine (le dimanche) ───────────────
@@ -399,7 +415,8 @@ async function main(): Promise<number> {
     const aFaire: { v: Video; raison: string }[] = [];
     const attente: string[] = [];
     const attenteCommentaire: string[] = [];
-    for (const v of trier(videos.map((x) => x.nom)).map((n) => videos.find((x) => x.nom === n)!)) {
+    // Une vidéo de chaque chaîne à tour de rôle : Vice Radar ne prend plus toute la limite du jour.
+    for (const v of ordreDeFabrication(videos)) {
       if (values.video && v.nom !== values.video) continue;
       const d = values.video ? { action: 'fabriquer' as const, raison: 'demandée' } : decider(v, etat, ignorees);
       if (d.action === 'fabriquer') aFaire.push({ v, raison: d.raison });
@@ -428,12 +445,18 @@ async function main(): Promise<number> {
     }
 
     let faites = 0;
-    for (const { v, raison } of aFaire.slice(0, reste)) {
+    let tentees = 0;
+    for (const { v, raison } of aFaire) {
+      // Limite par passage : toutes les fabrications (temps du PC). Limite du jour : seulement celles qui ont
+      // généré une voix (crédits ElevenLabs) ; un rendu refait avec la même voix ne la consomme pas.
+      if (!values.video && (tentees >= parPassage || etat.faitesAujourdhui >= parJour)) break;
+      tentees++;
       log.info(`▶ ${v.nom} (${v.chaine}, ${raison})`);
       try {
-        const mp4 = fabriquer(v);
+        const { mp4, voixNeuve } = fabriquer(v);
         etat.videos[v.nom] = { empreinte: v.empreinte, statut: 'prete', le: new Date().toISOString() };
-        etat.faitesAujourdhui++;
+        if (voixNeuve) etat.faitesAujourdhui++;
+        else log.info('  Voix inchangée : aucun crédit ElevenLabs dépensé, ne compte pas dans la limite du jour.');
         faites++;
         log.info(`✔ ${v.nom} prête : ${mp4}`);
       } catch (err) {
@@ -451,7 +474,7 @@ async function main(): Promise<number> {
       faitesAujourdhui: etat.faitesAujourdhui,
       maxParJour: parJour,
       maxParPassage: parPassage,
-      enAttente: aFaire.slice(reste).map(({ v }) => v.nom),
+      enAttente: aFaire.slice(tentees).map(({ v }) => v.nom),
     }, attenteCommentaire);
     if (avecGit && envBool('POUSSER_RAPPORT', true)) pousserRapport(faites);
     if (faites) log.info(`${faites} vidéo(s) prête(s) dans ${dossierAPublier}`);

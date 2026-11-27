@@ -51,7 +51,7 @@ et cocher les expériences filmées.
 |---|---|---|
 | `USINE_ACTIVE` | `true` | `false` = l'usine ne fait plus rien |
 | `DOSSIER_A_PUBLIER` | `Vidéos\A publier` | où ranger les vidéos finies |
-| `MAX_PAR_PASSAGE` / `MAX_PAR_JOUR` | `3` / `4` | garde-fous sur les crédits ElevenLabs (~650 caractères par vidéo). Les vidéos au-delà de la limite du jour attendent demain toutes seules ; `--video` ignore ces limites |
+| `MAX_PAR_PASSAGE` / `MAX_PAR_JOUR` | `3` / `4` | `MAX_PAR_PASSAGE` compte toutes les fabrications (temps du PC) ; `MAX_PAR_JOUR` seulement celles qui ont généré une voix (crédits ElevenLabs, ~650 caractères par vidéo) : un rendu refait avec la même voix ne compte pas. Les vidéos au-delà attendent demain toutes seules ; `--video` ignore ces limites |
 | `GIT_AUTO` | `true` | `git pull` avant chaque passage |
 | `POUSSER_RAPPORT` | `true` | pousse `rapport.json` (vidéos prêtes / en erreur) pour les agents |
 | `DOSSIER_CAPTURES` | `tools\vr-clips\entree` | où tu déposes tes captures PS5 (importées par vr-clips) |
@@ -84,7 +84,7 @@ Pour chaque capture PS5 sans commentaires, l'usine fait une planche (`vr-video\p
 - Vidéo gameplay (`"gameplay"` dans le script) → attend ta capture PS5 dans son dossier.
 - Limite du jour atteinte (`MAX_PAR_JOUR`) → les vidéos restantes sont listées dans `enAttenteDeQuota` du rapport et reprises le lendemain (ou tout de suite avec `--video`).
 - Échec → réessayée au passage suivant, abandonnée après 3 échecs (voir `logs\usine\` et `rapport.json`).
-- Ordre : Vice Radar d'abord (dossiers `07-…`), puis les autres chaînes (`F01-…` pour Faits animés).
+- Ordre : une vidéo de chaque chaîne à tour de rôle (Vice Radar `07-…`, Faits animés `F01-…`, Vice Radar…), chaque chaîne par numéro croissant.
 - Un seul passage à la fois (verrou), état gardé dans `etat.local.json` (non versionné).
 
 ## Exemple
