@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-26T20:46:23.274Z",
+  "majLe": "2026-11-27T08:15:43.061Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -10,7 +10,7 @@
     {
       "nom": "09-rencontres-bizarres",
       "chaine": "Vice Radar",
-      "le": "2026-11-26T08:02:19.248Z"
+      "le": "2026-11-27T08:08:50.769Z"
     },
     {
       "nom": "10-premier-patch",
@@ -20,12 +20,17 @@
     {
       "nom": "11-secrets-partie-6",
       "chaine": "Vice Radar",
-      "le": "2026-11-26T08:09:36.943Z"
+      "le": "2026-11-27T08:11:32.992Z"
     },
     {
       "nom": "12-e01-plante-au-milieu-de-la-route",
       "chaine": "Vice Radar",
       "le": "2026-11-25T07:56:15.967Z"
+    },
+    {
+      "nom": "13-suite-32-millions",
+      "chaine": "Vice Radar",
+      "le": "2026-11-27T08:15:38.926Z"
     },
     {
       "nom": "F01-everest-vs-fosse",
@@ -49,15 +54,12 @@
     "12-e01-plante-au-milieu-de-la-route"
   ],
   "enAttenteDeQuota": [
-    "09-rencontres-bizarres",
-    "11-secrets-partie-6",
-    "13-suite-32-millions",
     "14-vrai-jeu-cache",
     "F04-vitesse-lumiere",
     "F05-coeur-baleine-bleue"
   ],
   "quota": {
-    "faitesAujourdhui": 4,
+    "faitesAujourdhui": 3,
     "maxParJour": 4,
     "maxParPassage": 3
   },
