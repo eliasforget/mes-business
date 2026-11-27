@@ -50,3 +50,10 @@ test('planche : le passage est figé dans le script, et les commentaires sont de
   assert.equal(fait.commentaire, 'fait');
   assert.equal(scriptAvecPassage({ ...s, commentaire: 'sans' as const }, { depuis: 0, duree: 30 }).commentaire, 'sans');
 });
+
+test('accroche qui montre la suite et raison de s’abonner : vérifiées', () => {
+  const base = { scenes: [{ voix: 'Question ?' }] };
+  assert.deepEqual(verifierScript({ ...base, suite: 'demain : la mamie braqueuse', gameplay: { teaser: { a: 21, duree: 1.2 } } }), []);
+  assert.ok(verifierScript({ ...base, gameplay: { teaser: { a: -2, duree: 5 } } }).length === 2);
+  assert.ok(verifierScript({ ...base, suite: 'x'.repeat(60) }).length === 1);
+});

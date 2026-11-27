@@ -149,6 +149,7 @@ Une capture où seule l'accroche est dite ne retient personne. Le circuit :
    "gameplay": { "fichier": "gameplay.mp4", "debut": 0, "duree": 35, "chrono": "planté sur la route" },
    "commentaire": "fait"
    ```
+   Deux réglages pour garder les gens jusqu'au bout : `"gameplay": { "teaser": { "a": 21, "duree": 1.2 } }` montre le moment fort (seconde 21 du passage) pendant 1,2 s au tout début, avec « TOUT À L'HEURE… », puis un flash et la vidéo reprend au début ; `"suite": "demain : la mamie braqueuse"` ajoute « Abonne-toi · demain : la mamie braqueuse » sous l'appel à commenter de la fin (marche aussi pour les vidéos en motion design).
 3. vr-voix génère une voix par phrase (`voix-c1.mp3`, `voix-c2.mp3`…, seules les phrases modifiées sont refaites) ; le rendu place chaque phrase à sa seconde (jamais deux voix en même temps), avec ses sous-titres, baisse le son du jeu pendant la voix, zoome sur les phrases `"zoom": true`, affiche le chrono et met une musique légère (`VOLUME_MUSIQUE_COMMENTAIRES`, 0,06 par défaut).
 
 ## Clips de fond

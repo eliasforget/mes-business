@@ -176,7 +176,7 @@ export const BarreProgression: React.FC<{ dureeFrames: number }> = ({ dureeFrame
 };
 
 /** Appel à l'action en fin de vidéo, qui pulse doucement. */
-export const AppelAction: React.FC<{ texte: string }> = ({ texte }) => {
+export const AppelAction: React.FC<{ texte: string; suite?: string | null }> = ({ texte, suite = null }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const p = spring({ frame, fps, config: { damping: 12 } });
@@ -191,6 +191,15 @@ export const AppelAction: React.FC<{ texte: string }> = ({ texte }) => {
       }}>
         {texte}
       </div>
+      {suite && (
+        <div style={{
+          position: 'absolute', top: '100%', marginTop: 22, fontFamily: TEXTE, fontWeight: 800, fontSize: 36, lineHeight: 1.2, textAlign: 'center', maxWidth: 860,
+          color: COULEURS.blanc, background: COULEURS.rose, padding: '12px 30px', borderRadius: 40,
+          opacity: spring({ frame: frame - Math.round(0.5 * fps), fps, config: { damping: 14 } }),
+        }}>
+          Abonne-toi · {suite}
+        </div>
+      )}
     </div>
   );
 };

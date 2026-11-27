@@ -56,6 +56,8 @@ export interface Gameplay {
   cadrage?: 'flou' | 'remplir';
   /** Chrono affiché sur le jeu, avec ce texte (ex. « sans se faire écraser » → « 0:23 sans se faire écraser »). */
   chrono?: string;
+  /** Accroche qui montre la suite : les `duree` premières secondes affichent le moment fort pris à la seconde `a` du passage. */
+  teaser?: { a: number; duree?: number };
 }
 
 /**
@@ -80,6 +82,8 @@ export interface ScriptVideo {
   theme?: string;
   /** Logo propre à cette vidéo (sinon celui du thème). */
   marque?: { nom: string; accent: string };
+  /** Raison de s'abonner affichée sous l'appel à commenter, à la fin (ex. « demain : la mamie braqueuse »). */
+  suite?: string;
   /** Vidéos gameplay : la voix commente tout du long (voir Commentaire). */
   commentaires?: Commentaire[];
   /** « a_ecrire » : la planche attend les commentaires de l'Agent web (l'usine ne rend pas encore) ; « fait » ; « sans » : pas de commentaires. */
@@ -395,6 +399,11 @@ export function verifierScript(script: unknown): string[] {
     if (g.volume !== undefined && !(typeof g.volume === 'number' && g.volume >= 0 && g.volume <= 1)) erreurs.push('gameplay.volume : nombre entre 0 et 1.');
     if (g.cadrage !== undefined && !['flou', 'remplir'].includes(g.cadrage)) erreurs.push('gameplay.cadrage : « flou » ou « remplir ».');
     if (g.chrono !== undefined && (typeof g.chrono !== 'string' || g.chrono.length > 40)) erreurs.push('gameplay.chrono : texte court (40 caractères max), ex. « sans se faire écraser ».');
+    if (g.teaser !== undefined) {
+      const t = g.teaser;
+      if (!t || typeof t.a !== 'number' || !(t.a >= 0)) erreurs.push('gameplay.teaser.a : seconde du moment fort dans le passage (nombre ≥ 0).');
+      if (t?.duree !== undefined && !(typeof t.duree === 'number' && t.duree >= 0.6 && t.duree <= 2.5)) erreurs.push('gameplay.teaser.duree : entre 0,6 et 2,5 s.');
+    }
   }
   const c = s.commentaires;
   if (c !== undefined) {
@@ -410,6 +419,7 @@ export function verifierScript(script: unknown): string[] {
       });
     }
   }
+  if (s.suite !== undefined && (typeof s.suite !== 'string' || !s.suite.trim() || s.suite.length > 50)) erreurs.push('« suite » : raison de s\'abonner, 50 caractères max (ex. « demain : la mamie braqueuse »).');
   if (s.commentaire !== undefined && !['a_ecrire', 'fait', 'sans'].includes(s.commentaire)) erreurs.push('« commentaire » : a_ecrire, fait ou sans.');
   return erreurs;
 }

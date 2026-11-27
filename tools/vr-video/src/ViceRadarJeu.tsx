@@ -32,6 +32,10 @@ export type ProprietesViceRadarJeu = {
   zooms?: number[];
   /** Texte du chrono affiché sur le jeu (ex. « sans se faire écraser »), ou null. */
   chrono?: string | null;
+  /** Accroche qui montre la suite : le moment fort (seconde `a` du passage) pendant `duree` s au tout début. */
+  teaser?: { a: number; duree: number } | null;
+  /** Raison de s'abonner sous l'appel à commenter. */
+  appelSuite?: string | null;
 };
 
 const CONTOUR = '0 6px 24px rgba(0,0,0,0.6)';
@@ -103,6 +107,23 @@ export function niveauJeu(t: number, intervalles: { debut: number; fin: number }
   return bas + (haut - bas) * k;
 }
 
+/** Le moment fort montré en ouverture (« tout à l'heure… »), puis flash blanc avant de revenir au début. */
+const Teaser: React.FC<{ src: string; debut: number; duree: number }> = ({ src, debut, duree }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const flash = interpolate(frame, [duree - 5, duree - 1], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  return (
+    <AbsoluteFill style={{ overflow: 'hidden' }}>
+      <OffthreadVideo src={staticFile(src)} startFrom={debut} muted style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${1.08 + 0.04 * (frame / Math.max(1, duree))})` }} />
+      <div style={{
+        position: 'absolute', top: 24, left: 24, padding: '8px 18px', borderRadius: 14, background: COULEURS.rose, color: COULEURS.blanc,
+        fontFamily: TEXTE, fontWeight: 900, fontSize: 34, letterSpacing: 1, opacity: Math.floor(frame / (fps / 4)) % 2 ? 0.85 : 1,
+      }}>TOUT À L’HEURE…</div>
+      <AbsoluteFill style={{ background: COULEURS.blanc, opacity: flash }} />
+    </AbsoluteFill>
+  );
+};
+
 const Chrono: React.FC<{ texte: string; haut: number }> = ({ texte, haut }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -120,7 +141,7 @@ const Chrono: React.FC<{ texte: string; haut: number }> = ({ texte, haut }) => {
 
 export const ViceRadarJeu: React.FC<ProprietesViceRadarJeu> = ({
   plan, gameplay, audio, musique, volumeMusique, volumeJeu, volumeJeuSousVoix, finVoix, marque, appelAction, barreProgression,
-  commentaires = [], intervallesVoix, zooms = [], chrono = null,
+  commentaires = [], intervallesVoix, zooms = [], chrono = null, teaser = null, appelSuite = null,
 }) => {
   const { fps, durationInFrames } = useVideoConfig();
   const frame = useCurrentFrame();
@@ -132,6 +153,8 @@ export const ViceRadarJeu: React.FC<ProprietesViceRadarJeu> = ({
   const volume = (f: number) => niveauJeu(f / fps, intervalles, volumeJeu, volumeJeuSousVoix);
   const zoom = 1 + 0.18 * forceZoom(frame / fps, zooms);
   const debutAppel = Math.max(Math.round(finVoix * fps) + fps, durationInFrames - Math.round(3.5 * fps));
+  const teaserFrames = teaser && gameplay ? Math.round(teaser.duree * fps) : 0;
+  const teaserDebut = teaser && gameplay ? depuis + Math.round(teaser.a * fps) : 0;
 
   return (
     <AbsoluteFill style={{ backgroundColor: COULEURS.nuit }}>
@@ -145,6 +168,11 @@ export const ViceRadarJeu: React.FC<ProprietesViceRadarJeu> = ({
           <div style={{ position: 'absolute', top: JEU_HAUT, left: 0, width: '100%', height: JEU_HAUTEUR, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.6)' }}>
             <OffthreadVideo src={staticFile(gameplay.src)} startFrom={depuis} volume={volume}
               style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${zoom})` }} />
+            {teaserFrames > 0 && (
+              <Sequence durationInFrames={teaserFrames}>
+                <Teaser src={gameplay.src} debut={teaserDebut} duree={teaserFrames} />
+              </Sequence>
+            )}
           </div>
           <div style={{ position: 'absolute', top: JEU_HAUT - 6, left: 0, width: '100%', height: 6, background: `linear-gradient(90deg, ${COULEURS.menthe}, ${COULEURS.orange}, ${COULEURS.rose})` }} />
           <div style={{ position: 'absolute', top: JEU_HAUT + JEU_HAUTEUR, left: 0, width: '100%', height: 6, background: `linear-gradient(90deg, ${COULEURS.rose}, ${COULEURS.orange}, ${COULEURS.menthe})` }} />
@@ -154,6 +182,11 @@ export const ViceRadarJeu: React.FC<ProprietesViceRadarJeu> = ({
         <>
           <AbsoluteFill>
             <OffthreadVideo src={staticFile(gameplay.src)} startFrom={depuis} volume={volume} style={{ width: '100%', height: '100%', objectFit: 'cover', transform: `scale(${zoom})` }} />
+            {teaserFrames > 0 && (
+              <Sequence durationInFrames={teaserFrames}>
+                <Teaser src={gameplay.src} debut={teaserDebut} duree={teaserFrames} />
+              </Sequence>
+            )}
           </AbsoluteFill>
           {/* Assombrit le haut et le bas pour que le titre et les sous-titres restent lisibles. */}
           <AbsoluteFill style={{ background: 'linear-gradient(180deg, rgba(7,10,31,0.85) 0%, rgba(7,10,31,0.35) 30%, transparent 45%, transparent 62%, rgba(7,10,31,0.7) 85%)' }} />
@@ -166,7 +199,7 @@ export const ViceRadarJeu: React.FC<ProprietesViceRadarJeu> = ({
 
       {appelAction && (
         <Sequence from={debutAppel} layout="none">
-          <AppelAction texte={appelAction} />
+          <AppelAction texte={appelAction} suite={appelSuite} />
         </Sequence>
       )}
 

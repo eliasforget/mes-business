@@ -16,6 +16,8 @@ export type ProprietesViceRadar = {
   volumeMusique: number;
   marque: { nom: string; accent: string };
   appelAction: string | null;
+  /** Raison de s'abonner sous l'appel à commenter. */
+  appelSuite?: string | null;
   barreProgression: boolean;
   /** Fin en boucle : les dernières images reprennent l'accroche, le replay s'enchaîne sans coupure visible. */
   boucle: boolean;
@@ -23,7 +25,7 @@ export type ProprietesViceRadar = {
   theme?: string;
 };
 
-export const ViceRadar: React.FC<ProprietesViceRadar> = ({ plan, audio, musique, volumeMusique, marque, appelAction, barreProgression, boucle }) => {
+export const ViceRadar: React.FC<ProprietesViceRadar> = ({ plan, audio, musique, volumeMusique, marque, appelAction, appelSuite = null, barreProgression, boucle }) => {
   const { fps, durationInFrames } = useVideoConfig();
   const derniere = plan.scenes[plan.scenes.length - 1]!;
   const premiere = plan.scenes[0]!;
@@ -55,7 +57,7 @@ export const ViceRadar: React.FC<ProprietesViceRadar> = ({ plan, audio, musique,
 
       {appelAction && (
         <Sequence from={Math.round((derniere.debut + 0.6) * fps)} layout="none">
-          <AppelAction texte={appelAction} />
+          <AppelAction texte={appelAction} suite={appelSuite} />
         </Sequence>
       )}
 
