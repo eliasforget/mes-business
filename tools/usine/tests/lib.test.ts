@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { aBesoinDePlanche, ATTENTE_COMMENTAIRE_H, chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, horodatage, MAX_ESSAIS, nomSur, textesCompilation, titreChapitre, trier, type Etat, type InfosVideo } from '../lib.ts';
+import { aBesoinDePlanche, ATTENTE_COMMENTAIRE_H, chaineDe, compteurDuJour, decider, empreinte, ETAT_VIDE, horodatage, MAX_ESSAIS, nomSur, ordreDeFabrication, textesCompilation, titreChapitre, trier, voixRegeneree, type Etat, type InfosVideo } from '../lib.ts';
 
 const video = (x: Partial<InfosVideo> = {}): InfosVideo => ({ nom: '08-x', script: {}, empreinte: 'e1', captureOk: true, dejaRendue: false, ...x });
 const etat = (videos: Etat['videos'] = {}): Etat => ({ ...ETAT_VIDE, videos });
@@ -79,4 +79,20 @@ test('vidéo de jeu : on attend les commentaires, puis on rend quand même aprè
   assert.match((tard as { raison: string }).raison, /sans commentaires/);
   const commente = video({ script: { gameplay: {}, commentaire: 'fait', commentaires: [{ a: 3, texte: 'x' }] }, empreinte: 'e2' });
   assert.deepEqual(decider(commente, etat({ '08-x': { empreinte: 'e1', statut: 'prete', le: '' } }), new Set()), { action: 'fabriquer', raison: 'script modifié' });
+});
+
+test('ordreDeFabrication : une vidéo de chaque chaîne à tour de rôle', () => {
+  const v = (nom: string) => ({ nom, chaine: /^\d/.test(nom) ? 'Vice Radar' : 'Faits animés' });
+  const ordre = ordreDeFabrication([v('F05-e'), v('14-d'), v('F04-c'), v('09-a'), v('11-b'), v('13-x')]).map((x) => x.nom);
+  assert.deepEqual(ordre, ['09-a', 'F04-c', '11-b', 'F05-e', '13-x', '14-d']);
+  assert.deepEqual(ordreDeFabrication([]), []);
+  assert.deepEqual(ordreDeFabrication([v('F01-a'), v('F02-b')]).map((x) => x.nom), ['F01-a', 'F02-b']);
+});
+
+test('voixRegeneree : vrai seulement si un fichier de voix a changé ou est apparu', () => {
+  assert.equal(voixRegeneree(['voix.meta.json:1:10'], ['voix.meta.json:1:10']), false);
+  assert.equal(voixRegeneree([], []), false);
+  assert.equal(voixRegeneree(['voix.meta.json:1:10'], ['voix.meta.json:2:10']), true);
+  assert.equal(voixRegeneree([], ['voix.meta.json:1:10']), true);
+  assert.equal(voixRegeneree(['voix.meta.json:1:10'], ['voix.meta.json:1:10', 'voix-c1.meta.json:3:5']), true);
 });

@@ -119,6 +119,38 @@ export function trier(noms: string[]): string[] {
   });
 }
 
+/**
+ * Ordre de fabrication du passage : une vidéo de chaque chaîne à tour de rôle (Vice Radar, Faits animés,
+ * Vice Radar…), chaque chaîne dans l'ordre de trier(). Avant (2026-11-27), Vice Radar passait entièrement
+ * devant et prenait toute la limite du jour : F04 et F05 ont attendu 3 jours.
+ */
+export function ordreDeFabrication<T extends { nom: string; chaine: string }>(videos: T[]): T[] {
+  const parNom = new Map(videos.map((v) => [v.nom, v]));
+  const files = new Map<string, T[]>();
+  for (const nom of trier(videos.map((v) => v.nom))) {
+    const v = parNom.get(nom)!;
+    files.set(v.chaine, [...(files.get(v.chaine) ?? []), v]);
+  }
+  const ordre: T[] = [];
+  for (let i = 0; ordre.length < videos.length; i++) {
+    for (const file of files.values()) {
+      const v = file[i];
+      if (v) ordre.push(v);
+    }
+  }
+  return ordre;
+}
+
+/**
+ * Les voix ont-elles été (re)générées pendant la fabrication ? Compare les signatures (nom, date, taille)
+ * des fichiers *.meta.json de vr-voix avant et après. Un rendu refait sans nouvelle voix (code ou textes de
+ * publication modifiés) ne coûte aucun crédit ElevenLabs : il ne compte pas dans la limite du jour.
+ */
+export function voixRegeneree(avant: string[], apres: string[]): boolean {
+  const a = new Set(avant);
+  return apres.some((s) => !a.has(s));
+}
+
 /** Ligne de journal lisible pour le rapport. */
 export function resumeRapport(etat: Etat): { prete: string[]; erreur: string[] } {
   const prete: string[] = [];
