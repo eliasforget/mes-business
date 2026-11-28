@@ -183,7 +183,7 @@ export function resumer(profil: Profil, videos: VideoTikTok[], maintenant = Date
 }
 
 /** Historique quotidien d'un compte : [jour (AAAA-MM-JJ, heure de Paris), abonnés, likes, vues sur 30 jours, nombre de vidéos]. */
-export type Point = [jour: string, abonnes: number | null, likes: number | null, vues30j: number, nbVideos: number | null];
+export type Point = [jour: string, abonnes: number | null, likes: number | null, vues30j: number | null, nbVideos: number | null];
 export type Historique = Record<string, Point[]>;
 export const COLONNES_HISTORIQUE = ['jour', 'abonnes', 'likes', 'vues30j', 'nbVideos'];
 
@@ -212,4 +212,55 @@ export function ajouterPoint(h: Historique, compte: string, point: Point, max = 
   liste.push(point);
   liste.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
   return { ...h, [compte]: liste.slice(-max) };
+}
+
+/** Ce que contient tiktok-stats.txt : la date de la dernière lecture réussie, puis un objet par compte. */
+export interface Stats {
+  majLe?: string;
+  comptes: Record<string, Record<string, unknown>>;
+}
+
+/** Lit l'ancien tiktok-stats.txt ; un fichier absent, vide ou abîmé donne un contenu vide. */
+export function lireStats(texte: string): Stats {
+  try {
+    const v = JSON.parse(texte.replace(/^\uFEFF/, '')) as { majLe?: unknown; comptes?: unknown };
+    if (!v || typeof v.comptes !== 'object' || v.comptes === null) return { comptes: {} };
+    return { majLe: typeof v.majLe === 'string' ? v.majLe : undefined, comptes: v.comptes as Stats['comptes'] };
+  } catch {
+    return { comptes: {} };
+  }
+}
+
+/** Les chiffres déjà enregistrés d'un compte, s'il y en a de vrais (pas seulement une erreur). */
+function chiffresConnus(avant: Stats, compte: string): Record<string, unknown> | null {
+  const a = avant.comptes[compte];
+  return a && typeof a === 'object' && !a.erreur && 'abonnes' in a ? a : null;
+}
+
+/**
+ * Lecture d'un compte en échec : on garde ses derniers chiffres, datés (« luLe »), avec l'échec à côté (« echec »).
+ * Pas de champ « erreur » dans ce cas : les tableaux de bord afficheraient l'erreur à la place des chiffres.
+ * Sans rien à garder, on écrit l'erreur.
+ */
+export function garderDernier(avant: Stats, compte: string, message: string, maintenant: string): Record<string, unknown> {
+  const a = chiffresConnus(avant, compte);
+  if (!a) return { erreur: message };
+  return { ...a, luLe: a.luLe ?? avant.majLe, echec: { le: maintenant, message } };
+}
+
+const CHAMPS_DES_VIDEOS = ['vues30j', 'videos30j', 'mediane30j', 'meilleures', 'dernieres'];
+
+/** Profil lu mais pas les vidéos : on reprend les derniers chiffres des vidéos ; inconnus = null, jamais de faux zéros. */
+export function garderVideos(neuf: Record<string, unknown>, avant: Stats, compte: string): Record<string, unknown> {
+  const a = chiffresConnus(avant, compte);
+  // Sans la liste des vidéos, resumer() compte 0 vidéo : on ne garde que le total donné par le profil (> 0).
+  const nbVideos = neuf.nbVideos || (a?.nbVideos ?? null);
+  if (!a || a.vues30j === null || a.vues30j === undefined) return { ...neuf, nbVideos, vues30j: null, videos30j: null, mediane30j: null };
+  const repris = Object.fromEntries(CHAMPS_DES_VIDEOS.map((c) => [c, a[c]]));
+  return { ...neuf, ...repris, nbVideos, videosLuesLe: a.videosLuesLe ?? a.luLe ?? avant.majLe };
+}
+
+/** « majLe » du fichier : il n'avance que si au moins un compte a été lu, sinon la date des chiffres gardés reste. */
+export function dateStats(comptesLus: number, ancienne: string | undefined, maintenant: string): string {
+  return comptesLus > 0 ? maintenant : (ancienne ?? maintenant);
 }

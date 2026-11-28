@@ -17,7 +17,7 @@ import { createServer } from 'node:http';
 import path from 'node:path';
 import { format, parseArgs } from 'node:util';
 import { createLogger, loadEnv } from '../../shared/index.ts';
-import { ajouterPoint, aRafraichir, COLONNES_HISTORIQUE, echangerCode, ErreurTikTok, jourParis, lireHistorique, lireProfil, lireVideos, pkce, rafraichir, resumer, urlAutorisation, type Jetons } from './tiktok.ts';
+import { ajouterPoint, aRafraichir, COLONNES_HISTORIQUE, dateStats, echangerCode, ErreurTikTok, garderDernier, garderVideos, jourParis, lireHistorique, lireProfil, lireStats, lireVideos, pkce, rafraichir, resumer, urlAutorisation, type Jetons, type Point } from './tiktok.ts';
 
 const ICI = import.meta.dirname;
 const FICHIER_JETONS = path.join(ICI, 'jetons.local.json'); // ignoré par git (*.local.json)
@@ -123,7 +123,12 @@ async function mettreAJour(dryRun: boolean, sortieForcee?: string): Promise<numb
     log.warn('Aucun compte connecté : lance d\'abord .\\tiktok.cmd connexion --compte actu-flash');
     return 0;
   }
-  const resultat: Record<string, unknown> = {};
+  const sortie = sortieForcee ?? (env.DOSSIER_SORTIE ? path.join(path.resolve(env.DOSSIER_SORTIE), 'tiktok-stats.txt') : '');
+  // Les chiffres de la dernière fois : on les garde pour tout ce qui ne peut pas être relu aujourd'hui.
+  const avant = lireStats(sortie && existsSync(sortie) ? readFileSync(sortie, 'utf8') : '');
+  const maintenant = new Date().toISOString();
+  const resultat: Record<string, Record<string, unknown>> = {};
+  const lus: Record<string, Record<string, unknown>> = {}; // comptes réellement relus à ce passage
   let erreurs = 0;
   const vus = new Map<string, string>();
   for (const nom of comptes) {
@@ -154,34 +159,38 @@ async function mettreAJour(dryRun: boolean, sortieForcee?: string): Promise<numb
         if (err instanceof ErreurTikTok && err.statut === 401) throw err;
         avertissement = `vidéos indisponibles pour l'instant (${(err as Error).message})`;
       }
-      const r = { ...resumer(profil, videos), ...(avertissement ? { avertissement } : {}) };
-      resultat[nom] = r;
+      const resume = resumer(profil, videos);
+      const r = avertissement ? { ...resume, ...garderVideos({ ...resume, avertissement }, avant, nom) } : resume;
+      resultat[nom] = lus[nom] = r;
       if (avertissement) log.warn('%s : %s abonnés, %s likes au total. Les vues par vidéo ne sont pas disponibles : %s', nom, r.abonnes ?? '?', r.likes ?? '?', avertissement);
       else log.info('%s (« %s ») : %s abonnés, %d vues sur 30 jours (%d vidéos), meilleure : %s vues.', nom, r.nom || '?', r.abonnes ?? '?', r.vues30j, r.videos30j, r.meilleures[0]?.vues ?? 0);
     } catch (err) {
       erreurs++;
-      resultat[nom] = { erreur: (err as Error).message };
+      const garde = (resultat[nom] = garderDernier(avant, nom, (err as Error).message, maintenant));
       log.error('%s : %s', nom, (err as Error).message);
+      if (!garde.erreur) log.warn('%s : les derniers chiffres lus (%s) sont gardés.', nom, typeof garde.luLe === 'string' ? new Date(garde.luLe).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }) : 'date inconnue');
     }
   }
-  const sortie = sortieForcee ?? (env.DOSSIER_SORTIE ? path.join(path.resolve(env.DOSSIER_SORTIE), 'tiktok-stats.txt') : '');
   if (dryRun || !sortie) {
     if (!sortie) log.warn('DOSSIER_SORTIE vide : rien n\'est écrit (l\'usine passe --sortie toute seule).');
     return erreurs ? 1 : 0;
   }
   mkdirSync(path.dirname(sortie), { recursive: true });
-  const majLe = new Date().toISOString();
-  writeFileSync(sortie, JSON.stringify({ majLe, comptes: resultat }, null, 2) + '\n');
+  const majLe = dateStats(Object.keys(lus).length, avant.majLe, maintenant);
+  writeFileSync(`${sortie}.tmp`, JSON.stringify({ majLe, comptes: resultat }, null, 2) + '\n');
+  renameSync(`${sortie}.tmp`, sortie);
   log.info('Stats écrites dans %s', sortie);
+  // Aucun compte relu : l'historique ne bouge pas.
+  if (!Object.keys(lus).length) return erreurs ? 1 : 0;
   // Historique : un point par compte et par jour, à côté des stats (pour la courbe des abonnés du tableau de bord).
   const fichierHisto = path.join(path.dirname(sortie), 'tiktok-historique.txt');
   let histo = lireHistorique(existsSync(fichierHisto) ? readFileSync(fichierHisto, 'utf8') : '');
   const jour = jourParis();
   let points = 0;
-  for (const [nom, r] of Object.entries(resultat)) {
-    const x = r as Partial<ReturnType<typeof resumer>> & { erreur?: string };
-    if (!x || x.erreur) continue;
-    histo = ajouterPoint(histo, nom, [jour, x.abonnes ?? null, x.likes ?? null, x.vues30j ?? 0, x.nbVideos ?? null]);
+  for (const [nom, r] of Object.entries(lus)) {
+    const x = r as { abonnes?: number | null; likes?: number | null; vues30j?: number | null; nbVideos?: number | null };
+    const point: Point = [jour, x.abonnes ?? null, x.likes ?? null, x.vues30j ?? null, x.nbVideos ?? null];
+    histo = ajouterPoint(histo, nom, point);
     points++;
   }
   writeFileSync(`${fichierHisto}.tmp`, JSON.stringify({ majLe, colonnes: COLONNES_HISTORIQUE, comptes: histo }) + '\n');

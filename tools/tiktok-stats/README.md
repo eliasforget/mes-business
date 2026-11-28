@@ -62,3 +62,11 @@ jamais dans les journaux. Le serveur de connexion n'écoute qu'en local, 5 minut
 ## Historique
 
 `tiktok-historique.txt` (à côté des stats) garde un point par compte et par jour (heure de Paris) : abonnés, likes, vues sur 30 jours, nombre de vidéos, sur 180 jours. Le point du jour est remplacé à chaque passage. C'est lui que lit la courbe des abonnés du tableau « Actu Flash — Statistiques ».
+
+## Quand la lecture échoue
+
+Coupure réseau, panne TikTok ou autorisation expirée : les derniers chiffres lus restent dans `tiktok-stats.txt`.
+Le compte reçoit `luLe` (date de ces chiffres) et `echec` (date et message de l'échec). Le champ `erreur` n'apparaît
+que s'il n'y a rien à garder. `majLe` n'avance que si au moins un compte a été relu, et l'historique n'est complété que
+pour les comptes relus. Si seules les vidéos sont illisibles, les chiffres des vidéos restent les derniers connus
+(`videosLuesLe`). Pour voir pourquoi une lecture échoue : `logs\tiktok-stats`.

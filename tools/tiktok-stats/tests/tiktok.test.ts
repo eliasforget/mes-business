@@ -83,3 +83,72 @@ test('historique : un point par jour, le plus récent remplace celui du même jo
   assert.deepEqual((long as Record<string, unknown[]>).x!.map((p) => (p as unknown[])[0]), ['2026-11-03', '2026-11-04', '2026-11-05']);
   assert.equal(jourParis(new Date('2026-11-26T23:30:00Z')), '2026-11-27');
 });
+
+const MIDI = '2026-11-28T11:00:00.000Z';
+const PLUS_TARD = '2026-11-28T12:18:00.000Z';
+const BON = { nom: 'Actu Flash', abonnes: 786, likes: 1594, nbVideos: 55, vues30j: 3042, videos30j: 5, mediane30j: 600, meilleures: [{ titre: 'A', vues: 900 }], dernieres: [{ titre: 'B', vues: 600 }] };
+
+test('lecture en échec : les derniers chiffres restent, sans champ « erreur », avec leur date', async () => {
+  const { garderDernier, lireStats } = await import('../tiktok.ts');
+  const avant = lireStats(JSON.stringify({ majLe: MIDI, comptes: { 'actu-flash': BON } }));
+  const r = garderDernier(avant, 'actu-flash', 'fetch failed', PLUS_TARD);
+  assert.equal(r.erreur, undefined); // les tableaux de bord remplacent tout par l'erreur si ce champ existe
+  assert.equal(r.abonnes, 786);
+  assert.deepEqual(r.dernieres, BON.dernieres);
+  assert.equal(r.luLe, MIDI);
+  assert.deepEqual(r.echec, { le: PLUS_TARD, message: 'fetch failed' });
+});
+
+test('deux échecs de suite : la date reste celle de la dernière lecture réussie', async () => {
+  const { garderDernier, lireStats } = await import('../tiktok.ts');
+  const un = garderDernier(lireStats(JSON.stringify({ majLe: MIDI, comptes: { 'actu-flash': BON } })), 'actu-flash', 'fetch failed', PLUS_TARD);
+  const deux = garderDernier(lireStats(JSON.stringify({ majLe: PLUS_TARD, comptes: { 'actu-flash': un } })), 'actu-flash', 'autorisation expirée', '2026-11-28T18:00:00.000Z');
+  assert.equal(deux.luLe, MIDI);
+  assert.deepEqual(deux.echec, { le: '2026-11-28T18:00:00.000Z', message: 'autorisation expirée' });
+  assert.equal(deux.vues30j, 3042);
+});
+
+test('rien à garder (fichier absent, abîmé ou déjà en erreur) : on écrit l\'erreur', async () => {
+  const { garderDernier, lireStats } = await import('../tiktok.ts');
+  for (const texte of ['', 'pas du json', 'null', '{"comptes":null}', JSON.stringify({ majLe: MIDI, comptes: { 'actu-flash': { erreur: 'fetch failed' } } }), JSON.stringify({ majLe: MIDI, comptes: { 'vice-radar': BON } })]) {
+    assert.deepEqual(garderDernier(lireStats(texte), 'actu-flash', 'fetch failed', PLUS_TARD), { erreur: 'fetch failed' }, texte);
+  }
+});
+
+test('lireStats accepte un fichier avec BOM', async () => {
+  const { lireStats } = await import('../tiktok.ts');
+  assert.equal(lireStats('﻿' + JSON.stringify({ majLe: MIDI, comptes: { x: BON } })).majLe, MIDI);
+});
+
+test('vidéos indisponibles : le profil est neuf, les chiffres des vidéos sont les derniers connus', async () => {
+  const { garderVideos, lireStats, resumer } = await import('../tiktok.ts');
+  const neuf = { ...resumer({ open_id: 'o', display_name: 'Actu Flash', follower_count: 800, likes_count: 1700 }, []), avertissement: 'vidéos indisponibles' };
+  const r = garderVideos(neuf, lireStats(JSON.stringify({ majLe: MIDI, comptes: { 'actu-flash': BON } })), 'actu-flash');
+  assert.equal(r.abonnes, 800);
+  assert.equal(r.vues30j, 3042);
+  assert.equal(r.videos30j, 5);
+  assert.equal(r.mediane30j, 600);
+  assert.equal(r.nbVideos, 55); // TikTok n'a pas donné video_count : on garde l'ancien
+  assert.deepEqual(r.meilleures, BON.meilleures);
+  assert.deepEqual(r.dernieres, BON.dernieres);
+  assert.equal(r.videosLuesLe, MIDI);
+  assert.equal(r.avertissement, 'vidéos indisponibles');
+});
+
+test('vidéos indisponibles sans rien d\'ancien : valeurs inconnues (null), pas de faux zéros', async () => {
+  const { garderVideos, lireStats, resumer } = await import('../tiktok.ts');
+  const r = garderVideos(resumer({ open_id: 'o', follower_count: 800 }, []), lireStats(''), 'actu-flash');
+  assert.equal(r.abonnes, 800);
+  assert.equal(r.vues30j, null);
+  assert.equal(r.videos30j, null);
+  assert.equal(r.mediane30j, null);
+  assert.equal(r.nbVideos, null);
+  assert.deepEqual(r.dernieres, []);
+});
+
+test('date du fichier : elle n\'avance que si au moins un compte a été lu', async () => {
+  const { dateStats } = await import('../tiktok.ts');
+  assert.equal(dateStats(1, MIDI, PLUS_TARD), PLUS_TARD);
+  assert.equal(dateStats(0, MIDI, PLUS_TARD), MIDI);
+  assert.equal(dateStats(0, undefined, PLUS_TARD), PLUS_TARD);
+});
