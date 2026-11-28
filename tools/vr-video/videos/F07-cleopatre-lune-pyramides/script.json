@@ -1,0 +1,125 @@
+{
+  "theme": "faits-animes",
+  "titre": "Cléopâtre : plus proche de la Lune que des pyramides ?",
+  "fin": "Tu le savais, ou tu pensais l'inverse ?",
+  "suite": "Bientôt : le cœur de la baleine bleue",
+  "scenes": [
+    {
+      "tag": "HISTOIRE",
+      "lignes": [
+        {
+          "texte": "Cléopâtre",
+          "style": "normal"
+        },
+        {
+          "texte": "pyramides",
+          "style": "gros"
+        },
+        {
+          "texte": "ou la Lune ?",
+          "style": "accent"
+        }
+      ],
+      "voix": "Cléopâtre est-elle plus proche des pyramides, ou des pas sur la Lune ?",
+      "motsCles": [
+        "pyramide",
+        "egypte"
+      ]
+    },
+    {
+      "tag": "LA GRANDE PYRAMIDE",
+      "chiffre": {
+        "valeur": 2500,
+        "suffixe": "AV. J.-C."
+      },
+      "lignes": [
+        {
+          "texte": "environ, à quelques décennies près",
+          "style": "petit"
+        }
+      ],
+      "voix": "La grande pyramide de Khéops est construite vers deux mille cinq cents avant notre ère, à quelques décennies près.",
+      "motsCles": [
+        "pyramide",
+        "desert"
+      ]
+    },
+    {
+      "tag": "CLÉOPÂTRE",
+      "chiffre": {
+        "valeur": 70,
+        "suffixe": "AV. J.-C."
+      },
+      "lignes": [
+        {
+          "texte": "sa naissance, vers 70 ou 69",
+          "style": "petit"
+        }
+      ],
+      "voix": "Cléopâtre, elle, naît vers l'an soixante-dix avant notre ère. Et là, ça devient bizarre.",
+      "motsCles": [
+        "egypte",
+        "temple"
+      ]
+    },
+    {
+      "tag": "PREMIER ÉCART",
+      "chiffre": {
+        "prefixe": "+ DE ",
+        "valeur": 2400,
+        "suffixe": "ANS"
+      },
+      "lignes": [
+        {
+          "texte": "de la pyramide à Cléopâtre",
+          "style": "accent"
+        }
+      ],
+      "voix": "Entre la grande pyramide et sa naissance, il s'écoule au moins deux mille quatre cents ans.",
+      "motsCles": [
+        "sablier",
+        "desert"
+      ]
+    },
+    {
+      "tag": "SECOND ÉCART",
+      "chiffre": {
+        "valeur": 2040,
+        "suffixe": "ANS"
+      },
+      "lignes": [
+        {
+          "texte": "environ, de Cléopâtre à la Lune",
+          "style": "accent"
+        }
+      ],
+      "voix": "Attends la suite : entre sa naissance et le premier pas sur la Lune, en juillet mille neuf cent soixante-neuf, environ deux mille quarante ans.",
+      "motsCles": [
+        "lune",
+        "astronaute"
+      ]
+    },
+    {
+      "tag": "LE VERDICT",
+      "lignes": [
+        {
+          "texte": "Plus proche de",
+          "style": "normal"
+        },
+        {
+          "texte": "la Lune",
+          "style": "gros"
+        },
+        {
+          "texte": "que de la pyramide",
+          "style": "accent"
+        }
+      ],
+      "voix": "Verdict : elle est plus proche de la Lune. Pour elle, cette pyramide était déjà très ancienne. Alors, pose la question à un ami :",
+      "motsCles": [
+        "egypte",
+        "lune"
+      ]
+    }
+  ]
+}

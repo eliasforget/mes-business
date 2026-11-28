@@ -1,0 +1,102 @@
+{
+  "theme": "faits-animes",
+  "titre": "Quel pays a le plus de fuseaux horaires ?",
+  "fin": "Tu pensais à la Russie ou à la France ?",
+  "suite": "Bientôt : Cléopâtre, les pyramides et la Lune",
+  "scenes": [
+    {
+      "tag": "GÉOGRAPHIE",
+      "lignes": [
+        {
+          "texte": "Quel pays a le plus",
+          "style": "normal"
+        },
+        {
+          "texte": "de fuseaux",
+          "style": "gros"
+        },
+        {
+          "texte": "horaires ?",
+          "style": "accent"
+        }
+      ],
+      "voix": "Quel pays a le plus de fuseaux horaires ? Attention, il y a un piège.",
+      "motsCles": [
+        "horloge",
+        "globe"
+      ]
+    },
+    {
+      "tag": "LA RUSSIE",
+      "chiffre": {
+        "valeur": 11,
+        "suffixe": "FUSEAUX"
+      },
+      "lignes": [
+        {
+          "texte": "la Russie, comme les États-Unis",
+          "style": "petit"
+        }
+      ],
+      "voix": "La Russie est gigantesque, et pourtant elle s'arrête à onze fuseaux. Les États-Unis font pareil. Alors, qui peut bien faire mieux ?",
+      "motsCles": [
+        "russie",
+        "neige"
+      ]
+    },
+    {
+      "tag": "LA RÉPONSE",
+      "chiffre": {
+        "valeur": 12,
+        "suffixe": "FUSEAUX"
+      },
+      "lignes": [
+        {
+          "texte": "la France, grâce à l'outre-mer",
+          "style": "accent"
+        }
+      ],
+      "voix": "Accroche-toi : le vainqueur, c'est la France, avec douze fuseaux, sans même compter la terre Adélie, en Antarctique.",
+      "motsCles": [
+        "france",
+        "drapeau"
+      ]
+    },
+    {
+      "tag": "EN MÉTROPOLE",
+      "chiffre": {
+        "valeur": 1,
+        "suffixe": "SEUL"
+      },
+      "lignes": [
+        {
+          "texte": "fuseau dans l'Hexagone",
+          "style": "petit"
+        }
+      ],
+      "voix": "Mais le plus fou, c'est ça : en métropole, il n'y en a qu'un seul. Tous les autres viennent de l'outre-mer.",
+      "motsCles": [
+        "paris",
+        "ile"
+      ]
+    },
+    {
+      "tag": "LE GRAND ÉCART",
+      "chiffre": {
+        "valeur": 22,
+        "suffixe": "HEURES"
+      },
+      "lignes": [
+        {
+          "texte": "entre Tahiti et Wallis-et-Futuna",
+          "style": "petit"
+        }
+      ],
+      "voix": "Et attends : entre Tahiti et Wallis-et-Futuna, les horloges affichent vingt-deux heures d'écart, presque une journée entière ! Maintenant, pose la question à un ami :",
+      "motsCles": [
+        "tahiti",
+        "lagon"
+      ]
+    }
+  ]
+}

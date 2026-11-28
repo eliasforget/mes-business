@@ -4,24 +4,61 @@
   "gameplay": {
     "fichier": "gameplay.mp4",
     "debut": 24.8,
-    "duree": 35
+    "duree": 35,
+    "teaser": {
+      "a": 22,
+      "duree": 1.2
+    }
   },
   "scenes": [
     {
       "tag": "EXPÉRIENCE GTA 6",
       "lignes": [
         {
-          "texte": "Planté au milieu",
+          "texte": "Tu bloques la route",
           "style": "normal"
         },
         {
-          "texte": "de la route",
+          "texte": "et la police ?",
           "style": "accent"
         }
       ],
-      "voix": "Que se passe-t-il si tu restes planté au milieu de la route dans GTA 6 ? Regarde bien la fin."
+      "voix": "Tu bloques la route : que va faire la police ?"
     }
   ],
-  "fin": "Je teste quoi ensuite ? Dis-le en commentaire",
-  "commentaire": "a_ecrire"
+  "fin": "Toi, tu restes planté ou tu cours ? Choisis !",
+  "commentaire": "fait",
+  "commentaires": [
+    {
+      "a": 4.2,
+      "texte": "Après le bus, cette voiture blanche te passe au ras.",
+      "zoom": false
+    },
+    {
+      "a": 11.2,
+      "texte": "Mais attends, tu cours te replanter un peu plus loin.",
+      "zoom": false
+    },
+    {
+      "a": 16.8,
+      "texte": "Nouvelle place, et ce pick-up blanc te passe tout près.",
+      "zoom": false
+    },
+    {
+      "a": 20.8,
+      "texte": "Et là, regarde : la police arrive droit sur toi !",
+      "zoom": true
+    },
+    {
+      "a": 25.0,
+      "texte": "Elle te contourne et file : personne ne descend.",
+      "zoom": false
+    },
+    {
+      "a": 28.8,
+      "texte": "Verdict : la police t'évite, comme toutes les autres voitures.",
+      "zoom": false
+    }
+  ],
+  "suite": "Bientôt : le jeu caché dans GTA 6"
 }
