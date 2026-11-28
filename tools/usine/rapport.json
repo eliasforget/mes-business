@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-28T12:18:03.387Z",
+  "majLe": "2026-11-28T13:57:17.737Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -51,27 +51,32 @@
       "nom": "F03-voyage-lune",
       "chaine": "Faits animés",
       "le": "2026-11-25T08:04:12.996Z"
-    }
-  ],
-  "erreurs": [
+    },
     {
       "nom": "F04-vitesse-lumiere",
-      "erreur": "voix (vr-voix) en échec : regarde logs\\vr-voix",
-      "essais": 1
+      "chaine": "Faits animés",
+      "le": "2026-11-28T13:47:18.476Z"
     },
     {
       "nom": "F05-coeur-baleine-bleue",
-      "erreur": "voix (vr-voix) en échec : regarde logs\\vr-voix",
-      "essais": 1
+      "chaine": "Faits animés",
+      "le": "2026-11-28T13:51:57.493Z"
+    },
+    {
+      "nom": "F06-fuseaux-horaires-france",
+      "chaine": "Faits animés",
+      "le": "2026-11-28T13:57:14.144Z"
     }
   ],
+  "erreurs": [],
   "enAttenteDeCapture": [],
-  "enAttenteDeCommentaire": [
+  "enAttenteDeCommentaire": [],
+  "enAttenteDeQuota": [
+    "F07-cleopatre-lune-pyramides",
     "12-e01-plante-au-milieu-de-la-route"
   ],
-  "enAttenteDeQuota": [],
   "quota": {
-    "faitesAujourdhui": 0,
+    "faitesAujourdhui": 3,
     "maxParJour": 4,
     "maxParPassage": 3
   },
