@@ -1,5 +1,5 @@
 {
-  "majLe": "2026-11-27T14:31:20.701Z",
+  "majLe": "2026-11-28T12:18:03.387Z",
   "pc": "Elias",
   "pretes": [
     {
@@ -53,17 +53,25 @@
       "le": "2026-11-25T08:04:12.996Z"
     }
   ],
-  "erreurs": [],
+  "erreurs": [
+    {
+      "nom": "F04-vitesse-lumiere",
+      "erreur": "voix (vr-voix) en échec : regarde logs\\vr-voix",
+      "essais": 1
+    },
+    {
+      "nom": "F05-coeur-baleine-bleue",
+      "erreur": "voix (vr-voix) en échec : regarde logs\\vr-voix",
+      "essais": 1
+    }
+  ],
   "enAttenteDeCapture": [],
   "enAttenteDeCommentaire": [
     "12-e01-plante-au-milieu-de-la-route"
   ],
-  "enAttenteDeQuota": [
-    "F04-vitesse-lumiere",
-    "F05-coeur-baleine-bleue"
-  ],
+  "enAttenteDeQuota": [],
   "quota": {
-    "faitesAujourdhui": 4,
+    "faitesAujourdhui": 0,
     "maxParJour": 4,
     "maxParPassage": 3
   },
